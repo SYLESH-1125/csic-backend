@@ -1,0 +1,51 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.core.logging import logger
+from app.db.base import Base
+from app.db.session import engine, SessionLocal
+from app.ingestion.integrity import verify_hash_chain
+from app.ingestion.router import router as new_ingestion
+from app.features.router import router as new_features
+from app.detection.router import router as new_detection
+from app.ledger.router import router as new_ledger
+from app.dashboard.router import router as new_dashboard
+from app.reporting.router import router as new_reporting
+
+new_app = FastAPI(title="Forensic AI Engine")
+
+new_origins = ["*"]
+
+new_app.add_middleware(
+    CORSMiddleware,
+    allow_origins=new_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+Base.metadata.create_all(bind=engine)
+
+new_app.include_router(new_ingestion, prefix="/api")
+new_app.include_router(new_features, prefix="/api")
+new_app.include_router(new_detection, prefix="/api")
+new_app.include_router(new_ledger, prefix="/api")
+new_app.include_router(new_dashboard, prefix="/api")
+new_app.include_router(new_reporting, prefix="/api")
+
+@new_app.get("/")
+def health():
+    return {"status": "Forensic Engine Online"}
+
+@new_app.on_event("startup")
+def startup_integrity_check():
+    new_db = SessionLocal()
+    try:
+        new_result = verify_hash_chain(new_db)
+        if hasattr(new_result, "get") and new_result.get("status") != "chain_valid":
+            logger.error("HASH CHAIN BROKEN!")
+        else:
+            logger.info("Hash chain verified.")
+    except Exception as new_e:
+        logger.warning(f"Integrity check skipped: {new_e}")
+    finally:
+        new_db.close()
