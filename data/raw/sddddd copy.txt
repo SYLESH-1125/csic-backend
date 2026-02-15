@@ -1,0 +1,73 @@
+2026-02-10 09:00:01,user1,192.168.1.10,login,success
+2026-02-10 09:01:15,user1,192.168.1.10,view_dashboard,success
+2026-02-10 09:02:30,user1,192.168.1.10,download_report,success
+2026-02-10 09:05:01,user2,192.168.1.11,login,success
+2026-02-10 09:06:12,user2,192.168.1.11,view_dashboard,success
+2026-02-10 09:07:18,user2,192.168.1.11,logout,success
+2026-02-10 09:10:05,user3,192.168.1.12,login,success
+2026-02-10 09:12:11,user3,192.168.1.12,view_dashboard,success
+2026-02-10 09:14:33,user3,192.168.1.12,download_report,success
+2026-02-10 09:16:45,user4,192.168.1.13,login,success
+2026-02-10 09:17:22,user4,192.168.1.13,view_dashboard,success
+2026-02-10 09:18:30,user4,192.168.1.13,logout,success
+2026-02-10 09:20:05,user5,192.168.1.14,login,success
+2026-02-10 09:21:19,user5,192.168.1.14,download_report,success
+2026-02-10 09:22:55,user5,192.168.1.14,logout,success
+2026-02-10 09:25:11,user6,192.168.1.15,login,success
+2026-02-10 09:26:45,user6,192.168.1.15,view_dashboard,success
+2026-02-10 09:28:12,user6,192.168.1.15,logout,success
+2026-02-10 09:30:01,user7,192.168.1.16,login,success
+2026-02-10 09:31:20,user7,192.168.1.16,download_report,success
+2026-02-10 09:33:10,user7,192.168.1.16,logout,success
+2026-02-10 09:35:00,user8,192.168.1.17,login,success
+2026-02-10 09:36:22,user8,192.168.1.17,view_dashboard,success
+2026-02-10 09:38:11,user8,192.168.1.17,logout,success
+2026-02-10 09:40:01,user9,192.168.1.18,login,success
+2026-02-10 09:41:33,user9,192.168.1.18,download_report,success
+2026-02-10 09:43:10,user9,192.168.1.18,logout,success
+2026-02-10 09:45:05,user10,192.168.1.19,login,success
+2026-02-10 09:46:20,user10,192.168.1.19,view_dashboard,success
+2026-02-10 09:47:30,user10,192.168.1.19,logout,success
+
+2026-02-10 10:00:01,attacker1,10.0.0.5,login,failed
+2026-02-10 10:00:10,attacker1,10.0.0.5,login,failed
+2026-02-10 10:00:20,attacker1,10.0.0.5,login,failed
+2026-02-10 10:00:30,attacker1,10.0.0.5,login,failed
+2026-02-10 10:00:40,attacker1,10.0.0.5,login,failed
+2026-02-10 10:00:50,attacker1,10.0.0.5,login,failed
+2026-02-10 10:01:00,attacker1,10.0.0.5,login,failed
+2026-02-10 10:01:10,attacker1,10.0.0.5,login,failed
+2026-02-10 10:01:20,attacker1,10.0.0.5,login,failed
+2026-02-10 10:01:30,attacker1,10.0.0.5,login,failed
+
+2026-02-10 11:00:01,user1,192.168.1.10,delete_user,success
+2026-02-10 11:02:05,user2,192.168.1.200,login,success
+2026-02-10 11:02:10,user2,192.168.1.201,login,success
+2026-02-10 11:02:15,user2,192.168.1.202,login,success
+2026-02-10 11:02:20,user2,192.168.1.203,login,success
+2026-02-10 11:02:25,user2,192.168.1.204,login,success
+2026-02-10 11:05:00,user3,172.16.5.10,admin_access,success
+2026-02-10 11:06:00,user3,172.16.5.10,change_permissions,success
+2026-02-10 11:07:00,user3,172.16.5.10,export_database,success
+2026-02-10 11:08:00,user3,172.16.5.10,logout,success
+
+2026-02-10 02:15:01,user4,192.168.1.13,login,success
+2026-02-10 02:16:01,user4,192.168.1.13,download_report,success
+2026-02-10 02:17:01,user4,192.168.1.13,logout,success
+
+2026-02-10 23:50:01,user5,203.0.113.5,login,success
+2026-02-10 23:51:01,user5,203.0.113.5,delete_logs,success
+2026-02-10 23:52:01,user5,203.0.113.5,logout,success
+
+2026-02-10 12:00:01,user6,192.168.1.15,login,success
+2026-02-10 12:00:02,user6,192.168.1.15,download_report,success
+2026-02-10 12:00:03,user6,192.168.1.15,download_report,success
+2026-02-10 12:00:04,user6,192.168.1.15,download_report,success
+2026-02-10 12:00:05,user6,192.168.1.15,download_report,success
+2026-02-10 12:00:06,user6,192.168.1.15,download_report,success
+2026-02-10 12:00:07,user6,192.168.1.15,download_report,success
+2026-02-10 12:00:08,user6,192.168.1.15,download_report,success
+2026-02-10 12:00:09,user6,192.168.1.15,download_report,success
+2026-02-10 12:00:10,user6,192.168.1.15,download_report,success
+2026-02-10 12:00:11,user6,192.168.1.eroutection occurs 192.168.1.15,logout,success
+

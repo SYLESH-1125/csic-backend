@@ -1,0 +1,19 @@
+
+
+2026-02-09T01:05:00Z [APP-SRV-07] [AUTH] EventID=4624 Status=SUCCESS Account=admin02 LogonType=3 Msg="Standard network logon"
+2026-02-09T01:18:30Z [APP-SRV-07] [AUTH] EventID=4625 Status=0xC000006D Account=admin02 SourceIP=185.231.72.19 Msg="Logon Failure - Velocity Spike Detected"
+2026-02-09T01:27:10Z [APP-SRV-07] [AUTH] EventID=4625 Status=0xC000006D Account=svc_backup SourceIP=185.231.72.19 Msg="Logon Failure - Password Spray Pattern"
+2026-02-09T01:27:11Z [APP-SRV-07] [AUTH] EventID=4625 Status=0xC000006D Account=sysadmin SourceIP=185.231.72.19 Msg="Logon Failure - Password Spray Pattern"
+2026-02-09T01:41:22Z [VPN-GW] [AUTH] EventID=1001 Status=SUCCESS Account=hr01 SourceIP=82.102.14.5 Msg="Successful VPN Connection - Geo-Jitter Flagged"
+2026-02-09T01:55:09Z [APP-SRV-07] [SYSMON] EventID=1 ProcessId=4892 Image="powershell.exe" CommandLine="powershell.exe -nop -w hidden -enc JABzAD0ATgBlAHcALQBPAGIAagBlAGMAdAAgAEkATwAuAE0AZQBtAG8AcgB5AFMAdAByAGUAYQBtACgAWwBDAG8AbgB2AGUAcgB0AF0AOgA6AEYAcgBvAG0AQgBhAHMAZQA2ADQAUwB0AHIAaQBuAGcAKAAiAEgA" User=DOMAIN\svc_backup
+2026-02-09T02:06:40Z [PERIMETER_FW] [TRAFFIC] Action=ALLOW Protocol=TCP SrcIP=10.0.4.55 DstIP=185.231.72.19 SrcPort=54392 DstPort=443 Msg="Suspicious Outbound Connection"
+2026-02-09T02:14:05Z [PERIMETER_FW] [DNS] Query="qkxj19aa.cdn-checks[.]com" Type=A Response=NXDOMAIN Msg="DGA-like pattern identified"
+2026-02-09T02:14:06Z [PERIMETER_FW] [DNS] Query="api.cdn-checks[.]com" Type=A Response=185.231.72.19
+2026-02-09T02:22:33Z [APP-SRV-07] [SYSMON] EventID=4732 TargetGroup="Administrators" MemberName="svc_backup" Msg="Privilege escalation indicator"
+2026-02-09T02:34:19Z [APP-SRV-07] [SYSMON] EventID=1 Image="schtasks.exe" CommandLine="schtasks /create /tn Microsoft\Windows\Update /tr C:\Windows\Temp\payload.exe /sc onstart /ru System" Msg="Persistence attempt suspected"
+2026-02-09T02:45:10Z [PERIMETER_FW] [TRAFFIC] Action=ALLOW Protocol=TCP SrcIP=10.0.5.12 DstIP=45.9.148.201 SrcPort=49152 DstPort=443 BytesSent=184857600 BytesRecv=1240 Msg="LARGE_DATA_TRANSFER_SPIKE (Source: DB-SRV-02)"
+2026-02-09T03:01:42Z [APP-SRV-07] [SYSMON] EventID=104 LogClear Msg="System Security log was cleared - Tamper signal detected" User=DOMAIN\svc_backup
+2026-02-09T03:12:55Z [APP-SRV-07] [SYSTEM] ALERT="Synchronized high-risk triggers correlating to current window"
+2026-02-09T03:27:44Z [APP-SRV-07] [SYSTEM] ALERT="Peak anomaly wave detected across all nodes"
+2026-02-09T03:42:10Z [PERIMETER_FW] [TRAFFIC] Action=DENY Protocol=TCP SrcIP=10.0.4.55 DstIP=185.231.72.19 SrcPort=54399 DstPort=443 Msg="Connection Dropped"
+2026-02-09T04:25:30Z [APP-SRV-07] [SYSTEM] INFO="Activity returning toward baseline thresholds"

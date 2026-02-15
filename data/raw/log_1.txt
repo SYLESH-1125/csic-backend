@@ -1,0 +1,451 @@
+﻿You may submit any number of times before the due date. The final submission will be considered for grading. 
+Mock Test : 
+ 
+General Information : 
+ 
+Mock Test starts from 2:00 PM to 5:00 PM, IST.
+ 
+Note : You may submit any number of times before the end time of the exam. The final submission will be considered for grading.
+Please scroll to the bottom of the screen & click on SUBMIT frequently so that your answers get saved in our system. Also, please do not wait till the end of the exam to submit.
+JavaScript should be enabled to grade this question. 
+JavaScript should be enabled to grade this question. 
+1 point 
+In appreciation of the social improvements completed in a town, a wealthy philanthropist decided to gift Rs 750 to each male senior citizen in the town and Rs 1000 to each female senior citizen. Altogether, there were 300 senior citizens eligible for this gift. However, only 8/9th^{th}th of the eligible men and 2/3rd^{rd}rd of the eligible women claimed the gift. How much money (in Rupees) did the philanthropist give away in total?
+1,50,000 
+2,00,000 
+1,75,000 
+1,51,000 
+JavaScript should be enabled to grade this question. 
+1 point 
+
+0 to 15 
+16 to 30 
+31 to 45 
+46 to 60 
+JavaScript should be enabled to grade this question. 
+1 point 
+Two cars start at the same time from the same location and go in the same direction. The speed of the first car is 50 km/h and the speed of the second car is 60 km/h. The number of hours it takes for the distance between the two cars to be 20 km is ___.
+1 
+2 
+3 
+6 
+JavaScript should be enabled to grade this question. 
+1 point 
+
+A 
+B 
+C 
+D 
+JavaScript should be enabled to grade this question. 
+1 point 
+
+A 
+B 
+C 
+D 
+JavaScript should be enabled to grade this question. 
+1 point 
+
+A 
+B 
+C 
+D 
+JavaScript should be enabled to grade this question. 
+1 point 
+“A recent High Court judgement has sought to dispel the idea of begging as a disease — which leads to its stigmatization and criminalization — and to regard it as a symptom. The underlying disease is the failure of the state to protect citizens who fall through the social security net.” 
+
+Which one of the following statements can be inferred from the given passage?
+Beggars are lazy people who beg because they are unwilling to work 
+Beggars are created because of the lack of social welfare schemes 
+Begging is an offence that has to be dealt with firmly 
+Begging has to be banned because it adversely affects the welfare of the state 
+JavaScript should be enabled to grade this question. 
+1 point 
+Goods and Services Tax (GST) is an indirect tax introduced in india in 2017 that is imposed on the supply of goods and services, and it subsumes all indirect taxes except few. It is a destination-based tax imposed on goods and servies used, and it is not imposed at the point of origin from where goods come. GST also has a few components specific to state governments, central government and Union Territories (UTs).
+Which one of the following statements can be inferred from the given passage ?
+GST is imposed on the production of goods and services. 
+GST includes all indirect taxes. 
+GST does not have a component specific to UT. 
+GST is imposed at the point of usage of goods and services. 
+JavaScript should be enabled to grade this question. 
+1 point 
+
+A 
+B 
+C 
+D 
+JavaScript should be enabled to grade this question. 
+1 point 
+W hat is the missing number in the following sequence?
+2, 12, 60, 240, 720, 1440, _____, 0
+2880 
+1440 
+720 
+0 
+JavaScript should be enabled to grade this question. 
+2 points 
+Let G = (V, E ) be a weighted undirected graph and let T be a Minimum Spanning Tree (MST) of G maintained using adjacency lists. Suppose a new weighted edge (u,v)∈V×V is added to G. The worst case time complexity of determining if T is still MST of the resultant graph is
+Θ(∣E∣+∣V∣)Θ(|E|+|V|) Θ(∣E∣+∣V∣) 
+Θ(∣E∣∣V∣)Θ(|E||V|) Θ(∣E∣∣V∣) 
+Θ(∣E∣log∣V∣)Θ(|E|log|V|) Θ(∣E∣log∣V∣) 
+Θ(∣V∣)Θ(|V|)Θ(∣V∣) 
+JavaScript should be enabled to grade this question. 
+2 points 
+
+T(n) = ⊖(n5/2) \ominus (n^{5/2})⊖(n5/2) 
+T(n) = \ominus (n \log n}) 
+T(n) = ⊖(n) \ominus (n)⊖(n) 
+T(n) = ⊖((log⁡n)5/2) \ominus ((\log n)^{5/2})⊖((logn)5/2) 
+JavaScript should be enabled to grade this question. 
+Consider a graph G=(V,E), where V={v1,v2,...,v100},E={(vi,vj)∣1≤i≤j≤100},G=(V,E),\text{ where }V=\{v_1,v_2,...,v_{100}\},E=\{(v_i,v_j)|1≤i≤j≤100\},G=(V,E), where V={v1​,v2​,...,v100​},E={(vi​,vj​)∣1≤i≤j≤100}, and weight of the edge (vi,vj) is ∣i−j∣.(v_i,v_j)\text{ is }|i−j|.(vi​,vj​) is ∣i−j∣. The weight of minimum spanning tree of G is __________.
+ 
+2 points 
+JavaScript should be enabled to grade this question. 
+1 point 
+A binary search tree T contains n distinct elements. What is the time complexity of picking an element in T that is smaller than the maximum element in T?
+Θ(nlog⁡n) \Theta (n \log n)Θ(nlogn) 
+Θ(n) \Theta (n)Θ(n) 
+Θ(log⁡n) \Theta (\log n)Θ(logn) 
+Θ \ThetaΘ 
+JavaScript should be enabled to grade this question. 
+1 point 
+Consider the following array
+23 	32 	45 	69 	72 	73 	89 	97
+Which algorithm out of the following options uses the least number of comparisons (among the array elements) to sort the above array in ascending order?
+Selection Sort 
+Mergesort 
+Insertion sort 
+Quicksort using the last eleemtn as pivot 
+JavaScript should be enabled to grade this question. 
+
+ 
+2 points 
+JavaScript should be enabled to grade this question. 
+A processor X1 X_{1}X1​ operating at 2 GHz has a standard 5-stage RISC instruction pipeline having a base CPI (cycles per instruction) of one without any pipeline hazards. For a given program P that has 30% branch instructions, control hazards incur 2 cycles stall for every branch. A new version of the processor X2 X_{2}X2​ operating at same clock frequency has an additional branch predictor unit (BPU) that completely eliminates stalls for correctly predicted branches. There is neither any savings nor any additional stalls for wrong predictions. There are no structural hazards and data hazards for X1 X_{1}X1​ and X2 X_{2}X2​. If the BPU has a prediction accuracy of 80%, the speed up (rounded off to two decimal places) obtained by X2 X_{2}X2​ over X1 X_{1}X1​ in executing P is____________. 
+ 
+2 points 
+JavaScript should be enabled to grade this question. 
+
+ 
+2 points 
+JavaScript should be enabled to grade this question. 
+The instruction pipeline of a RISC processor has the following stages: Instruction Fetch (IF), Instruction Decode (ID), Operand Fetch (OF), Perform Operation (PO) and Writeback (WB). The IF, ID, OF and WB stages take 1 clock cycle each for every instruction. Consider a sequence of 100 instructions. In the PO stage, 40 instructions take 3 clock cycles each, 35 instructions take 2 clock cycles each, and the remaining 25 instructions take 1 clock cycle each. Assume that there are no data hazards and no control hazards.
+The number of clock cycles required for completion of execution of the sequence of
+instructions is ______.
+ 
+2 points 
+JavaScript should be enabled to grade this question. 
+1 point 
+Let R1 and R2 be two 4-bit registers that store numbers in 2’s complement form. For the operation R1+R2, which one of the following values of R1 and R2 gives an arithmetic overflow? 
+R1 = 1011 and R2 = 1110 
+R1 = 1100 and R2 = 1010 
+R1 = 0011 and R2 = 0100 
+R1 = 1001 and R2 = 1111 
+JavaScript should be enabled to grade this question. 
+Consider a computer system with DMA support. The DMA module is transfening one 8-bit character i_n one CPU cycle from a device to memory through cycle stealing at regular intervals. Consider a 2 MHz processor. If 0.5% processor cycles are used for DMA. ihe data transfer rate of the device is ______ bits per second.
+ 
+1 point 
+JavaScript should be enabled to grade this question. 
+1 point 
+Which one of the following facilitates transfer of bulk data from hard disk to main memory with the highest throughput? 
+DMA based I/O transfer 
+Interrupt driven I/O transfer 
+Polling based I/O transfer 
+Programmed I/O transfer 
+JavaScript should be enabled to grade this question. 
+2 points 
+Consider the following grammar (that admits a series of declarations, followed by expresions) and the associated syntax directed translation (SDT) actions, given as pseudo-code: With respect to the above grammar, which one of the following choices is correct?
+The actions can be used to correctly type-check any syntactically conect program 
+The actions can be used to type-check syntactically conect integer variable declarations and integer expressions 
+The actions can be used to type-check syntactically correct boolean variable declarations and boolean expressions 
+The actions will lead to an in.finite loop. 
+JavaScript should be enabled to grade this question. 
+
+ 
+2 points 
+JavaScript should be enabled to grade this question. 
+1 point 
+Which of the following statements is/are TRUE?
+Every subset of a recursively enumerable language is recursive. 
+If a language L and its complement Lˉ \bar{L}Lˉ are both recursively enumerable, then L must be recursive. 
+Complement of a context-free language must be recursive 
+If L1 L_{1}L1​ and L2 L_{2}L2​ are regular, then L1∩L2 L_{1} \cap L_{2}L1​∩L2​ must be deterministic context-free 
+JavaScript should be enabled to grade this question. 
+1 point 
+
+Θ \Theta Θ(1) 
+Lexical analyzer 
+Syntax analyzer 
+Machine dependent optimizer 
+JavaScript should be enabled to grade this question. 
+In an RSA cryptosystem, the value of the public modulus parameter 𝑛 is 3007. If it is also known that φ(𝑛) = 2880, where φ() denotes Euler’s Totient Function, then the prime factor of 𝑛 which is greater than 50 is ____________________.
+ 
+2 points 
+JavaScript should be enabled to grade this question. 
+Consider the data transfer using TCP over a 1 Gbps link. Assuming that the maximum segment lifetime (MSL) is set to 60 seconds, the minimum number of bits required for the sequence number field of the TCP header, to prevent the sequence number space from wrapping around during the MSL is____________. 
+ 
+2 points 
+JavaScript should be enabled to grade this question. 
+1 point 
+Consider the following two statements. 
+S1:S_{1}:S1​: Destination MAC address of an ARP reply is a broadcast address.
+S2:S_{2}:S2​: Destination MAC address of an ARP request is a broadcast address. 
+Which one of the following choices is correct?
+Both S1S_{1}S1​ and S2S_{2}S2​ are true 
+S1S_{1}S1​ is true but S2S_{2}S2​ is false. 
+S1S_{1}S1​ is false but S2S_{2}S2​ is true. 
+Neither S1S_{1}S1​ nor S2S_{2}S2​ is true. 
+JavaScript should be enabled to grade this question. 
+1 point 
+Consider the following statements regarding the slow start phase of the TCP congestion
+control algorithm. Note that cwnd stands for the TCP congestion window and MSS denotes
+the Maximum Segment Size.
+(i) The cwnd increases by 2 MSS on every successful acknowledgment.
+(ii) The cwnd approximately doubles on every successful acknowledgement.
+(iii) The cwnd increases by 1 MSS every round trip time.
+(iv) The cwnd approximately doubles every round trip time.
+Which one of the following is correct?
+Only (ii) and (iii) are true 
+Only (i) and (iii) are true 
+Only (iv) is true 
+Only (i) and (iv) are true 
+JavaScript should be enabled to grade this question. 
+2 points 
+
+employees in the department 
+employees in the company 
+female employees in the department 
+female employees in the company 
+JavaScript should be enabled to grade this question. 
+
+ 
+2 points 
+JavaScript should be enabled to grade this question. 
+1 point 
+Consider a relational database containing the following schemas.
+
+The primary key of each table is indicated by underlining the constituent fields.
+
+The number of rows returned by the above SQL query is
+4 
+5 
+0 
+2 
+JavaScript should be enabled to grade this question. 
+1 point 
+
+A 
+B 
+C 
+D 
+JavaScript should be enabled to grade this question. 
+2 points 
+Consider a relational table R that is in 3NF, but not in BCNF, Which one of the following statements is TRUE ?
+RRR has a nontrivial functional dependency X→AX→AX→A, where XXX is not a superkey and AAA is a prime attribute. 
+RRR has a nontrivial functional dependency X→AX→AX→A, where XXX is not a superkey and AAA is a non-prime attribute and XXX is not a proper subset of any key. 
+RRR has a nontrivial functional dependency X→AX→AX→A, where XXX is not a superkey and AAA is a non-prime attribute and XXX is a proper subset of some key. 
+A cell in RRR holds a set instead of an atomic value. 
+JavaScript should be enabled to grade this question. 
+2 points 
+
+D1D_{1}D1​ is a lossless decomposition, but D2D_{2}D2​ is a lossy decomposition. 
+D1D_{1}D1​ is a lossy decomposition, but D2D_{2}D2​ is a lossless decomposition. 
+Both D1D_{1}D1​ and D2D_{2}D2​ are lossless decompositions. 
+Both D1D_{1}D1​ and D2D_{2}D2​ are lossy decompositions. 
+JavaScript should be enabled to grade this question. 
+What is the minimum number of 2-input NOR gates required to implement a 4-variable function expressed in sum-of-minterms form as f = Σ (0, 2, 5, 7, 8, 10, 13, 15)? Assume that all the inputs and their complements are available. Answer: _______________.
+ 
+2 points 
+JavaScript should be enabled to grade this question. 
+1 point 
+
+C800 to CFFF 
+CA00 to CAFF 
+C800 to C8FF 
+DA00 to DFFF 
+JavaScript should be enabled to grade this question. 
+1 point 
+Let the representation of a number in base 3 be 210. What is the hexadecimal representation of the number?
+15 
+21 
+D2 
+528 
+JavaScript should be enabled to grade this question. 
+
+ 
+2 points 
+JavaScript should be enabled to grade this question. 
+2 points 
+
+41 
+52 
+63 
+630 
+JavaScript should be enabled to grade this question. 
+2 points 
+
+z K S 
+122 75 83 
+* - + 
+P x + 
+JavaScript should be enabled to grade this question. 
+
+ 
+1 point 
+JavaScript should be enabled to grade this question. 
+
+ 
+1 point 
+JavaScript should be enabled to grade this question. 
+
+ 
+1 point 
+JavaScript should be enabled to grade this question. 
+Let G be a graph with 100! vertices, with each vertex labelled by a distinct permutation of the numbers 1,2, … , 100. There is an edge between vertices 𝑢 and 𝑣 if and only if the label of 𝑢 can be obtained by swapping two adjacent numbers in the label of 𝑣. Let 𝑦 denote the degree of a vertex in G, and 𝑧 denote the number of connected components in G. 
+Then, 𝑦 + 10𝑧 = _____.
+ 
+2 points 
+JavaScript should be enabled to grade this question. 
+2 points 
+
+A 
+B 
+C 
+D 
+JavaScript should be enabled to grade this question. 
+1 point 
+Let p and q be two propositions. Consider the following two formulae in propositional logic. 
+S1:(¬pΛ(p∨q))→qS_{1}: (\neg p \Lambda (p \vee q)) \rightarrow qS1​:(¬pΛ(p∨q))→q 
+S2:q→(¬pΛ(p∨q))S_{2}: q \rightarrow (\neg p \Lambda (p \vee q) )S2​:q→(¬pΛ(p∨q)) 
+Which one of the following choices is correct?
+Both S1S_{1}S1​ and S2S_{2}S2​ are tautologies 
+S1S_{1}S1​ is a tautology but S2S_{2}S2​ is not a tautology. 
+S1S_{1}S1​ is not a tautology but S2S_{2}S2​ is a tautology. 
+Neither S1S_{1}S1​ nor S2S_{2}S2​ is a tautology. 
+JavaScript should be enabled to grade this question. 
+1 point 
+Which of the following statements is/are TRUE for a group G ?
+If for all x,y ϵ \epsilonϵ G , (xy)2=x2y2 (xy)^{2} = x^{2}y^{2}(xy)2=x2y2, then G is commutative. 
+If for all x ϵ \epsilonϵ G , x2=1 x^{2} = 1x2=1 then G is commutative.Here, 1 is the identity element ofG 
+If the order of G is 2, then G is commutative. 
+If G is commutative, then a subgroup of G need not be commutative 
+JavaScript should be enabled to grade this question. 
+2 points 
+Let A and B be two n×n matrices over real numbers. Let rank (M) and det(M) denote the rank and determinant of a matrix M, respectively. Consider the following statements.
+
+I.rank(AB)=rank(A)rank(B)
+II.det(AB)=det(A)det(B)
+III.rank(A+B)≤rank(A)+rank(B)
+IV.det(A+B)≤det(A)+det(B)
+
+Which of the above statements are TRUE ?
+I and II only 
+I and IV only 
+II and III only 
+III and IV only 
+JavaScript should be enabled to grade this question. 
+1 point 
+Let 𝑋 be a square matrix. Consider the following two statements on 𝑋.
+I. 𝑋 is invertible.
+II. Determinant of 𝑋 is non-zero.
+Which one of the following is TRUE?
+I implies II; II does not imply I. 
+II implies I; I does not imply II. 
+I does not imply II; II does not imply I. 
+I and II are equivalent statements. 
+JavaScript should be enabled to grade this question. 
+2 points 
+
+First QuesA and then QuesB. Expected marks 14. 
+First QuesB and then QuesA . Expected marks 14 
+First QuesB and then QuesA . Expected marks 22. 
+First QuesA and then QuesB. Expected marks 16. 
+JavaScript should be enabled to grade this question. 
+The value of the following limit is _____________. 
+lim⁡x→0+x1−e2x \lim_{x \rightarrow 0+} \frac{\sqrt{x}}{1-e^{2\sqrt{x}}}limx→0+​1−e2x​x​​
+ 
+1 point 
+JavaScript should be enabled to grade this question. 
+Two people, P and Q, decide to independently roll two identical dice, each with 6 faces, numbered 1 to 6. The person with the lower number wins. In case of a tie, they roll the dice repeatedly until there is no tie. Define a trial as a throw of the dice by P and Q. Assume that all 6 numbers on each dice are equi-probable and that all trials are independent. The probability (rounded to 3 decimal places) that one of them wins on the third trial is _____.
+ 
+1 point 
+JavaScript should be enabled to grade this question. 
+2 points 
+Consider four processes P, Q, R, and S scheduled on a CPU as per round robin algorithm with a time quantum of 4 units. The processes arrive in the order P, Q, R, S, all at time t = 0. There is exactly one context switch from S to Q, exactly one context switch from R to Q, and exactly two context switches from Q to R. There is no context switch from S to P. Switching to a ready process after the termination of another process is also considered a context switch. Which one of the following is NOT possible as CPU burst time (in time units) of these processes? 
+P = 4, Q = 10, R = 6, S = 2 
+P = 2, Q = 9, R = 5, S = 1 
+P = 4, Q = 12, R = 5, S = 4 
+P = 3, Q = 7, R = 7, S = 3 
+JavaScript should be enabled to grade this question. 
+2 points 
+
+The value of counter is 5 after all the threads successfully complete the execution of parop. 
+The value of counter is 1 after all the threads successfully complete the execution of parop. 
+The value of counter is O after all the threads successfully complete the execution of parop. 
+There is a deadlock involving all the threads. 
+JavaScript should be enabled to grade this question. 
+Three processes arrive at time zero ,vith CPU bursts of 16, 20 and 10 milliseconds. If the scheduler has prior knowledge about the length of the CPU bursts, the minimum achievable average waiting time for these three processes in a non-preemptive scheduler (rounded to nearest integer) is ______ milliseconds
+ 
+1 point 
+JavaScript should be enabled to grade this question. 
+The index node (inode) of a Unix-like file system has 12 direct, one single-indirect and one double-indirect pointers. The disk block size is 4 kB, and the disk block address is 32-bits long. The maximum possible file size is (rounded off to 1 decimal place) _________ GB.
+ 
+2 points 
+JavaScript should be enabled to grade this question. 
+2 points 
+
+A 
+B 
+C 
+D 
+JavaScript should be enabled to grade this question. 
+2 points 
+
+I and IV only 
+I and II only 
+II and III only 
+II and IV only 
+JavaScript should be enabled to grade this question. 
+2 points 
+Consider the following two statements about regular languages: 
+S1 : Every infinite regular language contains an undecidable language as a subset. 
+S2: Every finite language is regular. 
+Which one of the following choices is correct?
+Only S1 is true. 
+Only S2 is true. 
+Both S1 and S2 are true. 
+Neither S1 and S2 is true. 
+JavaScript should be enabled to grade this question. 
+1 point 
+Let ⟨M⟩ \langle M \rangle⟨M⟩ denote an encoding of an automaton M. Suppose that Σ \Sigma Σ = {0,1}. Which of the following languages is/are NOT recursive?
+L = {⟨M⟩ \langle M \rangle⟨M⟩ | M is a DFA such that L(M) = ϕ \phi ϕ} 
+L = {⟨M⟩ \langle M \rangle⟨M⟩ | M is a DFA such that L(M) = Σ∗ \Sigma^{*} Σ∗} 
+L = {⟨M⟩ \langle M \rangle⟨M⟩ | M is a PDA such that L(M) = ϕ \phi ϕ} 
+L = {⟨M⟩ \langle M \rangle⟨M⟩ | M is a PDA such that L(M) = Σ∗ \Sigma^{*} Σ∗} 
+JavaScript should be enabled to grade this question. 
+1 point 
+Consider the following statements.
+I. If L1∪L2L_1 ∪ L_2L1​∪L2​ is regular, then both L1 and L2L_1 \text{ and } L_2L1​ and L2​ must be regular.
+II. The class of regular languages is closed under infinite union.
+Which of the above statements is/are TRUE ?
+I only 
+II only 
+Both I and II 
+Neither I nor II 
+JavaScript should be enabled to grade this question. 
+1 point 
+Suppose that L1L_{1}L1​ is a regular language and L2L_{2}L2​is a context-free language. Which one of the following languages is NOT necessarily context-free?
+L1∩L2L_{1} \cap L_{2}L1​∩L2​ 
+L1.L2L_{1} . L_{2}L1​.L2​ 
+L1−L2L_{1} - L_{2}L1​−L2​ 
+L1∪L2L_{1} \cup L_{2}L1​∪L2​ 
+JavaScript should be enabled to grade this question. 
+2 points 
+
+𝑇1𝑇2𝑇3𝑇_{1}𝑇_{2}𝑇_{3}T1​T2​T3​ 
+𝑇1𝑇1𝑇3𝑇_{1}𝑇_{1}𝑇_{3}T1​T1​T3​ 
+𝑇2𝑇1𝑇3𝑇_{2}𝑇_{1}𝑇_{3}T2​T1​T3​ 
+𝑇3𝑇3𝑇_{3}𝑇_{3}T3​T3​ 
+Submit Answers 
+
+Please enable JavaScript to continue using this application. 

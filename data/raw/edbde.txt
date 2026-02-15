@@ -1,0 +1,15 @@
+2026-02-07 09:01:00 User=admin IP=192.168.1.10 Action=login Status=success
+2026-02-07 09:05:00 User=admin IP=192.168.1.10 Action=view_dashboard Status=success
+2026-02-07 09:10:00 User=admin IP=192.168.1.10 Action=logout Status=success
+
+2026-02-07 10:00:00 User=john IP=192.168.1.20 Action=login Status=failed
+2026-02-07 10:00:10 User=john IP=192.168.1.20 Action=login Status=failed
+2026-02-07 10:00:20 User=john IP=192.168.1.20 Action=login Status=failed
+2026-02-07 10:01:00 User=john IP=192.168.1.20 Action=login Status=success
+
+2026-02-07 02:15:00 User=alice IP=10.0.0.5 Action=login Status=success
+2026-02-07 02:16:00 User=alice IP=10.0.0.6 Action=access_sensitive_file Status=success
+
+2026-02-07 14:30:00 User=bob IP=172.16.0.8 Action=login Status=success
+2026-02-07 14:30:05 User=bob IP=172.16.0.8 Action=download_report Status=success
+2026-02-07 14:30:07 User=bob IP=172.16.0.8 Action=delete_logs Status=success

@@ -1,0 +1,458 @@
+# ============================================================
+# REPORT EXAMPLE OUTPUTS (End-to-End: Upload → Verify → Ingest → ML → Alerts → Timeline)
+# Case: CASE-2026-0210-AX17
+# Note: All IDs/users/IPs are dummy values for documentation.
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 1) UPLOAD EVIDENCE (Multi-format)
+# Endpoint: POST /api/upload-log
+# Files: (A) auth_log_2026-02-09.txt, (B) vpn_events_2026-02-09.jsonl, (C) admin_actions_2026-02-09.csv
+# ------------------------------------------------------------
+
+# (A) Upload TXT response
+{
+  "id": "8e6d3b53-6e0d-4c6a-9c2b-8a2c1d6b70d1",
+  "case_id": "CASE-2026-0210-AX17",
+  "original_filename": "auth_log_2026-02-09.txt",
+  "stored_filename": "8e6d3b53-6e0d-4c6a-9c2b-8a2c1d6b70d1_auth_log_2026-02-09.txt",
+  "format_detected": "txt",
+  "mime_type": "text/plain",
+  "file_size": 48291,
+  "sha256_hash": "c0b9d3e0e2f56d2bce1d2c7f2b2e2b1b4b9f6f0b1b4f879b0d083d6f6d61c91a",
+  "previous_hash": null,
+  "chain_index": 1,
+  "upload_time": "2026-02-10T10:24:11Z",
+  "uploader": "analyst_01",
+  "source_ip": "10.10.5.23",
+  "status": "ingested"
+}
+
+# (B) Upload JSONL response
+{
+  "id": "a3b2f6b6-2e68-41d5-a2c0-2f0a66d7b4b9",
+  "case_id": "CASE-2026-0210-AX17",
+  "original_filename": "vpn_events_2026-02-09.jsonl",
+  "stored_filename": "a3b2f6b6-2e68-41d5-a2c0-2f0a66d7b4b9_vpn_events_2026-02-09.jsonl",
+  "format_detected": "jsonl",
+  "mime_type": "application/json",
+  "file_size": 90314,
+  "sha256_hash": "6a2a9a8b2ff2c54a9e4f2c2a2e9b51b9fe5e2d9a6fbc4b7f1c28d0e6b09d2f35",
+  "previous_hash": "c0b9d3e0e2f56d2bce1d2c7f2b2e2b1b4b9f6f0b1b4f879b0d083d6f6d61c91a",
+  "chain_index": 2,
+  "upload_time": "2026-02-10T10:25:02Z",
+  "uploader": "analyst_01",
+  "source_ip": "10.10.5.23",
+  "status": "ingested"
+}
+
+# (C) Upload CSV response
+{
+  "id": "c7d4f2a1-1f1c-4a20-9c2c-4c7c79d54cc0",
+  "case_id": "CASE-2026-0210-AX17",
+  "original_filename": "admin_actions_2026-02-09.csv",
+  "stored_filename": "c7d4f2a1-1f1c-4a20-9c2c-4c7c79d54cc0_admin_actions_2026-02-09.csv",
+  "format_detected": "csv",
+  "mime_type": "text/csv",
+  "file_size": 21473,
+  "sha256_hash": "9d8b8f63bb98f4f5b4c0f9fd4c2a3f0d8a9b1a3c2d6f7a8b9c0d1e2f3a4b5c6d",
+  "previous_hash": "6a2a9a8b2ff2c54a9e4f2c2a2e9b51b9fe5e2d9a6fbc4b7f1c28d0e6b09d2f35",
+  "chain_index": 3,
+  "upload_time": "2026-02-10T10:25:44Z",
+  "uploader": "analyst_01",
+  "source_ip": "10.10.5.23",
+  "status": "ingested"
+}
+
+
+# ------------------------------------------------------------
+# 2) VERIFY FILE INTEGRITY (Per evidence)
+# Endpoint: GET /api/verify/{audit_id}
+# Example: verify TXT evidence (A)
+# ------------------------------------------------------------
+
+{
+  "audit_id": "8e6d3b53-6e0d-4c6a-9c2b-8a2c1d6b70d1",
+  "status": "valid",
+  "expected_sha256": "c0b9d3e0e2f56d2bce1d2c7f2b2e2b1b4b9f6f0b1b4f879b0d083d6f6d61c91a",
+  "current_sha256": "c0b9d3e0e2f56d2bce1d2c7f2b2e2b1b4b9f6f0b1b4f879b0d083d6f6d61c91a",
+  "checked_at": "2026-02-10T10:26:13Z"
+}
+
+
+# ------------------------------------------------------------
+# 3) VERIFY HASH CHAIN (Cold ledger tamper check)
+# Endpoint: GET /api/verify-chain
+# ------------------------------------------------------------
+
+{
+  "status": "chain_valid",
+  "records_checked": 3,
+  "start_chain_index": 1,
+  "end_chain_index": 3,
+  "checked_at": "2026-02-10T10:26:21Z"
+}
+
+
+# ------------------------------------------------------------
+# 4) INGEST INTO HOT STORE (DuckDB)
+# Endpoint: POST /api/ingest/{audit_id}
+# Target: DuckDB table raw_events
+# ------------------------------------------------------------
+
+# Ingest TXT evidence (A)
+{
+  "audit_id": "8e6d3b53-6e0d-4c6a-9c2b-8a2c1d6b70d1",
+  "format": "txt",
+  "duckdb_path": "data/hot/analytics.duckdb",
+  "target_table": "raw_events",
+  "rows_total": 612,
+  "rows_parsed": 598,
+  "rows_unparsed": 14,
+  "min_timestamp": "2026-02-09T18:03:12Z",
+  "max_timestamp": "2026-02-09T23:58:51Z",
+  "status": "parsed",
+  "errors_sample": [
+    {
+      "row_no": 44,
+      "reason": "timestamp_missing",
+      "raw_fragment": "FAILED login user=? ip=203.0.113.77"
+    },
+    {
+      "row_no": 219,
+      "reason": "unsupported_line_format",
+      "raw_fragment": "### rotated log marker ###"
+    }
+  ]
+}
+
+# Ingest JSONL evidence (B)
+{
+  "audit_id": "a3b2f6b6-2e68-41d5-a2c0-2f0a66d7b4b9",
+  "format": "jsonl",
+  "duckdb_path": "data/hot/analytics.duckdb",
+  "target_table": "raw_events",
+  "rows_total": 820,
+  "rows_parsed": 820,
+  "rows_unparsed": 0,
+  "min_timestamp": "2026-02-09T00:00:09Z",
+  "max_timestamp": "2026-02-09T23:59:44Z",
+  "status": "parsed"
+}
+
+# Ingest CSV evidence (C)
+{
+  "audit_id": "c7d4f2a1-1f1c-4a20-9c2c-4c7c79d54cc0",
+  "format": "csv",
+  "duckdb_path": "data/hot/analytics.duckdb",
+  "target_table": "raw_events",
+  "rows_total": 143,
+  "rows_parsed": 143,
+  "rows_unparsed": 0,
+  "min_timestamp": "2026-02-09T10:11:08Z",
+  "max_timestamp": "2026-02-09T16:49:20Z",
+  "status": "parsed"
+}
+
+
+# ------------------------------------------------------------
+# 5) GENERATE BEHAVIORAL FEATURES
+# Endpoint: POST /api/generate-features
+# Output: DuckDB table event_features (or features)
+# ------------------------------------------------------------
+
+{
+  "case_id": "CASE-2026-0210-AX17",
+  "source_tables": ["raw_events"],
+  "feature_table": "event_features",
+  "events_used": 1561,
+  "features_created": [
+    "time_delta_s",
+    "failed_flag",
+    "rolling_fail_ratio_5",
+    "action_freq_10m",
+    "ip_switch_flag",
+    "unusual_hour_flag",
+    "burst_30s_flag"
+  ],
+  "notes": {
+    "unusual_hour_window": "08:00-20:00 local",
+    "rolling_window": "5 events per user",
+    "frequency_window": "10 minutes"
+  },
+  "status": "ok",
+  "generated_at": "2026-02-10T10:28:04Z"
+}
+
+
+# ------------------------------------------------------------
+# 6) RUN ANOMALY DETECTION (Isolation Forest + Scaling)
+# Endpoint: POST /api/run-detection
+# Output: DuckDB table detection_results
+# ------------------------------------------------------------
+
+{
+  "case_id": "CASE-2026-0210-AX17",
+  "input_table": "event_features",
+  "output_table": "detection_results",
+  "model": {
+    "type": "IsolationForest",
+    "n_estimators": 300,
+    "contamination": "auto",
+    "random_state": 42
+  },
+  "events_scored": 1561,
+  "anomalies_flagged": 47,
+  "risk_score_range": {
+    "min": 3,
+    "max": 96
+  },
+  "status": "ok",
+  "scored_at": "2026-02-10T10:29:12Z"
+}
+
+
+# ------------------------------------------------------------
+# 7) ALERTS (Grouped + report-friendly narrative)
+# Endpoint: GET /api/alerts?case_id=CASE-2026-0210-AX17
+# ------------------------------------------------------------
+
+{
+  "case_id": "CASE-2026-0210-AX17",
+  "summary": {
+    "total_events": 1561,
+    "total_anomalies": 47,
+    "high_risk_anomalies_over_75": 11,
+    "entities_flagged": 3
+  },
+  "alerts": [
+    {
+      "entity_type": "user",
+      "entity": "admin_ops",
+      "risk_level": "CRITICAL",
+      "risk_score": 92,
+      "anomaly_events": 18,
+      "time_window": {
+        "start": "2026-02-09T19:42:11Z",
+        "end": "2026-02-09T20:07:54Z"
+      },
+      "top_reasons": [
+        "Multiple failed authentications followed by a successful login",
+        "IP changed twice within a short sequence",
+        "Privileged action executed immediately after first successful login",
+        "High action rate within 10 minutes"
+      ],
+      "key_events": [
+        {
+          "timestamp": "2026-02-09T19:44:03Z",
+          "action": "LOGIN",
+          "status": "FAIL",
+          "source_ip": "203.0.113.77",
+          "risk_score": 81
+        },
+        {
+          "timestamp": "2026-02-09T19:45:18Z",
+          "action": "LOGIN",
+          "status": "SUCCESS",
+          "source_ip": "203.0.113.77",
+          "risk_score": 88
+        },
+        {
+          "timestamp": "2026-02-09T19:46:02Z",
+          "action": "ROLE_CHANGE",
+          "status": "SUCCESS",
+          "source_ip": "198.51.100.24",
+          "risk_score": 92
+        }
+      ],
+      "evidence_links": [
+        {
+          "audit_id": "8e6d3b53-6e0d-4c6a-9c2b-8a2c1d6b70d1",
+          "evidence_type": "auth_log"
+        },
+        {
+          "audit_id": "c7d4f2a1-1f1c-4a20-9c2c-4c7c79d54cc0",
+          "evidence_type": "admin_actions"
+        }
+      ]
+    },
+    {
+      "entity_type": "ip",
+      "entity": "203.0.113.77",
+      "risk_level": "HIGH",
+      "risk_score": 79,
+      "anomaly_events": 14,
+      "time_window": {
+        "start": "2026-02-09T18:58:10Z",
+        "end": "2026-02-09T20:11:40Z"
+      },
+      "top_reasons": [
+        "Repeated authentication failures across multiple users",
+        "Burst pattern: multiple attempts within 30 seconds",
+        "Appears in VPN and authentication logs with inconsistent device tags"
+      ],
+      "key_events": [
+        {
+          "timestamp": "2026-02-09T19:01:12Z",
+          "action": "LOGIN",
+          "status": "FAIL",
+          "risk_score": 77
+        },
+        {
+          "timestamp": "2026-02-09T19:02:01Z",
+          "action": "VPN_CONNECT",
+          "status": "SUCCESS",
+          "risk_score": 79
+        }
+      ],
+      "evidence_links": [
+        {
+          "audit_id": "a3b2f6b6-2e68-41d5-a2c0-2f0a66d7b4b9",
+          "evidence_type": "vpn_events"
+        },
+        {
+          "audit_id": "8e6d3b53-6e0d-4c6a-9c2b-8a2c1d6b70d1",
+          "evidence_type": "auth_log"
+        }
+      ]
+    },
+    {
+      "entity_type": "user",
+      "entity": "reports_viewer",
+      "risk_level": "MEDIUM",
+      "risk_score": 58,
+      "anomaly_events": 5,
+      "time_window": {
+        "start": "2026-02-09T21:10:22Z",
+        "end": "2026-02-09T22:00:05Z"
+      },
+      "top_reasons": [
+        "Activity outside typical hours",
+        "Unusual access path: multiple report exports back-to-back"
+      ],
+      "key_events": [
+        {
+          "timestamp": "2026-02-09T21:12:44Z",
+          "action": "EXPORT_REPORT",
+          "status": "SUCCESS",
+          "risk_score": 58
+        }
+      ],
+      "evidence_links": [
+        {
+          "audit_id": "c7d4f2a1-1f1c-4a20-9c2c-4c7c79d54cc0",
+          "evidence_type": "admin_actions"
+        }
+      ]
+    }
+  ],
+  "generated_at": "2026-02-10T10:29:36Z"
+}
+
+
+# ------------------------------------------------------------
+# 8) TIMELINE VIEW (Investigation output)
+# Endpoint: GET /api/timeline?case_id=CASE-2026-0210-AX17&user=admin_ops
+# ------------------------------------------------------------
+
+{
+  "case_id": "CASE-2026-0210-AX17",
+  "entity": "admin_ops",
+  "entity_type": "user",
+  "events": [
+    {
+      "timestamp": "2026-02-09T19:42:11Z",
+      "source_ip": "203.0.113.77",
+      "action": "LOGIN",
+      "status": "FAIL",
+      "risk_score": 73,
+      "is_anomaly": true,
+      "audit_id": "8e6d3b53-6e0d-4c6a-9c2b-8a2c1d6b70d1",
+      "reasons": ["rolling_fail_ratio_5 high", "burst_30s_flag"]
+    },
+    {
+      "timestamp": "2026-02-09T19:44:03Z",
+      "source_ip": "203.0.113.77",
+      "action": "LOGIN",
+      "status": "FAIL",
+      "risk_score": 81,
+      "is_anomaly": true,
+      "audit_id": "8e6d3b53-6e0d-4c6a-9c2b-8a2c1d6b70d1",
+      "reasons": ["rolling_fail_ratio_5 high", "action_freq_10m high"]
+    },
+    {
+      "timestamp": "2026-02-09T19:45:18Z",
+      "source_ip": "203.0.113.77",
+      "action": "LOGIN",
+      "status": "SUCCESS",
+      "risk_score": 88,
+      "is_anomaly": true,
+      "audit_id": "8e6d3b53-6e0d-4c6a-9c2b-8a2c1d6b70d1",
+      "reasons": ["fail_then_success pattern", "burst_30s_flag"]
+    },
+    {
+      "timestamp": "2026-02-09T19:46:02Z",
+      "source_ip": "198.51.100.24",
+      "action": "ROLE_CHANGE",
+      "status": "SUCCESS",
+      "risk_score": 92,
+      "is_anomaly": true,
+      "audit_id": "c7d4f2a1-1f1c-4a20-9c2c-4c7c79d54cc0",
+      "reasons": ["ip_switch_flag", "privileged_action_after_login"]
+    },
+    {
+      "timestamp": "2026-02-09T19:47:10Z",
+      "source_ip": "198.51.100.24",
+      "action": "EXPORT_USER_LIST",
+      "status": "SUCCESS",
+      "risk_score": 79,
+      "is_anomaly": true,
+      "audit_id": "c7d4f2a1-1f1c-4a20-9c2c-4c7c79d54cc0",
+      "reasons": ["action_freq_10m high"]
+    },
+    {
+      "timestamp": "2026-02-09T20:07:54Z",
+      "source_ip": "198.51.100.24",
+      "action": "LOGOUT",
+      "status": "SUCCESS",
+      "risk_score": 41,
+      "is_anomaly": false,
+      "audit_id": "8e6d3b53-6e0d-4c6a-9c2b-8a2c1d6b70d1",
+      "reasons": []
+    }
+  ],
+  "count": 6
+}
+
+
+# ------------------------------------------------------------
+# 9) TAMPER DEMONSTRATION (File modified after upload)
+# Scenario: raw file edited on disk for audit_id (A)
+# Endpoint: GET /api/verify/{audit_id}
+# ------------------------------------------------------------
+
+{
+  "audit_id": "8e6d3b53-6e0d-4c6a-9c2b-8a2c1d6b70d1",
+  "status": "tampered",
+  "expected_sha256": "c0b9d3e0e2f56d2bce1d2c7f2b2e2b1b4b9f6f0b1b4f879b0d083d6f6d61c91a",
+  "current_sha256": "4f1b2f0f0c1a9d2b4d3e6f7a8b9c0d1e2f3a4b5c6d7e8f90123456789abcdef0",
+  "checked_at": "2026-02-10T10:33:02Z",
+  "notes": "File hash mismatch detected. Raw evidence content differs from cold-ledger digest."
+}
+
+
+# ------------------------------------------------------------
+# 10) CHAIN BREAK DEMONSTRATION (Ledger modified)
+# Scenario: previous_hash for chain_index=3 manually changed in cold DB
+# Endpoint: GET /api/verify-chain
+# ------------------------------------------------------------
+
+{
+  "status": "chain_broken",
+  "broken_at": "c7d4f2a1-1f1c-4a20-9c2c-4c7c79d54cc0",
+  "broken_chain_index": 3,
+  "expected_previous_hash": "6a2a9a8b2ff2c54a9e4f2c2a2e9b51b9fe5e2d9a6fbc4b7f1c28d0e6b09d2f35",
+  "found_previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+  "checked_at": "2026-02-10T10:34:41Z"
+}
