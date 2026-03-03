@@ -5,6 +5,7 @@ from app.db.base import Base
 from app.db.session import engine, SessionLocal
 from app.ingestion.integrity import verify_hash_chain
 from app.ingestion.router import router as new_ingestion
+from app.ingestion.ws_router import router as ws_ingestion
 from app.features.router import router as new_features
 from app.detection.router import router as new_detection
 from app.ledger.router import router as new_ledger
@@ -23,18 +24,25 @@ new_app.add_middleware(
     allow_headers=["*"],
 )
 
+# Create all tables (includes new IngestionSession + QuarantineLog tables)
 Base.metadata.create_all(bind=engine)
 
-new_app.include_router(new_ingestion, prefix="/api")
+# ── REST routers (prefixed under /api) ─────────────────────────────────────
+new_app.include_router(new_ingestion, prefix="/api/ingestion", tags=["Ingestion"])
 new_app.include_router(new_features, prefix="/api")
 new_app.include_router(new_detection, prefix="/api")
 new_app.include_router(new_ledger, prefix="/api")
 new_app.include_router(new_dashboard, prefix="/api")
 new_app.include_router(new_reporting, prefix="/api")
 
+# ── WebSocket router (no /api prefix — WS routes use bare paths) ───────────
+new_app.include_router(ws_ingestion, tags=["Secure WebSocket Ingestion"])
+
+
 @new_app.get("/")
 def health():
     return {"status": "Forensic Engine Online"}
+
 
 @new_app.on_event("startup")
 def startup_integrity_check():
