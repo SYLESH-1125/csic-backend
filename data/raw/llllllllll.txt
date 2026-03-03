@@ -1,0 +1,10 @@
+2026-02-10 10:00:01,admin,192.168.1.10,login,success
+2026-02-10 10:02:15,admin,192.168.1.10,view_dashboard,success
+2026-02-10 10:05:33,john,192.168.1.22,login,failed
+2026-02-10 10:06:01,john,192.168.1.22,login,failed
+2026-02-10 10:06:45,john,192.168.1.22,login,success
+2026-02-10 10:10:12,guest,10.0.0.5,login,failed
+2026-02-10 10:11:55,guest,10.0.0.5,login,failed
+2026-02-10 10:12:40,guest,10.0.0.5,password_reset,success
+2026-02-10 10:15:03,admin,192.168.1.10,delete_user,success
+2026-02-10 10:20:27,john,172.16.0.8,upload_file,success

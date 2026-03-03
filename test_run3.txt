@@ -1,0 +1,120 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.5, pytest-9.0.2, pluggy-1.6.0 -- S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine
+configfile: pytest.ini
+plugins: anyio-4.12.1, asyncio-1.3.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 57 items
+
+tests/test_phase1_forensic.py::TestJITGateway::test_manual_session_creation_returns_ws_url PASSED [  1%]
+tests/test_phase1_forensic.py::TestJITGateway::test_telemetry_link_returns_ephemeral_token PASSED [  3%]
+tests/test_phase1_forensic.py::TestJITGateway::test_cloud_session_rejects_missing_token PASSED [  5%]
+tests/test_phase1_forensic.py::TestJITGateway::test_cloud_session_accepts_token PASSED [  7%]
+tests/test_phase1_forensic.py::TestJITGateway::test_ip_binding_same_ip_allowed PASSED [  8%]
+tests/test_phase1_forensic.py::TestJITGateway::test_ip_binding_wrong_ip_rejected PASSED [ 10%]
+tests/test_phase1_forensic.py::TestJITGateway::test_expired_session_rejected PASSED [ 12%]
+tests/test_phase1_forensic.py::TestJITGateway::test_valid_session_not_rejected_by_ttl PASSED [ 14%]
+tests/test_phase1_forensic.py::TestJITGateway::test_burn_on_use_second_connection_rejected PASSED [ 15%]
+tests/test_phase1_forensic.py::TestJITGateway::test_already_used_session_rejected_immediately PASSED [ 17%]
+tests/test_phase1_forensic.py::TestJITGateway::test_unknown_session_rejected PASSED [ 19%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_single_chunk_upload_creates_ledger_entry PASSED [ 21%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_multi_chunk_upload_reconstructs_correctly PASSED [ 22%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_invalid_chunk_hash_aborts_connection PASSED [ 24%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_hash_mismatch_no_ledger_entry PASSED [ 26%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_out_of_order_chunk_rejected PASSED [ 28%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_oversized_chunk_rejected PASSED [ 29%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_binary_framing_rejected PASSED [ 31%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_worm_file_created_after_upload PASSED [ 33%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_temp_dir_cleaned_after_successful_upload PASSED [ 35%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_single_chunk_merkle_root_equals_chunk_hash PASSED [ 36%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_two_chunk_merkle_root PASSED [ 38%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_four_chunk_merkle_root PASSED [ 40%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_tampered_chunk_changes_root PASSED [ 42%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_merkle_verify_integrity_pass PASSED [ 43%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_merkle_verify_integrity_fail_on_tamper PASSED [ 45%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_merkle_proof_verify_all_leaves PASSED [ 47%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_merkle_proof_fails_on_tampered_leaf PASSED [ 49%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_empty_chunk_list_raises_valueerror PASSED [ 50%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_ws_upload_ledger_merkle_matches_recomputed PASSED [ 52%]
+tests/test_phase1_forensic.py::TestSHA256Integrity::test_sha256_matches_full_file_content PASSED [ 54%]
+tests/test_phase1_forensic.py::TestSHA256Integrity::test_sha256_different_files_produce_different_hashes PASSED [ 56%]
+tests/test_phase1_forensic.py::TestSHA256Integrity::test_streaming_sha256_matches_in_memory_sha256 PASSED [ 57%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_zip_bomb_detected_by_check_zip_bomb PASSED [ 59%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_normal_zip_passes_bomb_check PASSED [ 61%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_non_archive_file_skips_bomb_check PASSED [ 63%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_zip_bomb_quarantined_via_run_sync_triage PASSED [ 64%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_mz_bytes_in_txt_file_flagged PASSED [ 66%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_elf_bytes_in_txt_file_flagged PASSED [ 68%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_clean_log_file_passes_magic_check PASSED [ 70%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_mz_in_txt_quarantined_via_run_sync_triage PASSED [ 71%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_quarantine_creates_db_record PASSED [ 73%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_quarantine_moves_file_out_of_original_location PASSED [ 75%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_sandbox_does_not_create_ledger_entry_for_quarantined PASSED [ 77%]
+tests/test_phase1_forensic.py::TestWORMBehavior::test_worm_file_has_readonly_permissions PASSED [ 78%]
+tests/test_phase1_forensic.py::TestWORMBehavior::test_worm_file_write_raises_permission_error PASSED [ 80%]
+tests/test_phase1_forensic.py::TestWORMBehavior::test_worm_file_readable PASSED [ 82%]
+tests/test_phase1_forensic.py::TestHashChainIntegrity::test_first_entry_has_null_previous_hash PASSED [ 84%]
+tests/test_phase1_forensic.py::TestHashChainIntegrity::test_sequential_entries_chain_correctly PASSED [ 85%]
+tests/test_phase1_forensic.py::TestHashChainIntegrity::test_verify_chain_passes_for_valid_chain PASSED [ 87%]
+tests/test_phase1_forensic.py::TestHashChainIntegrity::test_verify_chain_detects_tampered_previous_hash PASSED [ 89%]
+tests/test_phase1_forensic.py::TestHashChainIntegrity::test_ws_upload_chains_with_existing_entries PASSED [ 91%]
+tests/test_phase1_forensic.py::TestConcurrencyAndIsolation::test_multiple_sessions_are_unique PASSED [ 92%]
+tests/test_phase1_forensic.py::TestConcurrencyAndIsolation::test_two_sessions_do_not_share_state PASSED [ 94%]
+tests/test_phase1_forensic.py::TestConcurrencyAndIsolation::test_two_uploads_produce_separate_ledger_entries PASSED [ 96%]
+tests/test_phase1_forensic.py::TestConcurrencyAndIsolation::test_sequential_uploads_form_valid_chain PASSED [ 98%]
+tests/test_phase1_forensic.py::TestConcurrencyAndIsolation::test_temp_dirs_do_not_leak_across_sessions PASSED [100%]
+
+============================== warnings summary ===============================
+app\config.py:6
+  S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine\app\config.py:6: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class Settings(BaseSettings):
+
+app\schemas\audit.py:6
+  S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine\app\schemas\audit.py:6: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class AuditResponse(BaseModel):
+
+tests/test_phase1_forensic.py::TestJITGateway::test_manual_session_creation_returns_ws_url
+  S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine\app\main.py:47: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    @new_app.on_event("startup")
+
+tests/test_phase1_forensic.py::TestJITGateway::test_manual_session_creation_returns_ws_url
+  S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine\venv\Lib\site-packages\fastapi\applications.py:4579: DeprecationWarning: 
+          on_event is deprecated, use lifespan event handlers instead.
+  
+          Read more about it in the
+          [FastAPI docs for Lifespan Events](https://fastapi.tiangolo.com/advanced/events/).
+          
+    return self.router.on_event(event_type)
+
+tests/test_phase1_forensic.py: 58 warnings
+  S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine\venv\Lib\site-packages\sqlalchemy\sql\schema.py:3624: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return util.wrap_callable(lambda ctx: fn(), fn)  # type: ignore
+
+tests/test_phase1_forensic.py: 35 warnings
+  S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine\app\ingestion\auth_gateway.py:112: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    return datetime.utcnow()
+
+tests/test_phase1_forensic.py: 37 warnings
+  S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine\app\ingestion\secure_ledger.py:66: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    upload_time=datetime.utcnow(),
+
+tests/test_phase1_forensic.py::TestJITGateway::test_expired_session_rejected
+  S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine\tests\test_phase1_forensic.py:79: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    expires_at=datetime.utcnow() - timedelta(hours=1),  # expired 1 hour ago
+
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_zip_bomb_quarantined_via_run_sync_triage
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_mz_in_txt_quarantined_via_run_sync_triage
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_quarantine_creates_db_record
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_quarantine_moves_file_out_of_original_location
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_sandbox_does_not_create_ledger_entry_for_quarantined
+  S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine\app\ingestion\sandbox.py:136: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    detected_at=datetime.utcnow(),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+====================== 57 passed, 140 warnings in 5.91s =======================

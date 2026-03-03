@@ -1,0 +1,487 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.5, pytest-9.0.2, pluggy-1.6.0 -- S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine\venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine
+configfile: pytest.ini
+plugins: anyio-4.12.1, asyncio-1.3.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 57 items
+
+tests/test_phase1_forensic.py::TestJITGateway::test_manual_session_creation_returns_ws_url ERROR [  1%]
+tests/test_phase1_forensic.py::TestJITGateway::test_telemetry_link_returns_ephemeral_token ERROR [  3%]
+tests/test_phase1_forensic.py::TestJITGateway::test_cloud_session_rejects_missing_token ERROR [  5%]
+tests/test_phase1_forensic.py::TestJITGateway::test_cloud_session_accepts_token ERROR [  7%]
+tests/test_phase1_forensic.py::TestJITGateway::test_ip_binding_same_ip_allowed ERROR [  8%]
+tests/test_phase1_forensic.py::TestJITGateway::test_ip_binding_wrong_ip_rejected ERROR [ 10%]
+tests/test_phase1_forensic.py::TestJITGateway::test_expired_session_rejected ERROR [ 12%]
+tests/test_phase1_forensic.py::TestJITGateway::test_valid_session_not_rejected_by_ttl ERROR [ 14%]
+tests/test_phase1_forensic.py::TestJITGateway::test_burn_on_use_second_connection_rejected ERROR [ 15%]
+tests/test_phase1_forensic.py::TestJITGateway::test_already_used_session_rejected_immediately ERROR [ 17%]
+tests/test_phase1_forensic.py::TestJITGateway::test_unknown_session_rejected ERROR [ 19%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_single_chunk_upload_creates_ledger_entry ERROR [ 21%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_multi_chunk_upload_reconstructs_correctly ERROR [ 22%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_invalid_chunk_hash_aborts_connection ERROR [ 24%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_hash_mismatch_no_ledger_entry ERROR [ 26%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_out_of_order_chunk_rejected ERROR [ 28%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_oversized_chunk_rejected ERROR [ 29%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_binary_framing_rejected ERROR [ 31%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_worm_file_created_after_upload ERROR [ 33%]
+tests/test_phase1_forensic.py::TestWebSocketStream::test_temp_dir_cleaned_after_successful_upload ERROR [ 35%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_single_chunk_merkle_root_equals_chunk_hash PASSED [ 36%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_two_chunk_merkle_root PASSED [ 38%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_four_chunk_merkle_root PASSED [ 40%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_tampered_chunk_changes_root PASSED [ 42%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_merkle_verify_integrity_pass PASSED [ 43%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_merkle_verify_integrity_fail_on_tamper PASSED [ 45%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_merkle_proof_verify_all_leaves PASSED [ 47%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_merkle_proof_fails_on_tampered_leaf PASSED [ 49%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_empty_chunk_list_raises_valueerror PASSED [ 50%]
+tests/test_phase1_forensic.py::TestMerkleTree::test_ws_upload_ledger_merkle_matches_recomputed ERROR [ 52%]
+tests/test_phase1_forensic.py::TestSHA256Integrity::test_sha256_matches_full_file_content ERROR [ 54%]
+tests/test_phase1_forensic.py::TestSHA256Integrity::test_sha256_different_files_produce_different_hashes ERROR [ 56%]
+tests/test_phase1_forensic.py::TestSHA256Integrity::test_streaming_sha256_matches_in_memory_sha256 PASSED [ 57%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_zip_bomb_detected_by_check_zip_bomb PASSED [ 59%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_normal_zip_passes_bomb_check PASSED [ 61%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_non_archive_file_skips_bomb_check PASSED [ 63%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_zip_bomb_quarantined_via_run_sync_triage PASSED [ 64%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_mz_bytes_in_txt_file_flagged PASSED [ 66%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_elf_bytes_in_txt_file_flagged PASSED [ 68%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_clean_log_file_passes_magic_check PASSED [ 70%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_mz_in_txt_quarantined_via_run_sync_triage PASSED [ 71%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_quarantine_creates_db_record PASSED [ 73%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_quarantine_moves_file_out_of_original_location PASSED [ 75%]
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_sandbox_does_not_create_ledger_entry_for_quarantined ERROR [ 77%]
+tests/test_phase1_forensic.py::TestWORMBehavior::test_worm_file_has_readonly_permissions ERROR [ 78%]
+tests/test_phase1_forensic.py::TestWORMBehavior::test_worm_file_write_raises_permission_error ERROR [ 80%]
+tests/test_phase1_forensic.py::TestWORMBehavior::test_worm_file_readable ERROR [ 82%]
+tests/test_phase1_forensic.py::TestHashChainIntegrity::test_first_entry_has_null_previous_hash PASSED [ 84%]
+tests/test_phase1_forensic.py::TestHashChainIntegrity::test_sequential_entries_chain_correctly PASSED [ 85%]
+tests/test_phase1_forensic.py::TestHashChainIntegrity::test_verify_chain_passes_for_valid_chain PASSED [ 87%]
+tests/test_phase1_forensic.py::TestHashChainIntegrity::test_verify_chain_detects_tampered_previous_hash PASSED [ 89%]
+tests/test_phase1_forensic.py::TestHashChainIntegrity::test_ws_upload_chains_with_existing_entries ERROR [ 91%]
+tests/test_phase1_forensic.py::TestConcurrencyAndIsolation::test_multiple_sessions_are_unique ERROR [ 92%]
+tests/test_phase1_forensic.py::TestConcurrencyAndIsolation::test_two_sessions_do_not_share_state ERROR [ 94%]
+tests/test_phase1_forensic.py::TestConcurrencyAndIsolation::test_two_uploads_produce_separate_ledger_entries ERROR [ 96%]
+tests/test_phase1_forensic.py::TestConcurrencyAndIsolation::test_sequential_uploads_form_valid_chain ERROR [ 98%]
+tests/test_phase1_forensic.py::TestConcurrencyAndIsolation::test_temp_dirs_do_not_leak_across_sessions ERROR [100%]
+
+=================================== ERRORS ====================================
+_ ERROR at setup of TestJITGateway.test_manual_session_creation_returns_ws_url _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestJITGateway.test_telemetry_link_returns_ephemeral_token _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+__ ERROR at setup of TestJITGateway.test_cloud_session_rejects_missing_token __
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+______ ERROR at setup of TestJITGateway.test_cloud_session_accepts_token ______
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+______ ERROR at setup of TestJITGateway.test_ip_binding_same_ip_allowed _______
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_____ ERROR at setup of TestJITGateway.test_ip_binding_wrong_ip_rejected ______
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_______ ERROR at setup of TestJITGateway.test_expired_session_rejected ________
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+___ ERROR at setup of TestJITGateway.test_valid_session_not_rejected_by_ttl ___
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestJITGateway.test_burn_on_use_second_connection_rejected _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestJITGateway.test_already_used_session_rejected_immediately _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_______ ERROR at setup of TestJITGateway.test_unknown_session_rejected ________
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestWebSocketStream.test_single_chunk_upload_creates_ledger_entry _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestWebSocketStream.test_multi_chunk_upload_reconstructs_correctly _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestWebSocketStream.test_invalid_chunk_hash_aborts_connection _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+__ ERROR at setup of TestWebSocketStream.test_hash_mismatch_no_ledger_entry ___
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+___ ERROR at setup of TestWebSocketStream.test_out_of_order_chunk_rejected ____
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_____ ERROR at setup of TestWebSocketStream.test_oversized_chunk_rejected _____
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_____ ERROR at setup of TestWebSocketStream.test_binary_framing_rejected ______
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+__ ERROR at setup of TestWebSocketStream.test_worm_file_created_after_upload __
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestWebSocketStream.test_temp_dir_cleaned_after_successful_upload _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestMerkleTree.test_ws_upload_ledger_merkle_matches_recomputed _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestSHA256Integrity.test_sha256_matches_full_file_content _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestSHA256Integrity.test_sha256_different_files_produce_different_hashes _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestSandboxSecurity.test_sandbox_does_not_create_ledger_entry_for_quarantined _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestWORMBehavior.test_worm_file_has_readonly_permissions __
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestWORMBehavior.test_worm_file_write_raises_permission_error _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_________ ERROR at setup of TestWORMBehavior.test_worm_file_readable __________
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestHashChainIntegrity.test_ws_upload_chains_with_existing_entries _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestConcurrencyAndIsolation.test_multiple_sessions_are_unique _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestConcurrencyAndIsolation.test_two_sessions_do_not_share_state _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestConcurrencyAndIsolation.test_two_uploads_produce_separate_ledger_entries _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestConcurrencyAndIsolation.test_sequential_uploads_form_valid_chain _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+_ ERROR at setup of TestConcurrencyAndIsolation.test_temp_dirs_do_not_leak_across_sessions _
+venv\Lib\site-packages\pytest_asyncio\plugin.py:730: in pytest_fixture_setup
+    return (yield)
+            ^^^^^
+tests\conftest.py:72: in client
+    from app.main import new_app
+app\main.py:13: in <module>
+    from app.reporting.router import router as new_reporting
+app\reporting\router.py:7: in <module>
+    import matplotlib
+E   ModuleNotFoundError: No module named 'matplotlib'
+============================== warnings summary ===============================
+app\config.py:6
+  S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine\app\config.py:6: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class Settings(BaseSettings):
+
+app\schemas\audit.py:6
+  S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine\app\schemas\audit.py:6: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class AuditResponse(BaseModel):
+
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_zip_bomb_quarantined_via_run_sync_triage
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_mz_in_txt_quarantined_via_run_sync_triage
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_quarantine_creates_db_record
+tests/test_phase1_forensic.py::TestSandboxSecurity::test_quarantine_moves_file_out_of_original_location
+  S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine\app\ingestion\sandbox.py:136: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    detected_at=datetime.utcnow(),
+
+tests/test_phase1_forensic.py: 10 warnings
+  S:\final backend\cyber_forensics (1)\cyber_forensics\forensic_ai_engine\app\ingestion\secure_ledger.py:66: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    upload_time=datetime.utcnow(),
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+ERROR tests/test_phase1_forensic.py::TestJITGateway::test_manual_session_creation_returns_ws_url - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestJITGateway::test_telemetry_link_returns_ephemeral_token - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestJITGateway::test_cloud_session_rejects_missing_token - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestJITGateway::test_cloud_session_accepts_token - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestJITGateway::test_ip_binding_same_ip_allowed - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestJITGateway::test_ip_binding_wrong_ip_rejected - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestJITGateway::test_expired_session_rejected - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestJITGateway::test_valid_session_not_rejected_by_ttl - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestJITGateway::test_burn_on_use_second_connection_rejected - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestJITGateway::test_already_used_session_rejected_immediately - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestJITGateway::test_unknown_session_rejected - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestWebSocketStream::test_single_chunk_upload_creates_ledger_entry - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestWebSocketStream::test_multi_chunk_upload_reconstructs_correctly - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestWebSocketStream::test_invalid_chunk_hash_aborts_connection - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestWebSocketStream::test_hash_mismatch_no_ledger_entry - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestWebSocketStream::test_out_of_order_chunk_rejected - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestWebSocketStream::test_oversized_chunk_rejected - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestWebSocketStream::test_binary_framing_rejected - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestWebSocketStream::test_worm_file_created_after_upload - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestWebSocketStream::test_temp_dir_cleaned_after_successful_upload - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestMerkleTree::test_ws_upload_ledger_merkle_matches_recomputed - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestSHA256Integrity::test_sha256_matches_full_file_content - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestSHA256Integrity::test_sha256_different_files_produce_different_hashes - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestSandboxSecurity::test_sandbox_does_not_create_ledger_entry_for_quarantined - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestWORMBehavior::test_worm_file_has_readonly_permissions - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestWORMBehavior::test_worm_file_write_raises_permission_error - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestWORMBehavior::test_worm_file_readable - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestHashChainIntegrity::test_ws_upload_chains_with_existing_entries - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestConcurrencyAndIsolation::test_multiple_sessions_are_unique - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestConcurrencyAndIsolation::test_two_sessions_do_not_share_state - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestConcurrencyAndIsolation::test_two_uploads_produce_separate_ledger_entries - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestConcurrencyAndIsolation::test_sequential_uploads_form_valid_chain - ModuleNotFoundError: No module named 'matplotlib'
+ERROR tests/test_phase1_forensic.py::TestConcurrencyAndIsolation::test_temp_dirs_do_not_leak_across_sessions - ModuleNotFoundError: No module named 'matplotlib'
+================= 24 passed, 16 warnings, 33 errors in 9.57s ==================
