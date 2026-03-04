@@ -395,3 +395,130 @@ def run_sync_triage(
         )
 
     return None
+
+
+def run_sync_deep_scan(
+    file_path: Path,
+    db: Session,
+    source_ip: Optional[str] = None,
+    ingestion_mode: Optional[str] = None,
+    session_id: Optional[str] = None,
+) -> Optional[QuarantineLog]:
+    """
+    Synchronous deep scan: extension blacklist + entropy + YARA patterns.
+    Mirror of async_malware_scan() but blocking, for use in the legacy
+    upload path where we must decide BEFORE ledger commit.
+
+    Returns QuarantineLog if quarantined, else None.
+    """
+    ext = file_path.suffix.lower()
+
+    # Extension blacklist
+    if ext in BLACKLISTED_EXTENSIONS:
+        return _quarantine_file(
+            file_path, db,
+            reason="BLACKLISTED_EXTENSION",
+            risk_score=9.5,
+            details={"extension": ext},
+            source_ip=source_ip,
+            ingestion_mode=ingestion_mode,
+            session_id=session_id,
+        )
+
+    # Read content once
+    try:
+        data = file_path.read_bytes()
+    except FileNotFoundError:
+        logger.warning(f"[Sandbox] File vanished before deep scan: {file_path}")
+        return None
+
+    # Entropy check
+    entropy = _compute_byte_entropy(data)
+    logger.debug(f"[Sandbox] SyncDeepScan entropy={entropy:.3f} for {file_path.name}")
+    if entropy > HIGH_ENTROPY_THRESHOLD:
+        return _quarantine_file(
+            file_path, db,
+            reason="HIGH_ENTROPY",
+            risk_score=round(entropy, 3),
+            details={"entropy": entropy, "threshold": HIGH_ENTROPY_THRESHOLD},
+            source_ip=source_ip,
+            ingestion_mode=ingestion_mode,
+            session_id=session_id,
+        )
+
+    # YARA pattern scan
+    matched_patterns = _yara_scan(data)
+    if matched_patterns:
+        return _quarantine_file(
+            file_path, db,
+            reason="MALWARE_PATTERN",
+            risk_score=8.0,
+            details={"matched_patterns": matched_patterns},
+            source_ip=source_ip,
+            ingestion_mode=ingestion_mode,
+            session_id=session_id,
+        )
+
+    logger.info(f"[Sandbox] SyncDeepScan clean: {file_path.name} entropy={entropy:.3f}")
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Diagnostic: collect triage info WITHOUT quarantining  (for audit trail)
+# ---------------------------------------------------------------------------
+
+def collect_triage_info(file_path: Path) -> dict:
+    """
+    Run all sandbox checks in read-only mode and return a dict of findings
+    suitable for the audit trail.  Does NOT quarantine or move any files.
+    """
+    ext = file_path.suffix.lower()
+    info: dict = {
+        "zip_bomb_ratio": 0.0,
+        "zip_bomb_result": "pass",
+        "magic_header_hex": "",
+        "magic_extension_match": True,
+        "entropy_score": 0.0,
+        "entropy_result": "normal",
+        "extension": ext,
+        "extension_blacklisted": ext in BLACKLISTED_EXTENSIONS,
+        "yara_detected": False,
+        "yara_pattern_name": None,
+    }
+
+    # ZIP bomb check
+    bomb = check_zip_bomb(file_path)
+    if bomb:
+        info["zip_bomb_ratio"] = bomb.get("ratio", 0.0)
+        info["zip_bomb_result"] = "fail"
+
+    # Magic byte check
+    magic = check_magic_bytes(file_path)
+    if magic:
+        info["magic_header_hex"] = magic.get("header_hex", magic.get("actual_header_hex", ""))
+        info["magic_extension_match"] = False
+    else:
+        # Read header for clean files too
+        try:
+            with open(file_path, "rb") as fh:
+                info["magic_header_hex"] = fh.read(8).hex()
+        except Exception:
+            pass
+
+    # Entropy + YARA (read file bytes once)
+    try:
+        data = file_path.read_bytes()
+        entropy = _compute_byte_entropy(data)
+        info["entropy_score"] = entropy
+        if entropy > HIGH_ENTROPY_THRESHOLD:
+            info["entropy_result"] = "suspicious"
+
+        matched = _yara_scan(data)
+        if matched:
+            info["yara_detected"] = True
+            info["yara_pattern_name"] = matched[0] if len(matched) == 1 else ", ".join(matched)
+    except FileNotFoundError:
+        pass
+
+    return info
+

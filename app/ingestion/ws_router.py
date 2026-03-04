@@ -53,8 +53,9 @@ from app.ingestion.auth_gateway import (
     _extract_ws_client_ip,
     _enforce_rules,
 )
-from app.ingestion.sandbox import async_malware_scan, run_sync_triage
+from app.ingestion.sandbox import async_malware_scan, run_sync_triage, collect_triage_info
 from app.ingestion.secure_ledger import commit_to_ledger
+from app.ingestion.audit_trail import build_trail_from_ws_session
 
 router = APIRouter()
 
@@ -314,6 +315,8 @@ async def websocket_secure_stream(
         )
 
         # ── Step 7: Synchronous sandbox triage ───────────────────────────────
+        triage_info = collect_triage_info(reconstructed_path)
+
         quarantine_record = run_sync_triage(
             file_path=reconstructed_path,
             db=db,
@@ -326,11 +329,29 @@ async def websocket_secure_stream(
             logger.warning(
                 f"[WSRouter] File quarantined: reason={quarantine_record.reason}"
             )
-            await _ws_reject(
-                websocket,
-                f"File failed sandbox triage: {quarantine_record.reason}",
-                code=4010,
+            # Build quarantined audit trail
+            _quarantined_trail = build_trail_from_ws_session(
+                ingestion_mode=session.mode,
+                source_ip=client_ip,
+                file_name=filename,
+                file_size_bytes=reconstructed_path.stat().st_size if reconstructed_path.exists() else 0,
+                session_id=session_id,
+                bound_ip=session.bound_ip,
+                expires_at=session.expires_at.isoformat() + "Z" if session.expires_at else "",
+                total_chunks=len(chunk_hashes),
+                verified_chunks=len(chunk_hashes),
+                sha256_hash=mono_sha256,
+                merkle_root=merkle_root,
+                chunk_hash_count=len(chunk_hashes),
+                sandbox_status="quarantined",
+                **triage_info,
             )
+            await websocket.send_text(json.dumps({
+                "status": "error",
+                "detail": f"File failed sandbox triage: {quarantine_record.reason}",
+                "audit_trail": _quarantined_trail,
+            }))
+            await websocket.close(code=4010)
             return
 
         # ── Step 8: Ledger commit + WORM storage ─────────────────────────────
@@ -364,6 +385,27 @@ async def websocket_secure_stream(
             )
         )
 
+        # ── Step 10: Build full audit trail ──────────────────────────────────
+        audit_trail = build_trail_from_ws_session(
+            ingestion_mode=session.mode,
+            source_ip=client_ip,
+            file_name=filename,
+            file_size_bytes=worm_path.stat().st_size,
+            session_id=session_id,
+            bound_ip=session.bound_ip,
+            expires_at=session.expires_at.isoformat() + "Z" if session.expires_at else "",
+            total_chunks=len(chunk_hashes),
+            verified_chunks=len(chunk_hashes),
+            sha256_hash=mono_sha256,
+            merkle_root=merkle_root,
+            chunk_hash_count=len(chunk_hashes),
+            sandbox_status="clean",
+            ledger_entry_id=audit_entry.id,
+            previous_hash=audit_entry.previous_hash,
+            worm_storage_path=str(worm_path),
+            **triage_info,
+        )
+
         # ── Final ACK ────────────────────────────────────────────────────────
         await websocket.send_text(
             json.dumps({
@@ -372,6 +414,7 @@ async def websocket_secure_stream(
                 "merkle_root": merkle_root,
                 "sha256": mono_sha256,
                 "filename": filename,
+                "audit_trail": audit_trail,
             })
         )
         await websocket.close(code=1000)

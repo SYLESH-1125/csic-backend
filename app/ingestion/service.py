@@ -27,6 +27,8 @@ from app.core.security import compute_sha256
 from app.db.models import AuditLog
 from app.ingestion.auth_gateway import SessionStore, _extract_client_ip
 from app.ingestion.secure_ledger import commit_to_ledger
+from app.ingestion.sandbox import run_sync_triage, run_sync_deep_scan, async_malware_scan, collect_triage_info
+from app.ingestion.audit_trail import build_trail_from_legacy_upload
 
 
 # ---------------------------------------------------------------------------
@@ -65,31 +67,114 @@ def ingest_file(
     """
     Original synchronous ingest path retained for backward compatibility.
     Called by POST /api/ingestion/upload-log.
+    Now includes full sandbox triage before ledger commit.
     """
+    import tempfile
+
+    sandbox_passed = False
+    triage_info: dict = {}
+    quarantine_reason: str | None = None
+
     try:
         file_hash = compute_sha256(content)
-        previous_hash = get_last_hash(db)
 
-        save_raw_file(filename, content)
+        # Write to a temp file so sandbox can operate on it by path
+        tmp_dir = Path(tempfile.mkdtemp(prefix="legacy_triage_"))
+        tmp_file = tmp_dir / filename
+        tmp_file.write_bytes(content)
 
-        audit_entry = AuditLog(
-            filename=filename,
-            sha256_hash=file_hash,
-            previous_hash=previous_hash,
-            upload_time=datetime.utcnow(),
-            file_size=len(content),
-            uploader=uploader,
-            source_ip=source_ip,
-            ingestion_mode=ingestion_mode,
-            status="ingested",
-        )
-        db.add(audit_entry)
-        db.commit()
-        db.refresh(audit_entry)
+        try:
+            # ── Collect triage diagnostics for audit trail ────────────────
+            triage_info = collect_triage_info(tmp_file)
 
-        logger.info(f"[IngestService] Legacy ledger entry created: {filename}")
-        return audit_entry
+            # ── Sandbox triage (synchronous ZIP bomb + magic byte) ────────
+            quarantine_record = run_sync_triage(
+                file_path=tmp_file,
+                db=db,
+                source_ip=source_ip,
+                ingestion_mode=ingestion_mode,
+                session_id=None,
+            )
 
+            if quarantine_record is not None:
+                quarantine_reason = quarantine_record.reason
+                logger.warning(
+                    f"[IngestService] File quarantined during legacy upload: "
+                    f"{filename} reason={quarantine_record.reason}"
+                )
+                raise ValueError(
+                    f"File failed sandbox triage: {quarantine_record.reason} "
+                    f"(risk_score={quarantine_record.risk_score})"
+                )
+
+            # ── Deep scan (synchronous — entropy + YARA + extension) ──────
+            deep_record = run_sync_deep_scan(
+                file_path=tmp_file,
+                db=db,
+                source_ip=source_ip,
+                ingestion_mode=ingestion_mode,
+                session_id=None,
+            )
+
+            if deep_record is not None:
+                quarantine_reason = deep_record.reason
+                logger.warning(
+                    f"[IngestService] File quarantined by deep scan: "
+                    f"{filename} reason={deep_record.reason}"
+                )
+                raise ValueError(
+                    f"File failed deep scan: {deep_record.reason} "
+                    f"(risk_score={deep_record.risk_score})"
+                )
+
+            # All sandbox checks passed
+            sandbox_passed = True
+
+            # ── Persist raw file ──────────────────────────────────────────
+            raw_path = save_raw_file(filename, content)
+
+            # ── Ledger commit ─────────────────────────────────────────────
+            previous_hash = get_last_hash(db)
+
+            audit_entry = AuditLog(
+                filename=filename,
+                sha256_hash=file_hash,
+                previous_hash=previous_hash,
+                upload_time=datetime.utcnow(),
+                file_size=len(content),
+                uploader=uploader,
+                source_ip=source_ip,
+                ingestion_mode=ingestion_mode,
+                status="ingested",
+            )
+            db.add(audit_entry)
+            db.commit()
+            db.refresh(audit_entry)
+
+            # ── Build audit trail JSON ────────────────────────────────────
+            audit_entry._audit_trail = build_trail_from_legacy_upload(
+                ingestion_mode=ingestion_mode,
+                source_ip=source_ip or "unknown",
+                file_name=filename,
+                file_size_bytes=len(content),
+                content=content,
+                sandbox_passed=True,
+                ledger_entry_id=audit_entry.id,
+                sha256_hash=file_hash,
+                previous_hash=previous_hash,
+                worm_storage_path=raw_path,
+                **triage_info,
+            )
+
+            logger.info(f"[IngestService] Legacy ledger entry created: {filename}")
+            return audit_entry
+
+        finally:
+            # Always clean up the triage temp directory
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    except ValueError:
+        raise
     except Exception as exc:
         db.rollback()
         logger.error(f"[IngestService] Legacy ingestion failed: {exc}")
