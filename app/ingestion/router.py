@@ -19,7 +19,7 @@ mounted at the application root (not under /api) to avoid prefix conflicts.
 
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -31,9 +31,26 @@ from app.ingestion.service import (
     create_telemetry_link,
     ingest_file,
 )
+from app.ingestion.audit_trail import build_trail_from_legacy_upload
+from app.ingestion.sandbox import collect_triage_info
 from app.schemas.audit import AuditResponse
 
 router = APIRouter()
+
+# ---------------------------------------------------------------------------
+# Valid ingestion modes (any alias → canonical name via AuditTrail.MODE_MAP)
+# ---------------------------------------------------------------------------
+_VALID_MODES = {"manual", "cloud", "agent", "manual_upload", "cloud_pull", "agentless_telemetry"}
+
+
+def _resolve_mode(source: str | None) -> str:
+    """Normalise the user-supplied source string into a valid mode."""
+    if not source:
+        return "manual"                     # default for REST uploads
+    cleaned = source.strip().lower()
+    if cleaned in _VALID_MODES:
+        return cleaned
+    return "manual"                          # fallback
 
 
 # ---------------------------------------------------------------------------
@@ -65,16 +82,21 @@ class CloudIngestRequest(BaseModel):
 async def upload_log(
     request: Request,
     file: UploadFile = File(...),
-    uploader: Optional[str] = None,
+    source: Optional[str] = Form(None),
+    uploader: Optional[str] = Form(None),
     db: Session = Depends(get_db),
 ):
     """
     Legacy single-shot log upload.
     Kept for backward compatibility with existing integrations.
+
+    Form fields:
+        source: ingestion mode — 'manual', 'cloud', 'agent' (default: 'manual')
     """
     try:
         content = await file.read()
         source_ip = request.client.host if request.client else None
+        mode = _resolve_mode(source)
 
         result = ingest_file(
             db,
@@ -82,7 +104,7 @@ async def upload_log(
             content,
             uploader=uploader,
             source_ip=source_ip,
-            ingestion_mode="legacy",
+            ingestion_mode=mode,
         )
 
         from app.parsing.service import process_log_file
@@ -90,6 +112,9 @@ async def upload_log(
 
         return result
 
+    except ValueError as exc:
+        # File was quarantined by sandbox triage — not a server error
+        raise HTTPException(status_code=422, detail=str(exc))
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
@@ -183,5 +208,125 @@ def verify_log(audit_id: str, db: Session = Depends(get_db)):
 def verify_chain(db: Session = Depends(get_db)):
     """Verify the complete cryptographic hash chain across all audit records."""
     return verify_hash_chain(db)
+
+
+# ---------------------------------------------------------------------------
+# ── AUDIT TRAIL ENDPOINT ──────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+
+@router.post("/audit-trail")
+async def upload_with_audit_trail(
+    request: Request,
+    file: UploadFile = File(...),
+    source: Optional[str] = Form(None),
+    uploader: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
+):
+    """
+    Upload a file and return the full session audit trail JSON.
+
+    This endpoint performs the exact same pipeline as /upload-log but
+    returns the detailed 6-node audit trail instead of the compact
+    AuditResponse schema.
+
+    Form fields:
+        source: ingestion mode — 'manual', 'cloud', 'agent' (default: 'manual')
+
+    Returns:
+        Full JSON audit object with session, nodes, security_summary, result.
+    """
+    import tempfile
+    from pathlib import Path
+    from app.core.security import compute_sha256
+    from app.ingestion.sandbox import (
+        run_sync_triage, run_sync_deep_scan, collect_triage_info,
+    )
+
+    content = await file.read()
+    source_ip = request.client.host if request.client else "unknown"
+    filename = file.filename or "unknown"
+    mode = _resolve_mode(source)
+    file_hash = compute_sha256(content)
+
+    # Write temp file for sandbox
+    tmp_dir = Path(tempfile.mkdtemp(prefix="audit_trail_"))
+    tmp_file = tmp_dir / filename
+    tmp_file.write_bytes(content)
+
+    sandbox_passed = False
+    quarantine_reason = None
+    ledger_entry_id = ""
+    previous_hash = None
+    raw_path = ""
+    triage_info = {}
+
+    try:
+        triage_info = collect_triage_info(tmp_file)
+
+        # Sync triage
+        q_rec = run_sync_triage(
+            file_path=tmp_file, db=db,
+            source_ip=source_ip, ingestion_mode=mode, session_id=None,
+        )
+        if q_rec:
+            quarantine_reason = q_rec.reason
+        else:
+            # Deep scan
+            d_rec = run_sync_deep_scan(
+                file_path=tmp_file, db=db,
+                source_ip=source_ip, ingestion_mode=mode, session_id=None,
+            )
+            if d_rec:
+                quarantine_reason = d_rec.reason
+            else:
+                sandbox_passed = True
+
+        if sandbox_passed:
+            from app.ingestion.service import save_raw_file, get_last_hash
+            from app.db.models import AuditLog
+            from datetime import datetime
+
+            raw_path = save_raw_file(filename, content)
+            previous_hash = get_last_hash(db)
+
+            audit_entry = AuditLog(
+                filename=filename,
+                sha256_hash=file_hash,
+                previous_hash=previous_hash,
+                upload_time=datetime.utcnow(),
+                file_size=len(content),
+                uploader=uploader,
+                source_ip=source_ip,
+                ingestion_mode=mode,
+                status="ingested",
+            )
+            db.add(audit_entry)
+            db.commit()
+            db.refresh(audit_entry)
+            ledger_entry_id = audit_entry.id
+
+            from app.parsing.service import process_log_file
+            process_log_file(filename, content, file_hash, audit_entry.id)
+
+    finally:
+        import shutil
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+
+    trail = build_trail_from_legacy_upload(
+        ingestion_mode=mode,
+        source_ip=source_ip,
+        file_name=filename,
+        file_size_bytes=len(content),
+        content=content,
+        sandbox_passed=sandbox_passed,
+        quarantine_reason=quarantine_reason,
+        ledger_entry_id=ledger_entry_id,
+        sha256_hash=file_hash,
+        previous_hash=previous_hash,
+        worm_storage_path=raw_path,
+        **triage_info,
+    )
+
+    return trail
 
 
