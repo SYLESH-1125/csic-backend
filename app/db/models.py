@@ -66,3 +66,65 @@ class QuarantineLog(Base):
     source_ip = Column(String, nullable=True)
     ingestion_mode = Column(String, nullable=True)
     session_id = Column(String, nullable=True)
+
+
+# ---------------------------------------------------------------------------
+# Phase 2: Hybrid Parsing & Data Normalization Tables
+# ---------------------------------------------------------------------------
+
+class TemplateRegistry(Base):
+    """
+    DRAIN3 template registry for log parsing.
+    Stores event templates and extracted variables.
+    """
+    __tablename__ = "template_registry"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    audit_id = Column(String, nullable=True)
+    template = Column(Text, nullable=False)
+    variables = Column(Text, nullable=True)  # JSON-encoded
+    cache_key = Column(String, unique=True, nullable=True)
+    template_word_category = Column(Text, nullable=True)  # Category description (min 150 words)
+    learned_patterns = Column(Text, nullable=True)  # JSON-encoded learned patterns from AI parsing
+    pattern_hash = Column(String, nullable=True)  # Hash of template structure for similarity matching
+    match_count = Column(Integer, default=1)  # Number of times this template matched
+    last_seen = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class StagingArea(Base):
+    """
+    Human-in-the-loop staging area for processed data.
+    Data remains here until human confirmation.
+    """
+    __tablename__ = "staging_area"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    audit_id = Column(String, nullable=False)
+    row_hash = Column(String, nullable=False)
+    immutable_pointer = Column(String, nullable=True)
+    decoded_payload = Column(Text, nullable=True)  # JSON-encoded
+    decode_trace = Column(Text, nullable=True)  # JSON-encoded
+    template_id = Column(String, nullable=True)
+    extracted_variables = Column(Text, nullable=True)  # JSON-encoded
+    ner_tags = Column(Text, nullable=True)  # JSON-encoded
+    normalized_timestamp = Column(DateTime, nullable=True)
+    human_overrides = Column(Text, nullable=True)  # JSON-encoded
+    status = Column(String, default="pending")  # pending | confirmed | committed | rejected
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class LineageAnchor(Base):
+    """
+    Immutable pointers linking processed rows to source files.
+    Creates tamper-evident lineage chain.
+    """
+    __tablename__ = "lineage_anchors"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    audit_id = Column(String, nullable=False)
+    source_file_hash = Column(String, nullable=False)
+    byte_offset = Column(Integer, nullable=False)
+    row_hash = Column(String, nullable=False)
+    duckdb_row_id = Column(Integer, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)

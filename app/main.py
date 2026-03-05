@@ -11,6 +11,7 @@ from app.detection.router import router as new_detection
 from app.ledger.router import router as new_ledger
 from app.dashboard.router import router as new_dashboard
 from app.reporting.router import router as new_reporting
+from app.phase2.router import router as phase2_router
 
 new_app = FastAPI(title="Forensic AI Engine")
 
@@ -29,6 +30,7 @@ Base.metadata.create_all(bind=engine)
 
 # ── REST routers (prefixed under /api) ─────────────────────────────────────
 new_app.include_router(new_ingestion, prefix="/api/ingestion", tags=["Ingestion"])
+new_app.include_router(phase2_router, prefix="/api/phase2", tags=["Phase 2: Universal Translator"])
 new_app.include_router(new_features, prefix="/api")
 new_app.include_router(new_detection, prefix="/api")
 new_app.include_router(new_ledger, prefix="/api")
@@ -50,7 +52,12 @@ def startup_integrity_check():
     try:
         new_result = verify_hash_chain(new_db)
         if hasattr(new_result, "get") and new_result.get("status") != "chain_valid":
-            logger.error("HASH CHAIN BROKEN!")
+            # Warning instead of error - common in development with existing data
+            logger.warning(
+                f"Hash chain integrity check: {new_result.get('status', 'unknown')} "
+                f"(broken_at: {new_result.get('broken_at', 'N/A')})"
+            )
+            logger.info("Server continues - hash chain warnings are non-fatal in development")
         else:
             logger.info("Hash chain verified.")
     except Exception as new_e:

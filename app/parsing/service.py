@@ -19,11 +19,19 @@ def save_to_cold_storage(df, audit_id: str):
         f"part_{int(datetime.utcnow().timestamp())}.parquet"
     )
 
-    df.to_parquet(
-        file_path,
-        engine="pyarrow",
-        compression="snappy"
-    )
+    try:
+        df.to_parquet(
+            file_path,
+            engine="pyarrow",
+            compression="snappy"
+        )
+    except ImportError:
+        # Fallback if pyarrow not available
+        df.to_parquet(
+            file_path,
+            engine="fastparquet",
+            compression="snappy"
+        )
 
 
 

@@ -407,14 +407,16 @@ async def websocket_secure_stream(
         )
 
         # ── Final ACK ────────────────────────────────────────────────────────
+        # Phase 1 response format: nested "result" object
         await websocket.send_text(
             json.dumps({
-                "status": "done",
-                "audit_id": audit_entry.id,
-                "merkle_root": merkle_root,
-                "sha256": mono_sha256,
-                "filename": filename,
-                "audit_trail": audit_trail,
+                "result": {
+                    "status": "done",
+                    "audit_id": audit_entry.id,
+                    "sha256": mono_sha256,
+                    "file_path": str(worm_path),  # Phase 2 handoff: WORM path
+                    "binary_signature": merkle_root,  # Merkle root as binary signature
+                }
             })
         )
         await websocket.close(code=1000)
