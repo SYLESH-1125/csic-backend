@@ -1,0 +1,5 @@
+2024-01-01 10:00:00 INFO User admin logged in from 192.168.1.100
+2024-01-01 10:00:15 INFO User admin accessed file /var/log/system.log
+2024-01-01 10:00:30 WARN Failed login attempt from 10.0.0.50
+2024-01-01 10:00:45 INFO User admin logged out
+2024-01-01 10:01:00 INFO System backup completed successfully

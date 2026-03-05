@@ -1,0 +1,8 @@
+2024-01-15T10:30:00Z INFO User admin logged in from 192.168.1.100
+2024-01-15T10:30:15Z INFO User admin accessed file /var/log/system.log
+2024-01-15T10:30:30Z WARN Failed login attempt from 10.0.0.50
+2024-01-15T10:30:45Z INFO User admin logged out
+2024-01-15T10:31:00Z INFO System backup completed successfully
+2024-01-15T10:31:15Z ERROR Database connection failed to db.example.com:5432
+2024-01-15T10:31:30Z INFO Email sent to admin@example.com
+2024-01-15T10:31:45Z INFO HTTP request GET https://api.example.com/v1/users
