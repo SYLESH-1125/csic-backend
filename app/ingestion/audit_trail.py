@@ -525,13 +525,14 @@ def build_trail_from_legacy_upload(
     ledger_entry_id: str = "",
     sha256_hash: str = "",
     previous_hash: Optional[str] = None,
+    merkle_root: str = "",
     worm_storage_path: str = "",
 ) -> dict[str, Any]:
     """
     Build a full audit trail for the REST upload path.
 
-    The REST path has no WebSocket or Merkle tree, so Node 3 and Node 4
-    record single-chunk / direct-hash equivalents.
+    The REST path chunks the file in-memory to compute a real Merkle
+    tree root, identical in behaviour to the WebSocket path.
 
     Args:
         ingestion_mode: User-supplied mode string (any alias accepted,
@@ -568,11 +569,13 @@ def build_trail_from_legacy_upload(
         rejected_chunks=0,
     )
 
-    # Node 4 — merkle of single chunk = sha256 of file
+    # Node 4 — real Merkle root computed from 64 KiB chunks
+    effective_merkle = merkle_root or file_hash
+    chunk_count = max(1, -(-file_size_bytes // (64 * 1024)))  # ceil div
     trail.record_node4_merkle_seal(
         sha256_hash=file_hash,
-        chunk_hash_count=1,
-        merkle_root=file_hash,  # single leaf → root = leaf
+        chunk_hash_count=chunk_count,
+        merkle_root=effective_merkle,
     )
 
     # Node 5 — sandbox
@@ -596,7 +599,7 @@ def build_trail_from_legacy_upload(
         ledger_entry_id=ledger_entry_id,
         sha256=file_hash,
         previous_hash=previous_hash,
-        merkle_root=file_hash,
+        merkle_root=effective_merkle,
         worm_storage_path=worm_storage_path,
     )
 

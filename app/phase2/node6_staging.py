@@ -487,13 +487,28 @@ def _signal_phase3(
         f"[Node6] Phase 3 signal sent: staging_id={staging_id}, "
         f"audit_id={audit_id}, final_row_hash={final_row_hash[:16]}..."
     )
-    
-    # TODO: Implement actual Phase 3 integration
-    # For now, we log it. In production, you might:
-    # 1. Write to a Phase 3 trigger table in DuckDB
-    # 2. Send to a message queue
-    # 3. Trigger a webhook
-    # 4. Write to a notification file/stream
+
+    # Wire to Phase 3 webhook (default: same backend, mounted at /api/phase3)
+    try:
+        import os
+        import httpx
+
+        base_url = os.getenv("PHASE3_WEBHOOK_URL", "http://127.0.0.1:8000/api/phase3/phase2_webhook").rstrip("/")
+        # Provide Phase 3 expected keys; lineage must be stable and unique.
+        payload = {
+            "Target_User": "unknown",
+            "Notes": (
+                f"phase2_commit_complete audit_id={audit_id} staging_id={staging_id} "
+                f"final_row_hash={final_row_hash} committed_at={committed_at.isoformat()}"
+            ),
+            "Lineage": staging_id,
+        }
+        with httpx.Client(timeout=5.0) as client:
+            r = client.post(base_url, json=payload)
+            r.raise_for_status()
+        signal["phase3_webhook"] = {"ok": True, "url": base_url}
+    except Exception as exc:
+        signal["phase3_webhook"] = {"ok": False, "error": str(exc)}
     
     return signal
 

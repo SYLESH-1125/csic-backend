@@ -21,8 +21,8 @@ def get_db():
 
 
 @router.get("/dashboard/summary")
-def dashboard_summary():
-    return get_summary()
+def dashboard_summary(db: Session = Depends(get_db)):
+    return get_summary(db)
 
 
 @router.get("/dashboard/timeline")

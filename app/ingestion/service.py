@@ -23,12 +23,36 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.core.logging import logger
+from app.core.merkle import build_merkle_root
 from app.core.security import compute_sha256
 from app.db.models import AuditLog
 from app.ingestion.auth_gateway import SessionStore, _extract_client_ip
 from app.ingestion.secure_ledger import commit_to_ledger
 from app.ingestion.sandbox import run_sync_triage, run_sync_deep_scan, async_malware_scan, collect_triage_info
 from app.ingestion.audit_trail import build_trail_from_legacy_upload
+
+
+# ---------------------------------------------------------------------------
+# Merkle tree helper for single-shot REST uploads
+# ---------------------------------------------------------------------------
+
+CHUNK_SIZE = 64 * 1024  # 64 KiB — matches WebSocket chunk size
+
+
+def _compute_merkle_root(content: bytes) -> str:
+    """
+    Split *content* into fixed-size chunks, hash each chunk, and build
+    a Merkle tree root.  This mirrors what the WebSocket path does when
+    it receives streamed chunks — every file gets a Merkle seal.
+    """
+    if not content:
+        # Empty file: single leaf = hash of empty bytes
+        return build_merkle_root([hashlib.sha256(b"").hexdigest()])
+    chunk_hashes: list[str] = []
+    for offset in range(0, len(content), CHUNK_SIZE):
+        chunk = content[offset : offset + CHUNK_SIZE]
+        chunk_hashes.append(hashlib.sha256(chunk).hexdigest())
+    return build_merkle_root(chunk_hashes)
 
 
 # ---------------------------------------------------------------------------
@@ -50,6 +74,28 @@ def save_raw_file(filename: str, content: bytes) -> str:
     with open(file_path, "wb") as f:
         f.write(content)
     return str(file_path)
+
+
+def save_worm_file(audit_id: str, filename: str, content: bytes) -> str:
+    """
+    Persist to WORM storage (read-only, immutable-ish path) for Phase 2 handoff.
+    """
+    WORM_PATH.mkdir(parents=True, exist_ok=True)
+    # Deterministic per-audit namespace keeps the uploaded filename unchanged.
+    audit_dir = WORM_PATH / str(audit_id)
+    audit_dir.mkdir(parents=True, exist_ok=True)
+    dest = audit_dir / filename
+    if dest.exists():
+        # WORM semantics: never overwrite. If a duplicate upload happens for the same audit,
+        # keep the original name and create a unique sibling while preserving the display name.
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d%H%M%S%f")
+        dest = audit_dir / f"{ts}__{filename}"
+    dest.write_bytes(content)
+    try:
+        os.chmod(dest, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH)
+    except Exception as exc:
+        logger.warning(f"[IngestService] WORM chmod failed for {dest}: {exc}")
+    return str(dest)
 
 
 # ---------------------------------------------------------------------------
@@ -130,8 +176,8 @@ def ingest_file(
             # All sandbox checks passed
             sandbox_passed = True
 
-            # ── Persist raw file ──────────────────────────────────────────
-            raw_path = save_raw_file(filename, content)
+            # ── Merkle root (chunk the blob just like the WS path) ────────
+            merkle_root = _compute_merkle_root(content)
 
             # ── Ledger commit ─────────────────────────────────────────────
             previous_hash = get_last_hash(db)
@@ -140,6 +186,7 @@ def ingest_file(
                 filename=filename,
                 sha256_hash=file_hash,
                 previous_hash=previous_hash,
+                merkle_root=merkle_root,
                 upload_time=datetime.utcnow(),
                 file_size=len(content),
                 uploader=uploader,
@@ -148,6 +195,11 @@ def ingest_file(
                 status="ingested",
             )
             db.add(audit_entry)
+            db.flush()  # allocate audit_id before WORM write
+
+            # ── Persist to WORM for Phase 2 handoff ───────────────────────
+            worm_path = save_worm_file(audit_entry.id, filename, content)
+
             db.commit()
             db.refresh(audit_entry)
 
@@ -161,8 +213,7 @@ def ingest_file(
                 sandbox_passed=True,
                 ledger_entry_id=audit_entry.id,
                 sha256_hash=file_hash,
-                previous_hash=previous_hash,
-                worm_storage_path=raw_path,
+                previous_hash=previous_hash,                merkle_root=merkle_root,                worm_storage_path=worm_path,
                 **triage_info,
             )
 

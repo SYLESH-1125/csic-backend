@@ -89,3 +89,9 @@ def detect_obfuscation(data: str | bytes) -> dict:
     }
 
 
+
+
+
+
+
+

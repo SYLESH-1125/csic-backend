@@ -1,0 +1,1 @@
+{"agent": "Network", "target": "jdoe@company.com", "finding": "Massive outbound data spike: 50000 bytes", "confidence": 92}

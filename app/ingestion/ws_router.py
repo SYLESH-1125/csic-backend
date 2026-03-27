@@ -56,8 +56,83 @@ from app.ingestion.auth_gateway import (
 from app.ingestion.sandbox import async_malware_scan, run_sync_triage, collect_triage_info
 from app.ingestion.secure_ledger import commit_to_ledger
 from app.ingestion.audit_trail import build_trail_from_ws_session
+from app.phase2.service import process_file_phase2
 
 router = APIRouter()
+
+
+# ---------------------------------------------------------------------------
+# Helper: Trigger Phase 2 Processing
+# ---------------------------------------------------------------------------
+
+async def trigger_phase2_processing(
+    audit_id: str,
+    file_path: str,
+    source_ip: str,
+) -> None:
+    """
+    Automatically trigger Phase 2 (Parsing Pipeline) after Phase 1 completes.
+    
+    This function is called asynchronously after Phase 1 ingestion completes
+    to automatically start the parsing pipeline.
+    
+    Payload format matches Phase 2 expectations:
+        {
+            "status": "done",
+            "audit_id": "uuid",
+            "sha256": "file_hash",
+            "file_path": "/worm/vault/file.log",
+            "source_ip": "127.0.0.1"
+        }
+    """
+    try:
+        import os
+        auto_trigger = os.getenv("AUTO_TRIGGER_PHASE2", "true").lower()
+        if auto_trigger in {"0", "false", "no", "off"}:
+            return
+        logger.info(
+            f"[WSRouter] Auto-triggering Phase 2: audit_id={audit_id} "
+            f"file_path={file_path} source_ip={source_ip}"
+        )
+        
+        # IMPORTANT: run Phase 2 with its own DB session.
+        # The WebSocket request-scoped session is closed in the WS handler's finally block,
+        # and passing it into an asyncio task can lead to using a closed session.
+        phase2_db: Optional[Session] = None
+        try:
+            phase2_db = SessionLocal()
+            result = process_file_phase2(
+                db=phase2_db,
+                audit_id=audit_id,
+                file_path=file_path,
+                source_ip=source_ip,
+            )
+        finally:
+            if phase2_db is not None:
+                phase2_db.close()
+        
+        logger.info(
+            f"[WSRouter] Phase 2 processing started: audit_id={audit_id} "
+            f"staging_ids={result.get('staging_ids', [])} "
+            f"rows_processed={result.get('rows_processed', 0)}"
+        )
+        
+    except ValueError as e:
+        logger.warning(
+            f"[WSRouter] Phase 2 trigger failed (ValueError): audit_id={audit_id} "
+            f"error={str(e)}"
+        )
+    except FileNotFoundError as e:
+        logger.warning(
+            f"[WSRouter] Phase 2 trigger failed (FileNotFound): audit_id={audit_id} "
+            f"file_path={file_path} error={str(e)}"
+        )
+    except Exception as e:
+        logger.error(
+            f"[WSRouter] Phase 2 trigger failed (unexpected): audit_id={audit_id} "
+            f"error={str(e)}",
+            exc_info=True
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -407,18 +482,46 @@ async def websocket_secure_stream(
         )
 
         # ── Final ACK ────────────────────────────────────────────────────────
-        # Phase 1 response format: nested "result" object
+        # Phase 1 response format:
+        # - top-level status="done" (used by frontend WS client)
+        # - nested "result" object (backward compatibility)
         await websocket.send_text(
             json.dumps({
+                "status": "done",
                 "result": {
                     "status": "done",
                     "audit_id": audit_entry.id,
                     "sha256": mono_sha256,
                     "file_path": str(worm_path),  # Phase 2 handoff: WORM path
-                    "binary_signature": merkle_root,  # Merkle root as binary signature
+                    "merkle_root": merkle_root,  # Merkle root hash
+                    "binary_signature": merkle_root,  # Merkle root as binary signature (backward compatibility)
+                    "source_ip": client_ip,  # Source IP for Phase 2
                 }
             })
         )
+        
+        # ── Step 11: Automatically trigger Phase 2 ONLY after Phase 1 completes successfully ────────
+        # Verify Phase 1 completion: audit entry exists, file exists, and final ACK sent
+        if audit_entry and audit_entry.id and worm_path.exists():
+            logger.info(
+                f"[WSRouter] Phase 1 ingestion completed successfully. "
+                f"Triggering Phase 2 (Parsing Pipeline) for audit_id={audit_entry.id}"
+            )
+            asyncio.create_task(
+                trigger_phase2_processing(
+                    audit_id=audit_entry.id,
+                    file_path=str(worm_path),
+                    source_ip=client_ip,
+                )
+            )
+        else:
+            logger.error(
+                f"[WSRouter] Phase 1 completion verification failed. "
+                f"audit_entry={audit_entry is not None}, "
+                f"file_exists={worm_path.exists() if 'worm_path' in locals() else False}. "
+                f"Phase 2 will NOT be triggered."
+            )
+        
         await websocket.close(code=1000)
 
     except WebSocketDisconnect:

@@ -6,9 +6,14 @@ Chronograph: Timeline Sync
 import re
 from datetime import datetime, timezone, timedelta
 from typing import Optional, Tuple, List
-from dateutil import parser as date_parser
-from dateutil.relativedelta import relativedelta
-from dateutil.tz import gettz
+
+# Optional dependency: python-dateutil provides robust fuzzy parsing.
+# We keep a graceful stdlib fallback so Phase 2 does not hard-fail if the
+# dependency is missing in a given deployment environment.
+try:
+    from dateutil import parser as date_parser  # type: ignore
+except Exception:  # pragma: no cover
+    date_parser = None
 
 
 ISO_8601_PATTERN = re.compile(
@@ -54,12 +59,13 @@ def extract_timestamp_from_line(log_line: str) -> Optional[str]:
     if not log_line:
         return None
     
-    # Try each pattern in order of specificity
+    # Try each pattern in order of specificity.
+    # Use match.group(0) rather than findall(), because several patterns include
+    # capturing groups which makes findall() return tuples instead of the full match.
     for pattern in TIMESTAMP_PATTERNS:
-        matches = pattern.findall(log_line)
-        if matches:
-            # Return the first match (usually at the start of the line)
-            return matches[0] if isinstance(matches[0], str) else str(matches[0])
+        m = pattern.search(log_line)
+        if m:
+            return m.group(0)
     
     # Fallback: try to find date-like patterns at the start of the line
     # Common format: timestamp at the beginning
@@ -99,15 +105,45 @@ def parse_timestamp(timestamp_str: str, source_ip: Optional[str] = None) -> Opti
     
     timestamp_str = timestamp_str.strip()
     
-    # Try dateutil parser first (handles most formats)
+    # Try python-dateutil if available (handles most formats, supports fuzzy parsing)
+    if date_parser is not None:
+        try:
+            dt = date_parser.parse(timestamp_str, fuzzy=True)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.astimezone(timezone.utc)
+        except Exception:
+            pass
+
+    # Stdlib fallbacks (no fuzzy parsing)
+    # 1) ISO-8601
     try:
-        dt = date_parser.parse(timestamp_str, fuzzy=True)
+        iso = timestamp_str.replace("Z", "+00:00")
+        dt = datetime.fromisoformat(iso.replace("T", " "))
         if dt.tzinfo is None:
-            # Assume UTC if no timezone info
             dt = dt.replace(tzinfo=timezone.utc)
         return dt.astimezone(timezone.utc)
     except Exception:
         pass
+
+    # 2) Common explicit formats
+    for fmt in (
+        "%Y-%m-%d %H:%M:%S",
+        "%Y/%m/%d %H:%M:%S",
+        "%Y-%m-%d",
+        "%Y/%m/%d",
+        "%d/%b/%Y:%H:%M:%S %z",  # Apache common log
+        "%b %d %H:%M:%S",  # Syslog (no year)
+    ):
+        try:
+            dt = datetime.strptime(timestamp_str, fmt)
+            if fmt == "%b %d %H:%M:%S":
+                dt = dt.replace(year=datetime.now(timezone.utc).year)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt.astimezone(timezone.utc)
+        except Exception:
+            continue
     
     # Try Unix timestamp (seconds since epoch)
     try:
@@ -185,6 +221,8 @@ def infer_date_format(
             continue
         
         try:
+            if date_parser is None:
+                continue
             parsed = date_parser.parse(ts_str, fuzzy=True)
             day = parsed.day
             month = parsed.month

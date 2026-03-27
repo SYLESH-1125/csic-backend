@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
 from app.core.logging import logger
 from app.db.base import Base
 from app.db.session import engine, SessionLocal
@@ -12,6 +14,8 @@ from app.ledger.router import router as new_ledger
 from app.dashboard.router import router as new_dashboard
 from app.reporting.router import router as new_reporting
 from app.phase2.router import router as phase2_router
+from app.auth.router import router as auth_router
+from fastapi.responses import JSONResponse
 
 new_app = FastAPI(title="Forensic AI Engine")
 
@@ -28,7 +32,23 @@ new_app.add_middleware(
 # Create all tables (includes new IngestionSession + QuarantineLog tables)
 Base.metadata.create_all(bind=engine)
 
+# ── Phase 6 assets (templates/covers) ────────────────────────────────────────
+_phase6_templates_dir = (
+    Path(__file__).resolve().parent
+    / "phase6"
+    / "engine_frontend"
+    / "public"
+    / "templates"
+)
+if _phase6_templates_dir.exists():
+    new_app.mount(
+        "/templates",
+        StaticFiles(directory=str(_phase6_templates_dir)),
+        name="phase6_templates",
+    )
+
 # ── REST routers (prefixed under /api) ─────────────────────────────────────
+new_app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 new_app.include_router(new_ingestion, prefix="/api/ingestion", tags=["Ingestion"])
 new_app.include_router(phase2_router, prefix="/api/phase2", tags=["Phase 2: Universal Translator"])
 new_app.include_router(new_features, prefix="/api")
@@ -37,8 +57,32 @@ new_app.include_router(new_ledger, prefix="/api")
 new_app.include_router(new_dashboard, prefix="/api")
 new_app.include_router(new_reporting, prefix="/api")
 
+# ── Phase 6 report engine (mounted under /api/report) ───────────────────────
+try:
+    from app.phase6.engine_backend.report_router import router as phase6_report_router
+
+    new_app.include_router(phase6_report_router)
+except Exception as _phase6_exc:
+    logger.warning(f"Phase 6 report engine unavailable: {_phase6_exc}")
+
 # ── WebSocket router (no /api prefix — WS routes use bare paths) ───────────
 new_app.include_router(ws_ingestion, tags=["Secure WebSocket Ingestion"])
+
+# ── Phase 3 prototype app (mounted under /api/phase3) ──────────────────────
+# This phase depends on optional heavyweight libs; mount only if available.
+try:
+    from app.phase3.phase3_hot_and_cold_db.main import new_app as phase3_app  # type: ignore
+    new_app.mount("/api/phase3", phase3_app)
+except Exception as _phase3_exc:
+    @new_app.get("/api/phase3", include_in_schema=False)
+    def _phase3_unavailable():
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "unavailable",
+                "detail": "Phase 3 app could not be mounted (missing optional dependencies).",
+            },
+        )
 
 
 @new_app.get("/")

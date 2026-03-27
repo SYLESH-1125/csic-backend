@@ -9,6 +9,7 @@ from app.dashboard.service import (
     get_timeline,
     get_severity,
 )
+from app.db.session import SessionLocal
 from app.detection.service import run_detection
 from app.reporting.engine import GraphEngine, b64_from_buf
 
@@ -25,7 +26,11 @@ def build_forensic_report_data(report_type: str = "executive") -> Dict[str, Any]
     """
     
     # Gather all data
-    summary = get_summary()
+    db = SessionLocal()
+    try:
+        summary = get_summary(db)
+    finally:
+        db.close()
     timeline = get_timeline()
     severity = get_severity()
     detection = run_detection()

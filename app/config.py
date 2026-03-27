@@ -18,6 +18,9 @@ class Settings(BaseSettings):
 
     # JIT session TTL (minutes)
     SESSION_TTL_MINUTES: int = 30
+    
+    # Authentication
+    SECRET_KEY: str = "change-this-secret-key-in-production-use-openssl-rand-hex-32"
 
     @field_validator("DEBUG", mode="before")
     @classmethod

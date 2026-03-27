@@ -1,0 +1,7 @@
+{
+  "investigator_id": "USR-892",
+  "seed_type": "user_account",
+  "seed_value": "jdoe@company.com",
+  "time_window": "24h",
+  "priority": "high"
+}

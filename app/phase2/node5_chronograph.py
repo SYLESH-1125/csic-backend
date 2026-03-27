@@ -82,10 +82,13 @@ def extract_timestamp(
     if extracted:
         return extracted
     
-    # Priority 3: Fallback to first token
+    # Priority 3: Fallback to first token ONLY if it actually looks like a timestamp.
+    # This prevents false positives on binary-ish logs (e.g., PDF tokens like "endobj").
     parts = log_line.strip().split()
     if parts:
-        return parts[0]
+        candidate = parts[0]
+        if extract_timestamp_from_line(candidate):
+            return candidate
     
     return None
 

@@ -48,11 +48,12 @@ def process_file_phase2(
     
     source_file_hash = audit_log.sha256_hash
     
-    # If file_path not provided, construct from WORM directory + filename
+    # If file_path not provided, construct from deterministic WORM directory:
+    # data/worm/<audit_id>/<original_filename>
     if not file_path:
         from app.config import settings
         worm_dir = Path(settings.WORM_STORAGE_PATH)
-        file_path = str(worm_dir / audit_log.filename)
+        file_path = str(worm_dir / str(audit_id) / audit_log.filename)
     
     file_path_obj = Path(file_path)
     
@@ -139,6 +140,12 @@ def process_file_phase2(
                     normalized_timestamp = timestamp_result.get("normalized")
                 
                 # Node 6: Create Staging Entry
+                # Include original line in extracted_variables for frontend access
+                if extracted_variables is None:
+                    extracted_variables = {}
+                extracted_variables["original"] = line
+                extracted_variables["line_number"] = line_num
+                
                 row_data = {
                     "line_number": line_num,
                     "original": line,

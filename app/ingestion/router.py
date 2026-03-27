@@ -18,10 +18,15 @@ mounted at the application root (not under /api) to avoid prefix conflicts.
 """
 
 from typing import Optional
+import re
+import time
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+import httpx
+from io import BytesIO
 
 from app.db.session import SessionLocal
 from app.ingestion.integrity import verify_file_integrity, verify_hash_chain
@@ -74,6 +79,10 @@ class CloudIngestRequest(BaseModel):
     cloud_provider: str = "generic"
 
 
+class FetchUrlRequest(BaseModel):
+    url: str
+
+
 # ---------------------------------------------------------------------------
 # ── LEGACY ENDPOINT (preserved, backward-compatible) ─────────────────────
 # ---------------------------------------------------------------------------
@@ -81,6 +90,7 @@ class CloudIngestRequest(BaseModel):
 @router.post("/upload-log", response_model=AuditResponse)
 async def upload_log(
     request: Request,
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     source: Optional[str] = Form(None),
     uploader: Optional[str] = Form(None),
@@ -107,8 +117,27 @@ async def upload_log(
             ingestion_mode=mode,
         )
 
-        from app.parsing.service import process_log_file
-        process_log_file(file.filename, content, result.sha256_hash, result.id)
+        # Phase 1 -> Phase 2 handoff (async, gated)
+        async def _trigger_phase2(audit_id: str, filename: str, src_ip: str | None) -> None:
+            from pathlib import Path
+            import os
+            from app.config import settings
+            from app.db.session import SessionLocal
+            from app.phase2.service import process_file_phase2
+
+            auto_trigger = os.getenv("AUTO_TRIGGER_PHASE2", "true").lower()
+            if auto_trigger in {"0", "false", "no", "off"}:
+                return
+
+            phase2_db = SessionLocal()
+            try:
+                # Deterministic WORM location: data/worm/<audit_id>/<filename>
+                worm_path = str(Path(settings.WORM_STORAGE_PATH) / str(audit_id) / filename)
+                process_file_phase2(db=phase2_db, audit_id=audit_id, file_path=worm_path, source_ip=src_ip)
+            finally:
+                phase2_db.close()
+
+        background_tasks.add_task(_trigger_phase2, result.id, result.filename, source_ip)
 
         return result
 
@@ -172,6 +201,151 @@ async def cloud_ingestion_init(
         raise HTTPException(status_code=401, detail=str(exc))
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.post("/fetch-url")
+async def fetch_url_file(
+    body: FetchUrlRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Fetch a publicly accessible file from a URL and return it as a downloadable blob.
+    This endpoint handles CORS issues by fetching the file server-side.
+    
+    Body:
+        url: Public file URL (Google Drive, direct links, etc.)
+    
+    Returns:
+        File content as streaming response with proper headers
+    """
+    try:
+        url = body.url.strip()
+        original_url = url
+        file_id = None
+        
+        # Extract file ID from Google Drive sharing link
+        if "drive.google.com/file/d/" in url:
+            file_id_match = re.search(r"/file/d/([a-zA-Z0-9_-]+)", url)
+            if file_id_match:
+                file_id = file_id_match.group(1)
+                # Try direct download URL first
+                url = f"https://drive.google.com/uc?export=download&id={file_id}"
+        
+        # Fetch file server-side (no CORS restrictions)
+        async with httpx.AsyncClient(timeout=60.0, follow_redirects=True) as client:
+            response = await client.get(url)
+            
+            if response.status_code == 403 or response.status_code == 401:
+                raise HTTPException(
+                    status_code=403,
+                    detail="File is not publicly accessible. Please make the file public and try again."
+                )
+            
+            if not response.is_success:
+                raise HTTPException(
+                    status_code=response.status_code,
+                    detail=f"Failed to fetch file: {response.status_code} {response.reason_phrase}"
+                )
+            
+            # Check if response is HTML (Google Drive confirmation page)
+            content_type = response.headers.get("content-type", "")
+            if "text/html" in content_type and file_id:
+                # Parse the HTML to extract confirmation token
+                html_content = response.text
+                
+                # Method 1: Try to find and extract the download confirmation link from HTML
+                # Google Drive shows a warning page with a download link
+                confirm_patterns = [
+                    r'href="(/uc\?export=download[^"]+)"',
+                    r'action="(/uc\?export=download[^"]+)"',
+                    r'id="download-form".*?action="([^"]+)"',
+                ]
+                
+                confirm_url = None
+                for pattern in confirm_patterns:
+                    confirm_match = re.search(pattern, html_content, re.DOTALL)
+                    if confirm_match:
+                        confirm_path = confirm_match.group(1)
+                        if confirm_path.startswith('/'):
+                            confirm_url = "https://drive.google.com" + confirm_path
+                        elif confirm_path.startswith('http'):
+                            confirm_url = confirm_path
+                        break
+                
+                # Method 2: Try with confirm=t parameter (bypasses confirmation for some files)
+                if not confirm_url:
+                    confirm_url = f"https://drive.google.com/uc?export=download&id={file_id}&confirm=t"
+                
+                # Try the confirmation URL
+                response = await client.get(confirm_url, follow_redirects=True)
+                content_type = response.headers.get("content-type", "")
+                
+                # Check if we got the actual file or still HTML
+                if "text/html" in content_type:
+                    # Still HTML, check content size - if it's small, it's likely an error page
+                    if len(response.content) < 50000:  # HTML pages are usually smaller
+                        # Try one more method: direct download with authuser parameter
+                        final_url = f"https://drive.google.com/uc?export=download&id={file_id}"
+                        response = await client.get(final_url, follow_redirects=True, headers={
+                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                        })
+                        content_type = response.headers.get("content-type", "")
+                        
+                        if "text/html" in content_type:
+                            raise HTTPException(
+                                status_code=400,
+                                detail=(
+                                    "Google Drive requires manual confirmation for this file (likely a large file or virus scan required).\n\n"
+                                    "Solutions:\n"
+                                    "1. For files < 100MB: Ensure the file is set to 'Anyone with the link' can view\n"
+                                    "2. For large files: Download manually and upload directly\n"
+                                    "3. Alternative: Use a direct file hosting service (Dropbox, OneDrive, etc.)\n\n"
+                                    "To get a direct download link:\n"
+                                    "1. Open the file in Google Drive\n"
+                                    "2. Right-click → Download\n"
+                                    "3. Copy the download URL from your browser's network tab"
+                                )
+                            )
+            
+            # Get filename from Content-Disposition or URL
+            filename = f"cloud_file_{int(time.time())}"
+            content_disposition = response.headers.get("content-disposition", "")
+            if content_disposition:
+                filename_match = re.search(r'filename[^;=\n]*=(([\'"]).*?\2|[^;\n]*)', content_disposition)
+                if filename_match:
+                    filename = filename_match.group(1).strip('\'"')
+            else:
+                # Try to extract from URL
+                url_parts = body.url.split('/')
+                last_part = url_parts[-1] if url_parts else ""
+                if last_part and '.' in last_part:
+                    filename = last_part.split('?')[0]
+            
+            # Return file as streaming response
+            file_content = BytesIO(response.content)
+            
+            return StreamingResponse(
+                file_content,
+                media_type=content_type or "application/octet-stream",
+                headers={
+                    "Content-Disposition": f'attachment; filename="{filename}"',
+                    "Content-Length": str(len(response.content)),
+                }
+            )
+            
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code in [403, 401]:
+            raise HTTPException(
+                status_code=403,
+                detail="File is not publicly accessible. Please make the file public and try again."
+            )
+        raise HTTPException(status_code=e.response.status_code, detail=str(e))
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=400, detail=f"Failed to fetch file from URL: {str(e)}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching file: {str(e)}")
 
 
 @router.post("/generate-telemetry-link")
@@ -259,6 +433,7 @@ async def upload_with_audit_trail(
     previous_hash = None
     raw_path = ""
     triage_info = {}
+    merkle_root = ""
 
     try:
         triage_info = collect_triage_info(tmp_file)
@@ -282,17 +457,19 @@ async def upload_with_audit_trail(
                 sandbox_passed = True
 
         if sandbox_passed:
-            from app.ingestion.service import save_raw_file, get_last_hash
+            from app.ingestion.service import save_raw_file, get_last_hash, _compute_merkle_root
             from app.db.models import AuditLog
             from datetime import datetime
 
             raw_path = save_raw_file(filename, content)
             previous_hash = get_last_hash(db)
+            merkle_root = _compute_merkle_root(content)
 
             audit_entry = AuditLog(
                 filename=filename,
                 sha256_hash=file_hash,
                 previous_hash=previous_hash,
+                merkle_root=merkle_root,
                 upload_time=datetime.utcnow(),
                 file_size=len(content),
                 uploader=uploader,
@@ -312,6 +489,8 @@ async def upload_with_audit_trail(
         import shutil
         shutil.rmtree(tmp_dir, ignore_errors=True)
 
+    merkle = merkle_root if sandbox_passed else ""
+
     trail = build_trail_from_legacy_upload(
         ingestion_mode=mode,
         source_ip=source_ip,
@@ -323,6 +502,7 @@ async def upload_with_audit_trail(
         ledger_entry_id=ledger_entry_id,
         sha256_hash=file_hash,
         previous_hash=previous_hash,
+        merkle_root=merkle,
         worm_storage_path=raw_path,
         **triage_info,
     )

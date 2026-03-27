@@ -7,8 +7,7 @@ root hash from ordered chunk hashes.
 """
 
 import hashlib
-import math
-from typing import List, Optional
+from typing import List
 from app.core.logging import logger
 
 
@@ -16,13 +15,15 @@ from app.core.logging import logger
 # Internal helpers
 # ---------------------------------------------------------------------------
 
-def _sha256_pair(left: str, right: str) -> str:
-    """Hash two hex-encoded sibling nodes into a parent node."""
-    combined = bytes.fromhex(left) + bytes.fromhex(right)
-    return hashlib.sha256(combined).hexdigest()
+def _sha256_pair_bytes(left: bytes, right: bytes) -> bytes:
+    """Hash two 32-byte sibling nodes into a 32-byte parent node."""
+    h = hashlib.sha256()
+    h.update(left)
+    h.update(right)
+    return h.digest()
 
 
-def _normalize_layer(layer: List[str]) -> List[str]:
+def _normalize_layer_bytes(layer: List[bytes]) -> List[bytes]:
     """
     Ensure an even number of nodes per layer by duplicating the last node
     when the layer length is odd (standard Bitcoin-style Merkle padding).
@@ -53,24 +54,27 @@ def build_merkle_root(chunk_hashes: List[str]) -> str:
     if not chunk_hashes:
         raise ValueError("Cannot build Merkle root from an empty chunk list.")
 
-    # Leaf nodes — each chunk hash is treated as a leaf
-    current_layer: List[str] = list(chunk_hashes)
+    # Leaf nodes — convert hex digests to raw bytes ONCE.
+    # This avoids repeated bytes.fromhex() calls per tree level.
+    try:
+        current_layer: List[bytes] = [bytes.fromhex(h) for h in chunk_hashes]
+    except ValueError as exc:
+        raise ValueError(f"Invalid hex digest in chunk_hashes: {exc}") from exc
 
     logger.debug(
         f"[Merkle] Building tree from {len(current_layer)} leaf nodes."
     )
 
     while len(current_layer) > 1:
-        current_layer = _normalize_layer(current_layer)
-        next_layer: List[str] = []
+        current_layer = _normalize_layer_bytes(current_layer)
+        next_layer: List[bytes] = []
         for i in range(0, len(current_layer), 2):
-            parent = _sha256_pair(current_layer[i], current_layer[i + 1])
-            next_layer.append(parent)
+            next_layer.append(_sha256_pair_bytes(current_layer[i], current_layer[i + 1]))
         current_layer = next_layer
 
-    root = current_layer[0]
-    logger.debug(f"[Merkle] Root hash computed: {root}")
-    return root
+    root_hex = current_layer[0].hex()
+    logger.debug(f"[Merkle] Root hash computed: {root_hex}")
+    return root_hex
 
 
 def build_merkle_proof(chunk_hashes: List[str], index: int) -> List[dict]:
@@ -93,12 +97,13 @@ def build_merkle_proof(chunk_hashes: List[str], index: int) -> List[dict]:
     if index < 0 or index >= len(chunk_hashes):
         raise ValueError(f"Index {index} out of range [0, {len(chunk_hashes)}).")
 
-    current_layer = list(chunk_hashes)
+    # Work on raw bytes internally; return hex siblings for external use.
+    current_layer = [bytes.fromhex(h) for h in chunk_hashes]
     proof: List[dict] = []
     current_index = index
 
     while len(current_layer) > 1:
-        current_layer = _normalize_layer(current_layer)
+        current_layer = _normalize_layer_bytes(current_layer)
         if current_index % 2 == 0:
             sibling_index = current_index + 1
             direction = "right"
@@ -107,14 +112,14 @@ def build_merkle_proof(chunk_hashes: List[str], index: int) -> List[dict]:
             direction = "left"
 
         proof.append({
-            "sibling": current_layer[sibling_index],
+            "sibling": current_layer[sibling_index].hex(),
             "direction": direction,
         })
 
         # Build next layer
-        next_layer: List[str] = []
+        next_layer: List[bytes] = []
         for i in range(0, len(current_layer), 2):
-            next_layer.append(_sha256_pair(current_layer[i], current_layer[i + 1]))
+            next_layer.append(_sha256_pair_bytes(current_layer[i], current_layer[i + 1]))
 
         current_layer = next_layer
         current_index //= 2
@@ -138,20 +143,20 @@ def verify_merkle_proof(
     Returns:
         True if the proof is valid, False otherwise.
     """
-    current = leaf_hash
+    current = bytes.fromhex(leaf_hash)
     for step in proof:
-        sibling = step["sibling"]
+        sibling = bytes.fromhex(step["sibling"])
         direction = step["direction"]
         if direction == "right":
-            current = _sha256_pair(current, sibling)
+            current = _sha256_pair_bytes(current, sibling)
         else:
-            current = _sha256_pair(sibling, current)
+            current = _sha256_pair_bytes(sibling, current)
 
-    valid = current == expected_root
+    valid = current.hex() == expected_root
     if not valid:
         logger.warning(
             f"[Merkle] Proof verification failed. "
-            f"Computed root={current}, expected={expected_root}"
+            f"Computed root={current.hex()}, expected={expected_root}"
         )
     return valid
 
