@@ -7,3 +7,13 @@ __pycache__/
 *.db-wal
 *.db-journal
 data/
+
+# Frontend (Next.js) — single repo; ignore build + deps under csic_frontend/
+csic_frontend/node_modules/
+csic_frontend/.next/
+csic_frontend/out/
+csic_frontend/.vercel/
+csic_frontend/.turbo/
+csic_frontend/.env.local
+csic_frontend/.env*.local
+csic_frontend/*.tsbuildinfo
