@@ -1,6 +1,6 @@
 "use client"
 
-import React from "react"
+import React, { Suspense } from "react"
 import { AppProvider, useApp } from "@/lib/app-context"
 import { LoginPage } from "@/components/login-page"
 import { RegisterPage } from "@/components/register-page"
@@ -17,9 +17,9 @@ import { ParsingPage } from "@/components/parsing-page"
 import { Phase3Page } from "@/components/phase3-page"
 import { Phase4Page } from "@/components/phase4-page"
 import { Phase5Page } from "@/components/phase5-page"
-import { Phase6Page } from "@/components/phase6-page"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { AppUrlBridge } from "@/components/app-url-bridge"
 
 function AppContent() {
   const { isAuthenticated, currentPage } = useApp()
@@ -45,28 +45,46 @@ function AppContent() {
   }
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <TopNavbar />
-        <ScrollArea className="flex-1">
-          <main>
-            {currentPage === "dashboard" && <DashboardPage />}
-            {currentPage === "ingestion" && <IngestionPage />}
-            {currentPage === "parsing" && <ParsingPage />}
-            {currentPage === "phase3" && <Phase3Page />}
-            {currentPage === "phase4" && <Phase4Page />}
-            {currentPage === "phase5" && <Phase5Page />}
-            {currentPage === "phase6" && <Phase6Page />}
-            {currentPage === "ledger" && <LedgerPage />}
-            {currentPage === "quarantine" && <QuarantinePage />}
-            {currentPage === "audit" && <AuditPage />}
-            {currentPage === "health" && <HealthPage />}
-            {currentPage === "settings" && <SettingsPage />}
-          </main>
-        </ScrollArea>
-      </SidebarInset>
-    </SidebarProvider>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-col items-center justify-center bg-muted">
+          <div className="text-muted-foreground text-sm">Loading workspace…</div>
+        </div>
+      }
+    >
+      <SidebarProvider>
+        <AppUrlBridge />
+        <AppSidebar />
+        <SidebarInset>
+          <TopNavbar />
+          <ScrollArea className="flex-1">
+            <main>
+              {currentPage === "dashboard" && <DashboardPage />}
+              {currentPage === "ingestion" && <IngestionPage />}
+              {currentPage === "parsing" && <ParsingPage />}
+              {currentPage === "phase3" && <Phase3Page />}
+              {currentPage === "phase4" && <Phase4Page />}
+              {currentPage === "phase5" && (
+                <Suspense
+                  fallback={
+                    <div className="flex items-center justify-center p-12 text-sm text-muted-foreground">
+                      Loading Operation Room…
+                    </div>
+                  }
+                >
+                  <Phase5Page />
+                </Suspense>
+              )}
+              {currentPage === "ledger" && <LedgerPage />}
+              {currentPage === "quarantine" && <QuarantinePage />}
+              {currentPage === "audit" && <AuditPage />}
+              {currentPage === "health" && <HealthPage />}
+              {currentPage === "settings" && <SettingsPage />}
+            </main>
+          </ScrollArea>
+        </SidebarInset>
+      </SidebarProvider>
+    </Suspense>
   )
 }
 

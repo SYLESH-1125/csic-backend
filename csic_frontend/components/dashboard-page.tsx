@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { FileText, Shield, ShieldAlert, Link2, CheckCircle2, Loader2 } from "lucide-react"
+import { FileText, Shield, ShieldAlert, Link2, CheckCircle2, Loader2, ScanSearch } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Alert, AlertDescription } from "@/components/ui/alert"
@@ -30,6 +30,8 @@ import {
 } from "recharts"
 import { apiClient } from "@/lib/api-client"
 import { formatDistanceToNow } from "date-fns"
+import { useShellNavigate } from "@/lib/use-shell-navigate"
+import { Button } from "@/components/ui/button"
 
 interface DashboardData {
   summary: any
@@ -40,10 +42,15 @@ interface DashboardData {
 }
 
 export function DashboardPage() {
+  const { goPhase5 } = useShellNavigate()
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [mounted, setMounted] = useState(false)
+
+  const openOperationRoom = () => {
+    goPhase5("overview")
+  }
 
   useEffect(() => {
     setMounted(true)
@@ -238,6 +245,31 @@ export function DashboardPage() {
             </Card>
           ))}
         </div>
+      </section>
+
+      <section>
+        <h3 className="mb-4 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
+          Investigation workspace
+        </h3>
+        <Card className="border border-primary/20 bg-primary/5">
+          <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex size-10 shrink-0 items-center justify-center bg-primary/10 text-primary">
+                <ScanSearch className="size-5" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-foreground">Phase 5 — Operation Room</p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-xl">
+                  Case vaults, evidence hashes, timeline, workflow modes, and studio APIs live in the main app with
+                  shareable routes (<code className="text-[10px]">?phase5=…</code>).
+                </p>
+              </div>
+            </div>
+            <Button onClick={openOperationRoom} className="shrink-0">
+              Open Operation Room
+            </Button>
+          </CardContent>
+        </Card>
       </section>
 
       {/* Section 2: Analytics Graphs */}

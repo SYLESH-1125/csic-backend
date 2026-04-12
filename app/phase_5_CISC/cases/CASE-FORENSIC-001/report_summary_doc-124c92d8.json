@@ -1,0 +1,101 @@
+{
+  "document_id": "doc-124c92d8",
+  "status": "GENERATED",
+  "findings": 15,
+  "generated_at": "2026-04-05T00:14:30Z",
+  "evidence_items": 295,
+  "total_pages": 233,
+  "case_id": "CASE-FORENSIC-001",
+  "hypotheses": [
+    {
+      "confidence": 0.95,
+      "name": "USB Data Exfiltration - Primary Analysis",
+      "id": "H1-USB-MAIN",
+      "verdict": "confirmed"
+    },
+    {
+      "confidence": 0.93,
+      "name": "USB Device Identification",
+      "id": "H1-USB-DEVICE",
+      "verdict": "confirmed"
+    },
+    {
+      "confidence": 0.94,
+      "name": "USB File Transfer Analysis",
+      "id": "H1-USB-FILES",
+      "verdict": "confirmed"
+    },
+    {
+      "confidence": 0.88,
+      "name": "Email Exfiltration",
+      "id": "H2-EMAIL-MAIN",
+      "verdict": "confirmed"
+    },
+    {
+      "confidence": 0.87,
+      "name": "Email Attachment Analysis",
+      "id": "H2-EMAIL-ATTACH",
+      "verdict": "confirmed"
+    },
+    {
+      "confidence": 0.79,
+      "name": "Network Exfiltration",
+      "id": "H3-NET-MAIN",
+      "verdict": "confirmed"
+    },
+    {
+      "confidence": 0.81,
+      "name": "Cloud Storage Analysis",
+      "id": "H3-NET-CLOUD",
+      "verdict": "confirmed"
+    },
+    {
+      "confidence": 0.82,
+      "name": "Bluetooth Transfer",
+      "id": "H4-BT-MAIN",
+      "verdict": "confirmed"
+    },
+    {
+      "confidence": 0.91,
+      "name": "Timeline Reconstruction",
+      "id": "H5-TL-MAIN",
+      "verdict": "confirmed"
+    },
+    {
+      "confidence": 0.89,
+      "name": "Cross-Channel Correlation",
+      "id": "H5-TL-CORR",
+      "verdict": "confirmed"
+    },
+    {
+      "confidence": 0.86,
+      "name": "ML Anomaly Detection",
+      "id": "H6-ANOM-ML",
+      "verdict": "confirmed"
+    },
+    {
+      "confidence": 0.84,
+      "name": "Behavioral Analysis",
+      "id": "H6-ANOM-BEHAV",
+      "verdict": "confirmed"
+    },
+    {
+      "confidence": 0.9,
+      "name": "Business Impact Assessment",
+      "id": "H7-IMPACT",
+      "verdict": "confirmed"
+    },
+    {
+      "confidence": 0.88,
+      "name": "MITRE ATT&CK Mapping",
+      "id": "H8-MITRE",
+      "verdict": "confirmed"
+    },
+    {
+      "confidence": 0.98,
+      "name": "Null Hypothesis",
+      "id": "H0-NULL",
+      "verdict": "rejected"
+    }
+  ]
+}

@@ -40,6 +40,7 @@ import {
   Activity,
   Shield,
 } from "lucide-react"
+import { useApp } from "@/lib/app-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -51,12 +52,16 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 /* ================================================================== */
 /* TYPES                                                               */
 /* ================================================================== */
+type QueryDataSource = "live" | "live_empty" | "mock" | "mock_fallback"
+
 interface QueryResult {
   columns: string[]
   rows: Record<string, string | number>[]
   executionTime: number
   totalRows: number
   tablesUsed: string[]
+  dataSource?: QueryDataSource
+  dataSourceDetail?: string
 }
 
 interface QueryHistoryEntry {
@@ -224,10 +229,12 @@ function SqlEditor({
   value,
   onChange,
   insertField,
+  activeAuditId,
 }: {
   value: string
   onChange: (val: string) => void
   insertField: string | null
+  activeAuditId: string | null
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const highlightRef = useRef<HTMLDivElement>(null)
@@ -283,9 +290,24 @@ function SqlEditor({
             </div>
           ))}
         </div>
+        <div className="mt-3 rounded-md border border-border bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground">
+          <span className="font-semibold text-foreground">Phases 1→4 pipeline: </span>
+          {activeAuditId ? (
+            <>
+              Active audit <code className="text-[10px] bg-muted px-1 rounded">{activeAuditId.slice(0, 8)}…</code>
+              — Magic Query loads committed rows from this audit after Phase 2 commit. Without an audit, the built-in demo
+              dataset is used.
+            </>
+          ) : (
+            <>
+              Set an audit by completing Phase 1 ingestion (or open Parsing with a saved audit). Phase 4 then queries real{" "}
+              <code className="text-[10px] bg-muted px-1 rounded">normalized_logs</code> via the backend.
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Syntax highlight layer */}
+{/* Syntax highlight layer */}
       <div
         ref={highlightRef}
         className="absolute inset-0 pl-14 pt-3 pr-4 pb-3 overflow-hidden whitespace-pre-wrap break-words text-[13px] leading-[20px] pointer-events-none text-slate-300"
@@ -669,6 +691,8 @@ function validateSQL(sql: string): { valid: boolean; error?: string } {
 /* MAIN COMPONENT                                                      */
 /* ================================================================== */
 export function Phase4Page() {
+  const { activeAuditId } = useApp()
+
   // Query input
   const [naturalQuery, setNaturalQuery] = useState("")
   const [generating, setGenerating] = useState(false)
@@ -779,7 +803,7 @@ export function Phase4Page() {
       const res = await fetch("/api/magic-query/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sql: sql.trim() }),
+        body: JSON.stringify({ sql: sql.trim(), audit_id: activeAuditId || undefined }),
       })
       const data = await res.json()
 
@@ -795,6 +819,8 @@ export function Phase4Page() {
         executionTime: data.executionTime,
         totalRows: data.totalRows,
         tablesUsed: data.tablesUsed,
+        dataSource: data.dataSource,
+        dataSourceDetail: data.dataSourceDetail,
       }
       setResult(queryResult)
       setExecuting(false)
@@ -816,7 +842,7 @@ export function Phase4Page() {
       setExecError(err.message || "Network error")
       setExecuting(false)
     }
-  }, [sql, naturalQuery])
+  }, [sql, naturalQuery, activeAuditId])
 
   /* ── Reset ── */
   const handleReset = useCallback(() => {
@@ -943,8 +969,25 @@ export function Phase4Page() {
         {/* Quick stats */}
         <div className="mt-3 grid grid-cols-4 gap-3">
           {[
-            { icon: Database, label: "Database", value: "parsed_logs", sub: "DuckDB" },
-            { icon: Hash, label: "Records", value: "48", sub: "Phase-2 staged" },
+            {
+              icon: Database,
+              label: "Database",
+              value: "parsed_logs",
+              sub: activeAuditId ? "Phase 4 API → DuckDB" : "demo or live",
+            },
+            {
+              icon: Hash,
+              label: "Records",
+              value: result != null ? String(result.totalRows) : "—",
+              sub:
+                result?.dataSource === "live"
+                  ? "committed Phase 2 rows"
+                  : result?.dataSource === "live_empty"
+                    ? "none for this audit"
+                    : activeAuditId
+                      ? "run query (uses audit)"
+                      : "no audit — demo set",
+            },
             { icon: Activity, label: "Queries Run", value: String(totalQueries), sub: avgExecTime > 0 ? `avg ${avgExecTime}ms` : "none yet" },
             { icon: Shield, label: "Mode", value: "READ-ONLY", sub: "SELECT only" },
           ].map((s) => (
@@ -959,6 +1002,21 @@ export function Phase4Page() {
               </div>
             </div>
           ))}
+        </div>
+        <div className="mt-3 rounded-md border border-border bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground">
+          <span className="font-semibold text-foreground">Phases 1→4 pipeline: </span>
+          {activeAuditId ? (
+            <>
+              Active audit <code className="text-[10px] bg-muted px-1 rounded">{activeAuditId.slice(0, 8)}…</code>
+              — Magic Query loads committed rows from this audit after Phase 2 commit. Without an audit, the built-in demo
+              dataset is used.
+            </>
+          ) : (
+            <>
+              Set an audit by completing Phase 1 ingestion (or open Parsing with a saved audit). Phase 4 then queries real{" "}
+              <code className="text-[10px] bg-muted px-1 rounded">normalized_logs</code> via the backend.
+            </>
+          )}
         </div>
       </div>
 
@@ -1174,7 +1232,12 @@ export function Phase4Page() {
                       <VisualSqlEditor sql={sql} onSqlChange={setSql} />
                     ) : (
                       <>
-                        <SqlEditor value={sql} onChange={setSql} insertField={insertField} />
+                        <SqlEditor
+                          value={sql}
+                          onChange={setSql}
+                          insertField={insertField}
+                          activeAuditId={activeAuditId}
+                        />
                         <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                           <Info className="size-3 shrink-0" />
                           <span>Edit SQL freely. Tab inserts 2 spaces. Use the schema panel on the right to insert columns.</span>

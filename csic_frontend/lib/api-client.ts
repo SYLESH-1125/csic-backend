@@ -1,6 +1,6 @@
-const _RAW_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000').trim()
-// Browsers cannot call 0.0.0.0; normalize to loopback.
-const API_BASE_URL = _RAW_BASE_URL.replace('://0.0.0.0', '://127.0.0.1').replace(/\/+$/, '')
+import { getApiBaseUrl } from '@/lib/public-env'
+
+const API_BASE_URL = getApiBaseUrl()
 
 // ============================================================================
 // AUTHENTICATION TYPES
@@ -574,32 +574,6 @@ class ApiClient {
       throw new Error(`Ledger item not found: ${auditId}`)
     }
     return res.item
-  }
-
-  async fetchUrlFile(url: string): Promise<Blob> {
-    const response = await fetch(`${this.baseUrl}/api/ingestion/fetch-url`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(this.getToken() ? { 'Authorization': `Bearer ${this.getToken()}` } : {}),
-      },
-      body: JSON.stringify({ url }),
-    })
-
-    if (!response.ok) {
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`
-      try {
-        const error = await response.json()
-        errorMessage = error.detail || error.message || errorMessage
-      } catch {
-        if (response.status === 403 || response.status === 401) {
-          errorMessage = "File is not publicly accessible. Please make the file public and try again."
-        }
-      }
-      throw new Error(errorMessage)
-    }
-
-    return response.blob()
   }
 
   // ==========================================================================

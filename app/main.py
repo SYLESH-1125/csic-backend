@@ -1,6 +1,6 @@
+import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from app.core.logging import logger
 from app.db.base import Base
@@ -14,6 +14,7 @@ from app.ledger.router import router as new_ledger
 from app.dashboard.router import router as new_dashboard
 from app.reporting.router import router as new_reporting
 from app.phase2.router import router as phase2_router
+from app.phase4.router import router as phase4_router
 from app.auth.router import router as auth_router
 from fastapi.responses import JSONResponse
 
@@ -32,38 +33,33 @@ new_app.add_middleware(
 # Create all tables (includes new IngestionSession + QuarantineLog tables)
 Base.metadata.create_all(bind=engine)
 
-# ── Phase 6 assets (templates/covers) ────────────────────────────────────────
-_phase6_templates_dir = (
-    Path(__file__).resolve().parent
-    / "phase6"
-    / "engine_frontend"
-    / "public"
-    / "templates"
-)
-if _phase6_templates_dir.exists():
-    new_app.mount(
-        "/templates",
-        StaticFiles(directory=str(_phase6_templates_dir)),
-        name="phase6_templates",
-    )
-
 # ── REST routers (prefixed under /api) ─────────────────────────────────────
 new_app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 new_app.include_router(new_ingestion, prefix="/api/ingestion", tags=["Ingestion"])
 new_app.include_router(phase2_router, prefix="/api/phase2", tags=["Phase 2: Universal Translator"])
+new_app.include_router(phase4_router, prefix="/api/phase4", tags=["Phase 4: Analytics Dataset"])
 new_app.include_router(new_features, prefix="/api")
 new_app.include_router(new_detection, prefix="/api")
 new_app.include_router(new_ledger, prefix="/api")
 new_app.include_router(new_dashboard, prefix="/api")
 new_app.include_router(new_reporting, prefix="/api")
 
-# ── Phase 6 report engine (mounted under /api/report) ───────────────────────
-try:
-    from app.phase6.engine_backend.report_router import router as phase6_report_router
+# ── Phase 5: NFLIP Operation Room (full FastAPI app — reporting + agents + Studio API) ──
+_phase5_backend_root = Path(__file__).resolve().parent / "phase_5_CISC" / "operation-room" / "backend"
+if _phase5_backend_root.is_dir():
+    _p5 = str(_phase5_backend_root)
+    if _p5 not in sys.path:
+        sys.path.insert(0, _p5)
+    try:
+        from operation_room.main import app as phase5_operation_room_app
 
-    new_app.include_router(phase6_report_router)
-except Exception as _phase6_exc:
-    logger.warning(f"Phase 6 report engine unavailable: {_phase6_exc}")
+        new_app.mount("/api/phase5", phase5_operation_room_app)
+        logger.info("Phase 5 Operation Room mounted at /api/phase5")
+    except Exception as _p5_exc:
+        logger.warning(
+            "Phase 5 Operation Room not mounted: {} — install: pip install -r app/phase_5_CISC/operation-room/backend/requirements.txt",
+            _p5_exc,
+        )
 
 # ── WebSocket router (no /api prefix — WS routes use bare paths) ───────────
 new_app.include_router(ws_ingestion, tags=["Secure WebSocket Ingestion"])

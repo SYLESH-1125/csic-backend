@@ -18,15 +18,10 @@ mounted at the application root (not under /api) to avoid prefix conflicts.
 """
 
 from typing import Optional
-import re
-import time
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-import httpx
-from io import BytesIO
 
 from app.db.session import SessionLocal
 from app.ingestion.integrity import verify_file_integrity, verify_hash_chain
@@ -77,10 +72,6 @@ def get_db():
 class CloudIngestRequest(BaseModel):
     oauth_token: str
     cloud_provider: str = "generic"
-
-
-class FetchUrlRequest(BaseModel):
-    url: str
 
 
 # ---------------------------------------------------------------------------
@@ -201,151 +192,6 @@ async def cloud_ingestion_init(
         raise HTTPException(status_code=401, detail=str(exc))
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
-
-
-@router.post("/fetch-url")
-async def fetch_url_file(
-    body: FetchUrlRequest,
-    db: Session = Depends(get_db),
-):
-    """
-    Fetch a publicly accessible file from a URL and return it as a downloadable blob.
-    This endpoint handles CORS issues by fetching the file server-side.
-    
-    Body:
-        url: Public file URL (Google Drive, direct links, etc.)
-    
-    Returns:
-        File content as streaming response with proper headers
-    """
-    try:
-        url = body.url.strip()
-        original_url = url
-        file_id = None
-        
-        # Extract file ID from Google Drive sharing link
-        if "drive.google.com/file/d/" in url:
-            file_id_match = re.search(r"/file/d/([a-zA-Z0-9_-]+)", url)
-            if file_id_match:
-                file_id = file_id_match.group(1)
-                # Try direct download URL first
-                url = f"https://drive.google.com/uc?export=download&id={file_id}"
-        
-        # Fetch file server-side (no CORS restrictions)
-        async with httpx.AsyncClient(timeout=60.0, follow_redirects=True) as client:
-            response = await client.get(url)
-            
-            if response.status_code == 403 or response.status_code == 401:
-                raise HTTPException(
-                    status_code=403,
-                    detail="File is not publicly accessible. Please make the file public and try again."
-                )
-            
-            if not response.is_success:
-                raise HTTPException(
-                    status_code=response.status_code,
-                    detail=f"Failed to fetch file: {response.status_code} {response.reason_phrase}"
-                )
-            
-            # Check if response is HTML (Google Drive confirmation page)
-            content_type = response.headers.get("content-type", "")
-            if "text/html" in content_type and file_id:
-                # Parse the HTML to extract confirmation token
-                html_content = response.text
-                
-                # Method 1: Try to find and extract the download confirmation link from HTML
-                # Google Drive shows a warning page with a download link
-                confirm_patterns = [
-                    r'href="(/uc\?export=download[^"]+)"',
-                    r'action="(/uc\?export=download[^"]+)"',
-                    r'id="download-form".*?action="([^"]+)"',
-                ]
-                
-                confirm_url = None
-                for pattern in confirm_patterns:
-                    confirm_match = re.search(pattern, html_content, re.DOTALL)
-                    if confirm_match:
-                        confirm_path = confirm_match.group(1)
-                        if confirm_path.startswith('/'):
-                            confirm_url = "https://drive.google.com" + confirm_path
-                        elif confirm_path.startswith('http'):
-                            confirm_url = confirm_path
-                        break
-                
-                # Method 2: Try with confirm=t parameter (bypasses confirmation for some files)
-                if not confirm_url:
-                    confirm_url = f"https://drive.google.com/uc?export=download&id={file_id}&confirm=t"
-                
-                # Try the confirmation URL
-                response = await client.get(confirm_url, follow_redirects=True)
-                content_type = response.headers.get("content-type", "")
-                
-                # Check if we got the actual file or still HTML
-                if "text/html" in content_type:
-                    # Still HTML, check content size - if it's small, it's likely an error page
-                    if len(response.content) < 50000:  # HTML pages are usually smaller
-                        # Try one more method: direct download with authuser parameter
-                        final_url = f"https://drive.google.com/uc?export=download&id={file_id}"
-                        response = await client.get(final_url, follow_redirects=True, headers={
-                            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                        })
-                        content_type = response.headers.get("content-type", "")
-                        
-                        if "text/html" in content_type:
-                            raise HTTPException(
-                                status_code=400,
-                                detail=(
-                                    "Google Drive requires manual confirmation for this file (likely a large file or virus scan required).\n\n"
-                                    "Solutions:\n"
-                                    "1. For files < 100MB: Ensure the file is set to 'Anyone with the link' can view\n"
-                                    "2. For large files: Download manually and upload directly\n"
-                                    "3. Alternative: Use a direct file hosting service (Dropbox, OneDrive, etc.)\n\n"
-                                    "To get a direct download link:\n"
-                                    "1. Open the file in Google Drive\n"
-                                    "2. Right-click → Download\n"
-                                    "3. Copy the download URL from your browser's network tab"
-                                )
-                            )
-            
-            # Get filename from Content-Disposition or URL
-            filename = f"cloud_file_{int(time.time())}"
-            content_disposition = response.headers.get("content-disposition", "")
-            if content_disposition:
-                filename_match = re.search(r'filename[^;=\n]*=(([\'"]).*?\2|[^;\n]*)', content_disposition)
-                if filename_match:
-                    filename = filename_match.group(1).strip('\'"')
-            else:
-                # Try to extract from URL
-                url_parts = body.url.split('/')
-                last_part = url_parts[-1] if url_parts else ""
-                if last_part and '.' in last_part:
-                    filename = last_part.split('?')[0]
-            
-            # Return file as streaming response
-            file_content = BytesIO(response.content)
-            
-            return StreamingResponse(
-                file_content,
-                media_type=content_type or "application/octet-stream",
-                headers={
-                    "Content-Disposition": f'attachment; filename="{filename}"',
-                    "Content-Length": str(len(response.content)),
-                }
-            )
-            
-    except httpx.HTTPStatusError as e:
-        if e.response.status_code in [403, 401]:
-            raise HTTPException(
-                status_code=403,
-                detail="File is not publicly accessible. Please make the file public and try again."
-            )
-        raise HTTPException(status_code=e.response.status_code, detail=str(e))
-    except httpx.RequestError as e:
-        raise HTTPException(status_code=400, detail=f"Failed to fetch file from URL: {str(e)}")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error fetching file: {str(e)}")
 
 
 @router.post("/generate-telemetry-link")

@@ -1,0 +1,638 @@
+diff --git a/operation-room/backend/app/services/timeline_service.py b/operation-room/backend/app/services/timeline_service.py
+index 40dfd26..d5804de 100644
+--- a/operation-room/backend/app/services/timeline_service.py
++++ b/operation-room/backend/app/services/timeline_service.py
+@@ -2,14 +2,16 @@
+ Timeline Reconstruction service.
+ 
+ Reads raw_events from the Case Vault, normalises timestamps to UTC,
+-merges them into a unified_timeline table, auto-detects anchor events,
+-hashes the result and records chain-of-custody.
++merges them into a unified_timeline table, applies DBSCAN clustering,
++running Time-Skew heuristics, hashes the result and records chain-of-custody.
+ """
+ 
+ import json
+ import uuid
+ from datetime import datetime, timezone
++import numpy as np
+ from collections import defaultdict
++from sklearn.cluster import DBSCAN
+ 
+ from app.database import open_vault
+ from app.config import settings
+@@ -44,58 +46,6 @@ def _classify_severity(action: str) -> str:
+     return "INFO"
+ 
+ 
+-# ── Anchor detection rules ───────────────────────────────────────────────
+-
+-def _detect_anchors(events: list[dict], case_id: str) -> list[dict]:
+-    """Auto-detect key anchor events per actor."""
+-    anchors = []
+-    seen_first = defaultdict(set)  # actor -> set of anchor types
+-
+-    for ev in events:
+-        actor = ev.get("actor", "unknown")
+-        source = ev.get("source_type", "")
+-        action = ev.get("action", "")
+-
+-        checks = [
+-            ("AUTH", {"LOGIN_SUCCESS", "LOGIN_FAILED"}, "First authentication event"),
+-            ("VPN", {"VPN_CONNECT"}, "First VPN session"),
+-            ("DB", {"SELECT", "INSERT", "UPDATE", "DELETE", "EXPORT"}, "First database access"),
+-            ("FW", {"DENY", "DROP"}, "First firewall block"),
+-            ("FILE", {"FILE_READ", "FILE_WRITE", "FILE_DELETE", "FILE_COPY"}, "First file-system access"),
+-            ("EPP", {"MALWARE_DETECTED", "QUARANTINE", "PROCESS_BLOCKED"}, "First endpoint security alert"),
+-        ]
+-
+-        for src_match, action_set, label in checks:
+-            anchor_key = f"{actor}:{src_match}"
+-            if source == src_match and action in action_set and anchor_key not in seen_first[actor]:
+-                seen_first[actor].add(anchor_key)
+-                anchors.append({
+-                    "anchor_id": str(uuid.uuid4()),
+-                    "case_id": case_id,
+-                    "tl_event_id": ev["tl_event_id"],
+-                    "label": f"{label} — {actor}",
+-                    "auto_detected": True,
+-                    "created_by": "system",
+-                    "created_at": _now_iso(),
+-                })
+-
+-        # High-severity actions are always anchored on first occurrence per actor
+-        sev_key = f"{actor}:HIGH:{action}"
+-        if _classify_severity(action) == "HIGH" and sev_key not in seen_first[actor]:
+-            seen_first[actor].add(sev_key)
+-            anchors.append({
+-                "anchor_id": str(uuid.uuid4()),
+-                "case_id": case_id,
+-                "tl_event_id": ev["tl_event_id"],
+-                "label": f"High-severity: {action} — {actor}",
+-                "auto_detected": True,
+-                "created_by": "system",
+-                "created_at": _now_iso(),
+-            })
+-
+-    return anchors
+-
+-
+ # ── Build timeline ───────────────────────────────────────────────────────
+ 
+ def build_timeline(case_id: str, data: dict) -> dict:
+@@ -123,8 +73,8 @@ def build_timeline(case_id: str, data: dict) -> dict:
+         if existing > 0 and not data.get("force_rebuild", False):
+             return {
+                 "total_events": existing,
+-                "anchors_detected": conn.execute(
+-                    "SELECT COUNT(*) FROM anchor_events WHERE case_id = ?", [case_id]
++                "clusters_detected": conn.execute(
++                    "SELECT COUNT(*) FROM temporal_clusters WHERE case_id = ?", [case_id]
+                 ).fetchone()[0],
+                 "hash_value": "",
+                 "coc_event_id": "",
+@@ -153,7 +103,7 @@ def build_timeline(case_id: str, data: dict) -> dict:
+                    source_system, actor, action, target, detail
+             FROM raw_events
+             WHERE case_id = ?{source_filter}{time_filter}
+-            ORDER BY timestamp ASC
++            ORDER BY event_id ASC
+             """,
+             params,
+         ).fetchall()
+@@ -161,20 +111,34 @@ def build_timeline(case_id: str, data: dict) -> dict:
+         cols = ["event_id", "case_id", "source_type", "timestamp",
+                 "source_system", "actor", "action", "target", "detail"]
+ 
+-        # ② Normalise & insert into unified_timeline
++        # ② Normalise & Execute Time-Skew Heuristics
+         normalised = []
++        last_ts_epoch = None
++        
+         for row in rows:
+             rec = dict(zip(cols, row))
+             ts_raw = rec["timestamp"]
+-            # Ensure UTC normalisation
+             if ts_raw and not isinstance(ts_raw, str):
+                 ts_str = str(ts_raw)
+             else:
+                 ts_str = ts_raw or now
++                
++            try:
++                curr_ts_epoch = datetime.fromisoformat(ts_str.replace("Z", "+00:00")).timestamp()
++            except Exception:
++                curr_ts_epoch = 0.0
+ 
+-            tl_id = str(uuid.uuid4())
++            is_time_stomped = False
+             severity = _classify_severity(rec.get("action", ""))
+ 
++            # Time-Skew Check: if timestamps decrement while sequence increments -> tampering
++            if last_ts_epoch is not None:
++                if curr_ts_epoch < last_ts_epoch:
++                    is_time_stomped = True
++                    severity = "CRITICAL"
++            last_ts_epoch = curr_ts_epoch
++
++            tl_id = str(uuid.uuid4())
+             event = {
+                 "tl_event_id": tl_id,
+                 "case_id": case_id,
+@@ -188,47 +152,63 @@ def build_timeline(case_id: str, data: dict) -> dict:
+                 "target": rec.get("target"),
+                 "severity": severity,
+                 "detail": rec.get("detail"),
+-                "is_anchor": False,
+-                "anchor_label": None,
++                "is_time_stomped": is_time_stomped,
++                "cluster_id": None,
+             }
+             normalised.append(event)
+ 
+-            conn.execute(
+-                """
+-                INSERT INTO unified_timeline
+-                    (tl_event_id, case_id, original_event_id, normalised_ts,
+-                     utc_offset, source_type, source_system, actor, action,
+-                     target, severity, detail, is_anchor, anchor_label, created_at)
+-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+-                """,
+-                [
+-                    event["tl_event_id"], case_id, event["original_event_id"],
+-                    event["normalised_ts"], event["utc_offset"],
+-                    event["source_type"], event["source_system"],
+-                    event["actor"], event["action"], event["target"],
+-                    event["severity"], event["detail"],
+-                    False, None, now,
+-                ],
+-            )
+-
+-        # ③ Detect anchors
+-        anchors = _detect_anchors(normalised, case_id)
+-        anchor_ids = {a["tl_event_id"] for a in anchors}
+-
+-        for a in anchors:
+-            conn.execute(
+-                """
+-                INSERT INTO anchor_events
+-                    (anchor_id, case_id, tl_event_id, label, auto_detected, created_by, created_at)
+-                VALUES (?, ?, ?, ?, ?, ?, ?)
+-                """,
+-                [a["anchor_id"], case_id, a["tl_event_id"],
+-                 a["label"], a["auto_detected"], a["created_by"], a["created_at"]],
+-            )
+-            conn.execute(
+-                "UPDATE unified_timeline SET is_anchor = TRUE, anchor_label = ? WHERE tl_event_id = ?",
+-                [a["label"], a["tl_event_id"]],
+-            )
++        # ③ Dynamic DBSCAN Clustering
++        # Sort chronologically for ML ingestion and DB storage
++        normalised.sort(key=lambda x: datetime.fromisoformat(x["normalised_ts"].replace("Z", "+00:00")).timestamp())
++        epoch_times = [datetime.fromisoformat(x["normalised_ts"].replace("Z", "+00:00")).timestamp() for x in normalised]
++        
++        cluster_window_seconds = float(data.get("cluster_window_seconds", 300))
++        cluster_count = 0
++        
++        if epoch_times:
++            X = np.array(epoch_times).reshape(-1, 1)
++            db = DBSCAN(eps=cluster_window_seconds, min_samples=3).fit(X)
++            
++            cluster_map = defaultdict(list)
++            
++            for idx, event in enumerate(normalised):
++                lbl = int(db.labels_[idx])
++                if lbl != -1:
++                    event["cluster_id"] = lbl
++                    cluster_map[lbl].append(event)
++                
++                conn.execute(
++                    """
++                    INSERT INTO unified_timeline
++                        (tl_event_id, case_id, original_event_id, normalised_ts,
++                         utc_offset, source_type, source_system, actor, action,
++                         target, severity, detail, is_time_stomped, cluster_id, created_at)
++                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
++                    """,
++                    [
++                        event["tl_event_id"], case_id, event["original_event_id"],
++                        event["normalised_ts"], event["utc_offset"],
++                        event["source_type"], event["source_system"],
++                        event["actor"], event["action"], event["target"],
++                        event["severity"], event["detail"],
++                        event["is_time_stomped"], event["cluster_id"], now,
++                    ],
++                )
++                
++            cluster_count = len(cluster_map.keys())
++            for c_id, evs in cluster_map.items():
++                evs_sorted = sorted(evs, key=lambda x: x["normalised_ts"])
++                actions = [e["action"] for e in evs if e["action"]]
++                dominant = max(set(actions), key=actions.count) if actions else "UNKNOWN"
++                
++                conn.execute(
++                    """
++                    INSERT INTO temporal_clusters
++                        (cluster_id, case_id, cluster_number, start_ts, end_ts, event_count, dominant_action, created_at)
++                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
++                    """,
++                    [str(uuid.uuid4()), case_id, c_id, evs_sorted[0]["normalised_ts"], evs_sorted[-1]["normalised_ts"], len(evs), dominant, now]
++                )
+ 
+         # ④ Hash the timeline
+         hash_value = hash_records(normalised, settings.HASH_ALGORITHM)
+@@ -243,17 +223,17 @@ def build_timeline(case_id: str, data: dict) -> dict:
+             hash_after=hash_value,
+             details={
+                 "total_events": len(normalised),
+-                "anchors_detected": len(anchors),
++                "clusters_detected": cluster_count,
+                 "source_types": list(set(e["source_type"] for e in normalised)),
+             },
+         )
+ 
+         return {
+             "total_events": len(normalised),
+-            "anchors_detected": len(anchors),
++            "clusters_detected": cluster_count,
+             "hash_value": hash_value,
+             "coc_event_id": coc_id,
+-            "message": f"Timeline built with {len(normalised)} events and {len(anchors)} anchors.",
++            "message": f"Timeline built with {len(normalised)} events spread across {cluster_count} clusters.",
+         }
+     finally:
+         try:
+@@ -265,8 +245,8 @@ def build_timeline(case_id: str, data: dict) -> dict:
+ 
+ # ── Query timeline ───────────────────────────────────────────────────────
+ 
+-def get_timeline(case_id: str, filters: dict) -> list[dict]:
+-    """Fetch timeline events with optional filters."""
++def get_timeline(case_id: str, filters: dict) -> dict:
++    """Fetch timeline events grouped by DBSCAN Temporal Clusters."""
+     conn = open_vault(case_id)
+     try:
+         where = ["case_id = ?"]
+@@ -287,8 +267,8 @@ def get_timeline(case_id: str, filters: dict) -> list[dict]:
+         if filters.get("severity"):
+             where.append("severity = ?")
+             params.append(filters["severity"])
+-        if filters.get("anchors_only"):
+-            where.append("is_anchor = TRUE")
++        if filters.get("time_stomped_only"):
++            where.append("is_time_stomped = TRUE")
+         if filters.get("time_start"):
+             where.append("normalised_ts >= ?")
+             params.append(filters["time_start"])
+@@ -296,17 +276,17 @@ def get_timeline(case_id: str, filters: dict) -> list[dict]:
+             where.append("normalised_ts <= ?")
+             params.append(filters["time_end"])
+         if filters.get("keyword"):
+-            where.append("(action LIKE ? OR target LIKE ? OR detail LIKE ?)")
++            where.append("(action LIKE ? OR target LIKE ? OR detail LIKE ?)")   
+             kw = f"%{filters['keyword']}%"
+             params.extend([kw, kw, kw])
+ 
+-        limit = min(filters.get("limit", 500), 5000)
++        limit = min(filters.get("limit", 5000), 5000)
+         offset = filters.get("offset", 0)
+ 
+         query = f"""
+-            SELECT tl_event_id, case_id, original_event_id, normalised_ts,
+-                   utc_offset, source_type, source_system, actor, action,
+-                   target, severity, detail, is_anchor, anchor_label
++            SELECT tl_event_id, case_id, original_event_id, normalised_ts,      
++                   utc_offset, source_type, source_system, actor, action,       
++                   target, severity, detail, is_time_stomped, cluster_id
+             FROM unified_timeline
+             WHERE {' AND '.join(where)}
+             ORDER BY normalised_ts ASC
+@@ -314,290 +294,50 @@ def get_timeline(case_id: str, filters: dict) -> list[dict]:
+         """
+ 
+         rows = conn.execute(query, params).fetchall()
+-        cols = [
+-            "tl_event_id", "case_id", "original_event_id", "normalised_ts",
+-            "utc_offset", "source_type", "source_system", "actor", "action",
+-            "target", "severity", "detail", "is_anchor", "anchor_label",
+-        ]
+-        results = []
+-        for row in rows:
+-            d = dict(zip(cols, row))
+-            if d.get("normalised_ts") and not isinstance(d["normalised_ts"], str):
+-                d["normalised_ts"] = str(d["normalised_ts"])
+-            results.append(d)
+-        return results
+-    finally:
+-        conn.close()
+-
+-
+-# ── Anchors ──────────────────────────────────────────────────────────────
+-
+-def get_anchors(case_id: str) -> list[dict]:
+-    """Get all anchor events for a case."""
+-    conn = open_vault(case_id)
+-    try:
+-        rows = conn.execute(
+-            """
+-            SELECT a.anchor_id, a.case_id, a.tl_event_id, a.label,
+-                   a.auto_detected, a.created_by, a.created_at,
+-                   t.normalised_ts, t.source_type, t.actor, t.action
+-            FROM anchor_events a
+-            JOIN unified_timeline t ON a.tl_event_id = t.tl_event_id
+-            WHERE a.case_id = ?
+-            ORDER BY t.normalised_ts ASC
+-            """,
+-            [case_id],
+-        ).fetchall()
+-        cols = [
+-            "anchor_id", "case_id", "tl_event_id", "label",
+-            "auto_detected", "created_by", "created_at",
+-            "normalised_ts", "source_type", "actor", "action",
+-        ]
+-        results = []
+-        for row in rows:
+-            d = dict(zip(cols, row))
+-            for k in ("created_at", "normalised_ts"):
+-                if d.get(k) and not isinstance(d[k], str):
+-                    d[k] = str(d[k])
+-            results.append(d)
+-        return results
+-    finally:
+-        conn.close()
+-
+-
+-def toggle_anchor(case_id: str, data: dict) -> dict:
+-    """Manually add or remove an anchor on a timeline event."""
+-    tl_id = data["tl_event_id"]
+-    is_anchor = data.get("is_anchor", True)
+-    label = data.get("label", "Manual anchor")
+-    conn = open_vault(case_id)
+-    try:
+-        if is_anchor:
+-            anchor_id = str(uuid.uuid4())
+-            conn.execute(
+-                "INSERT INTO anchor_events (anchor_id, case_id, tl_event_id, label, auto_detected, created_by, created_at) VALUES (?, ?, ?, ?, FALSE, 'analyst', ?)",
+-                [anchor_id, case_id, tl_id, label, _now_iso()],
+-            )
+-            conn.execute(
+-                "UPDATE unified_timeline SET is_anchor = TRUE, anchor_label = ? WHERE tl_event_id = ?",
+-                [label, tl_id],
+-            )
+-        else:
+-            conn.execute("DELETE FROM anchor_events WHERE tl_event_id = ? AND case_id = ?", [tl_id, case_id])
+-            conn.execute(
+-                "UPDATE unified_timeline SET is_anchor = FALSE, anchor_label = NULL WHERE tl_event_id = ?",
+-                [tl_id],
+-            )
+-    finally:
+-        conn.close()
+-
+-    record_coc_event(
+-        case_id=case_id,
+-        actor="analyst",
+-        action="ANCHOR_TOGGLED",
+-        target_artefact=f"timeline_event:{tl_id}",
+-        justification=f"{'Added' if is_anchor else 'Removed'} anchor: {label}",
+-    )
+-
+-    return {"tl_event_id": tl_id, "is_anchor": is_anchor, "label": label}
+-
+-
+-# ── Stats ────────────────────────────────────────────────────────────────
+-
+-
+-def get_virtualized_timeline(case_id: str, bucket_interval: str = "1 hour") -> dict:
+-    """
+-    Phase 4: Virtualisation for Large Datasets.
+-    Aggregates events into time buckets to prevent DOM crashes on 40,000+ nodes.
+-    Interval can be '1 hour', '15 minutes', '1 day', etc.
+-    """
+-    conn = open_vault(case_id)
+-    try:
+-        # Check total rows
+-        total_rows = conn.execute("SELECT COUNT(*) FROM unified_timeline WHERE case_id = ?", [case_id]).fetchone()[0]
+-        
+-        # Aggregate by bucket and source to generate area/bar charts safely
+-        query = f"""
+-            SELECT 
+-                date_trunc('{bucket_interval}', normalised_ts) as bucket_time,
+-                source_type as source,
+-                COUNT(*) as event_count
+-            FROM unified_timeline 
+-            WHERE case_id = ? AND normalised_ts IS NOT NULL
+-            GROUP BY bucket_time, source_type
+-            ORDER BY bucket_time ASC
+-        """
+-        
+-        rows = conn.execute(query, [case_id]).fetchall()
+-        
+-        # Restructure for Recharts
+-        # [ { "time": "2024-01-01T00:00:00", "source A": 50, "source B": 20 } ]
+-        bucket_map = {}
+-        for bucket_time, source, count in rows:
+-            ts_str = str(bucket_time)
+-            if ts_str not in bucket_map:
+-                bucket_map[ts_str] = {"time": ts_str, "total": 0}
+-            
+-            src_key = source or "Unknown"
+-            bucket_map[ts_str][src_key] = count
+-            bucket_map[ts_str]["total"] += count
+-            
+-        series = list(bucket_map.values())
+-        
+-        return {
+-            "is_virtualized": True,
+-            "total_raw_events": total_rows,
+-            "interval": bucket_interval,
+-            "series": series
+-        }
+-    finally:
+-        conn.close()
+-
+-def get_timeline_stats(case_id: str) -> dict:
+-    """Summary statistics for the timeline."""
+-    conn = open_vault(case_id)
+-    try:
+-        total = conn.execute(
+-            "SELECT COUNT(*) FROM unified_timeline WHERE case_id = ?", [case_id]
+-        ).fetchone()[0]
+-        anchors = conn.execute(
+-            "SELECT COUNT(*) FROM anchor_events WHERE case_id = ?", [case_id]
+-        ).fetchone()[0]
+-
+-        # By source
+-        source_rows = conn.execute(
+-            "SELECT source_type, COUNT(*) FROM unified_timeline WHERE case_id = ? GROUP BY source_type ORDER BY COUNT(*) DESC",
+-            [case_id],
+-        ).fetchall()
+-        sources = {r[0]: r[1] for r in source_rows}
+-
+-        # By actor
+-        actor_rows = conn.execute(
+-            "SELECT actor, COUNT(*) FROM unified_timeline WHERE case_id = ? GROUP BY actor ORDER BY COUNT(*) DESC",
+-            [case_id],
+-        ).fetchall()
+-        actors = {r[0]: r[1] for r in actor_rows}
+-
+-        # Time span
+-        span = conn.execute(
+-            "SELECT MIN(normalised_ts), MAX(normalised_ts) FROM unified_timeline WHERE case_id = ?",
+-            [case_id],
+-        ).fetchone()
+-        ts_start = str(span[0]) if span[0] else None
+-        ts_end = str(span[1]) if span[1] else None
+-
+-        # By hour
+-        hour_rows = conn.execute(
+-            "SELECT EXTRACT(HOUR FROM normalised_ts) AS hr, COUNT(*) FROM unified_timeline WHERE case_id = ? GROUP BY hr ORDER BY hr",
+-            [case_id],
+-        ).fetchall()
+-        events_by_hour = {str(int(r[0])): r[1] for r in hour_rows}
+-
+-        return {
+-            "total_events": total,
+-            "total_anchors": anchors,
+-            "sources": sources,
+-            "actors": actors,
+-            "time_span_start": ts_start,
+-            "time_span_end": ts_end,
+-            "events_by_hour": events_by_hour,
+-        }
+-    finally:
+-        conn.close()
++        cols = ["tl_event_id", "case_id", "original_event_id", "normalised_ts",
++                "utc_offset", "source_type", "source_system", "actor", "action",
++                "target", "severity", "detail", "is_time_stomped", "cluster_id"]
+ 
+-# ── Advanced Search & Stats ──────────────────────────────────────────────
+-
+-def get_timeline_search(case_id: str, search_query: dict, limit: int = 500, offset: int = 0) -> list[dict]:
+-    """Fetch timeline events using the advanced JSON Filter DSL."""
+-    conn = open_vault(case_id)
+-    try:
+-        where_clause, params = build_where_clause(search_query)
+-        base_where = "case_id = ?"
+-        all_params = [case_id]
++        cluster_map = defaultdict(lambda: {"events": [], "start": None, "end": None})
++        unclustered = []
+         
+-        if where_clause:
+-            full_where = f"{base_where} AND {where_clause}"
+-            all_params.extend(params)
+-        else:
+-            full_where = base_where
+-
+-        query = f"""
+-            SELECT tl_event_id, case_id, original_event_id, normalised_ts,
+-                   utc_offset, source_type, source_system, actor, action,
+-                   target, severity, detail, is_anchor, anchor_label
+-            FROM unified_timeline
+-            WHERE {full_where}
+-            ORDER BY normalised_ts ASC
+-            LIMIT {limit} OFFSET {offset}
+-        """
+-
+-        rows = conn.execute(query, all_params).fetchall()
+-        cols = [
+-            "tl_event_id", "case_id", "original_event_id", "normalised_ts",
+-            "utc_offset", "source_type", "source_system", "actor", "action",
+-            "target", "severity", "detail", "is_anchor", "anchor_label",
+-        ]
+-        results = []
+         for row in rows:
+-            d = dict(zip(cols, row))
+-            if d.get("normalised_ts") and not isinstance(d["normalised_ts"], str):
+-                d["normalised_ts"] = str(d["normalised_ts"])
+-            results.append(d)
+-        return results
+-    finally:
+-        conn.close()
+-
+-def get_timeline_stats_search(case_id: str, search_query: dict) -> dict:
+-    """Fetch aggregated stats using the advanced JSON Filter DSL."""
+-    conn = open_vault(case_id)
+-    try:
+-        where_clause, params = build_where_clause(search_query)
+-        base_where = "case_id = ?"
+-        all_params = [case_id]
+-        
+-        if where_clause:
+-            full_where = f"{base_where} AND {where_clause}"
+-            all_params.extend(params)
+-        else:
+-            full_where = base_where
+-
+-        total = conn.execute(f"SELECT COUNT(*) FROM unified_timeline WHERE {full_where}", all_params).fetchone()[0]
+-        anchors = conn.execute(f"SELECT COUNT(*) FROM unified_timeline WHERE is_anchor = TRUE AND {full_where}", all_params).fetchone()[0]
+-
+-        source_rows = conn.execute(f"SELECT source_type, COUNT(*) FROM unified_timeline WHERE {full_where} GROUP BY source_type ORDER BY COUNT(*) DESC", all_params).fetchall()
+-        sources = {r[0]: r[1] for r in source_rows}
+-
+-        actor_rows = conn.execute(f"SELECT actor, COUNT(*) FROM unified_timeline WHERE {full_where} GROUP BY actor ORDER BY COUNT(*) DESC", all_params).fetchall()
+-        actors = {r[0]: r[1] for r in actor_rows}
+-
+-        span = conn.execute(f"SELECT MIN(normalised_ts), MAX(normalised_ts) FROM unified_timeline WHERE {full_where}", all_params).fetchone()
+-        ts_start = str(span[0]) if span[0] else None
+-        ts_end = str(span[1]) if span[1] else None
++            rec = dict(zip(cols, row))
++            c_id = rec["cluster_id"]
++            
++            if c_id is not None:
++                cmap = cluster_map[c_id]
++                cmap["events"].append(rec)
++                
++                # Update boundaries
++                ts = rec["normalised_ts"]
++                if cmap["start"] is None or ts < cmap["start"]: cmap["start"] = ts
++                if cmap["end"] is None or ts > cmap["end"]: cmap["end"] = ts
++            else:
++                unclustered.append(rec)
++                
++        clusters_out = []
++        for c_id, cmap in cluster_map.items():
++            evs = cmap["events"]
++            clusters_out.append({
++                "cluster_id": c_id,
++                "start": cmap["start"],
++                "end": cmap["end"],
++                "event_count": len(evs),
++                "events": evs
++            })
+ 
+-        hour_rows = conn.execute(f"SELECT EXTRACT(HOUR FROM normalised_ts) AS hr, COUNT(*) FROM unified_timeline WHERE {full_where} GROUP BY hr ORDER BY hr", all_params).fetchall()
+-        events_by_hour = {str(int(r[0])): r[1] for r in hour_rows}
++        # Append unclustered points as pseudo-cluster for rendering, or simply append them
++        if unclustered:
++            clusters_out.append({
++                "cluster_id": "outliers",
++                "start": unclustered[0]["normalised_ts"] if unclustered else None,
++                "end": unclustered[-1]["normalised_ts"] if unclustered else None,
++                "event_count": len(unclustered),
++                "events": unclustered
++            })
+ 
+-        return {
+-            "total_events": total,
+-            "total_anchors": anchors,
+-            "sources": sources,
+-            "actors": actors,
+-            "time_span_start": ts_start,
+-            "time_span_end": ts_end,
+-            "events_by_hour": events_by_hour,
+-        }
++        return {"clusters": clusters_out}
+     finally:
+         conn.close()
+ 
+-def get_timeline_distinct(case_id: str, field_name: str) -> list[str]:
+-    """Fetch distinct values for a given field for frontend type-ahead."""
+-    allowed_fields = {"source_type", "source_system", "actor", "action", "target", "severity"}
+-    if field_name not in allowed_fields:
+-        raise ValueError(f"Field '{field_name}' is not allowed for distinct query")
+-    
+-    conn = open_vault(case_id)
+-    try:
+-        rows = conn.execute(f"SELECT DISTINCT {field_name} FROM unified_timeline WHERE case_id = ? AND {field_name} IS NOT NULL ORDER BY {field_name} LIMIT 100", [case_id]).fetchall()
+-        return [r[0] for r in rows]
+-    finally:
+-        conn.close()

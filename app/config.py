@@ -1,9 +1,17 @@
-from pydantic import field_validator
-from pydantic_settings import BaseSettings
 from pathlib import Path
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """Backend-only settings. Unknown keys in `.env` (e.g. NEXT_PUBLIC_* for the Next.js app) are ignored."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
     APP_NAME: str = "Forensic AI Engine"
     DEBUG: bool = True
     DATABASE_URL: str = "sqlite:///data/ledger.db"
@@ -35,9 +43,6 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return v.lower() not in {"false", "0", "no", "off", "release", "production", "prod"}
         return bool(v)
-
-    class Config:
-        env_file = ".env"
 
 
 settings = Settings()

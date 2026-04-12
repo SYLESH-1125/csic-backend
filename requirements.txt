@@ -48,3 +48,6 @@ python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
 bcrypt==4.3.0
 httpx==0.27.2
+
+# Phase 5 Operation Room (mounted at /api/phase5) — minimal extra; full set in phase_5_CISC/operation-room/backend/requirements.txt
+canonicaljson>=2.0.0

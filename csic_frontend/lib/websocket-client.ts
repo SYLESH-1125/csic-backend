@@ -1,9 +1,6 @@
-const _RAW_WS_BASE_URL =
-  (process.env.NEXT_PUBLIC_WS_URL ||
-    process.env.NEXT_PUBLIC_API_URL?.replace('http://', 'ws://').replace('https://', 'wss://') ||
-    'ws://127.0.0.1:8000').trim()
-// Browsers cannot call 0.0.0.0; normalize to loopback.
-const WS_BASE_URL = _RAW_WS_BASE_URL.replace('://0.0.0.0', '://127.0.0.1').replace(/\/+$/, '')
+import { getWsBaseUrl } from '@/lib/public-env'
+
+const WS_BASE_URL = getWsBaseUrl()
 
 export interface ChunkMessage {
   chunk_number: number

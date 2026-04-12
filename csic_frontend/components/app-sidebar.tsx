@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useSearchParams } from "next/navigation"
 import {
   LayoutDashboard,
   Upload,
@@ -14,8 +15,12 @@ import {
   Workflow,
   Database,
   ScanSearch,
-  Bot,
   FileText,
+  FolderOpen,
+  FileStack,
+  Clock,
+  Sparkles,
+  Settings,
 } from "lucide-react"
 import {
   Sidebar,
@@ -31,22 +36,11 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { useApp } from "@/lib/app-context"
+import type { ShellPage } from "@/lib/app-navigation"
+import { PHASE5_QUERY, parsePhase5Section, type Phase5SectionId } from "@/lib/phase5-routes"
+import { useShellNavigate } from "@/lib/use-shell-navigate"
 
-type Page =
-  | "dashboard"
-  | "ingestion"
-  | "parsing"
-  | "phase3"
-  | "phase4"
-  | "phase5"
-  | "phase6"
-  | "ledger"
-  | "quarantine"
-  | "audit"
-  | "health"
-  | "settings"
-
-const ingestionSubItems: { id: Page; label: string; icon: typeof Upload }[] = [
+const ingestionSubItems: { id: ShellPage; label: string; icon: typeof Upload }[] = [
   { id: "ingestion", label: "Injection Control", icon: Upload },
   { id: "ledger", label: "Ledger View", icon: BookOpen },
   { id: "quarantine", label: "Quarantine Center", icon: ShieldAlert },
@@ -54,28 +48,31 @@ const ingestionSubItems: { id: Page; label: string; icon: typeof Upload }[] = [
   { id: "health", label: "System Health", icon: Activity },
 ]
 
-const parsingSubItems: { id: Page; label: string; icon: typeof Upload }[] = [
+const parsingSubItems: { id: ShellPage; label: string; icon: typeof Upload }[] = [
   { id: "parsing", label: "Parsing Pipeline", icon: Workflow },
 ]
 
-const phase3SubItems: { id: Page; label: string; icon: typeof Upload }[] = [
+const phase3SubItems: { id: ShellPage; label: string; icon: typeof Upload }[] = [
   { id: "phase3", label: "Hot/Cold DB", icon: Database },
 ]
 
-const phase4SubItems: { id: Page; label: string; icon: typeof Upload }[] = [
+const phase4SubItems: { id: ShellPage; label: string; icon: typeof Upload }[] = [
   { id: "phase4", label: "Analytics & Detection", icon: ScanSearch },
 ]
 
-const phase5SubItems: { id: Page; label: string; icon: typeof Upload }[] = [
-  { id: "phase5", label: "Agent Triage", icon: Bot },
-]
-
-const phase6SubItems: { id: Page; label: string; icon: typeof Upload }[] = [
-  { id: "phase6", label: "Reporting Phase", icon: FileText },
+const phase5NavItems: { section: Phase5SectionId; label: string; icon: typeof LayoutDashboard }[] = [
+  { section: "overview", label: "Overview", icon: LayoutDashboard },
+  { section: "cases", label: "Cases", icon: FolderOpen },
+  { section: "evidence", label: "Evidence", icon: FileStack },
+  { section: "timeline", label: "Timeline", icon: Clock },
+  { section: "workflow", label: "Workflow", icon: Workflow },
+  { section: "studio", label: "Studio", icon: Sparkles },
 ]
 
 export function AppSidebar() {
-  const { currentPage, setCurrentPage } = useApp()
+  const { currentPage } = useApp()
+  const { go, goPhase5 } = useShellNavigate()
+  const searchParams = useSearchParams()
   const [ingestionOpen, setIngestionOpen] = useState(
     ingestionSubItems.some((item) => item.id === currentPage)
   )
@@ -83,14 +80,12 @@ export function AppSidebar() {
   const [phase3Open, setPhase3Open] = useState(currentPage === "phase3")
   const [phase4Open, setPhase4Open] = useState(currentPage === "phase4")
   const [phase5Open, setPhase5Open] = useState(currentPage === "phase5")
-  const [phase6Open, setPhase6Open] = useState(currentPage === "phase6")
 
   const isIngestionSection = ingestionSubItems.some((item) => item.id === currentPage)
   const isParsingSection = currentPage === "parsing"
   const isPhase3Section = currentPage === "phase3"
   const isPhase4Section = currentPage === "phase4"
   const isPhase5Section = currentPage === "phase5"
-  const isPhase6Section = currentPage === "phase6"
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
@@ -117,7 +112,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton
                   isActive={currentPage === "dashboard"}
-                  onClick={() => setCurrentPage("dashboard")}
+                  onClick={() => go("dashboard")}
                   tooltip="Dashboard"
                   className={
                     currentPage === "dashboard"
@@ -136,7 +131,7 @@ export function AppSidebar() {
                   onClick={() => {
                     setIngestionOpen(!ingestionOpen)
                     if (!isIngestionSection) {
-                      setCurrentPage("ingestion")
+                      go("ingestion")
                     }
                   }}
                   tooltip="Ingestion Phase"
@@ -162,7 +157,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       isActive={currentPage === item.id}
-                      onClick={() => setCurrentPage(item.id)}
+                      onClick={() => go(item.id)}
                       tooltip={item.label}
                       className={`pl-8 ${
                         currentPage === item.id
@@ -182,7 +177,7 @@ export function AppSidebar() {
                   onClick={() => {
                     setParsingOpen(!parsingOpen)
                     if (!isParsingSection) {
-                      setCurrentPage("parsing")
+                      go("parsing")
                     }
                   }}
                   tooltip="Parsing Phase"
@@ -208,7 +203,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       isActive={currentPage === item.id}
-                      onClick={() => setCurrentPage(item.id)}
+                      onClick={() => go(item.id)}
                       tooltip={item.label}
                       className={`pl-8 ${
                         currentPage === item.id
@@ -227,7 +222,7 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   onClick={() => {
                     setPhase3Open(!phase3Open)
-                    if (!isPhase3Section) setCurrentPage("phase3")
+                    if (!isPhase3Section) go("phase3")
                   }}
                   tooltip="Phase 3"
                   className={
@@ -251,7 +246,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       isActive={currentPage === item.id}
-                      onClick={() => setCurrentPage(item.id)}
+                      onClick={() => go(item.id)}
                       tooltip={item.label}
                       className={`pl-8 ${
                         currentPage === item.id
@@ -270,7 +265,7 @@ export function AppSidebar() {
                 <SidebarMenuButton
                   onClick={() => {
                     setPhase5Open(!phase5Open)
-                    if (!isPhase5Section) setCurrentPage("phase5")
+                    if (!isPhase5Section) goPhase5("overview")
                   }}
                   tooltip="Phase 5"
                   className={
@@ -279,8 +274,8 @@ export function AppSidebar() {
                       : "text-foreground hover:bg-muted"
                   }
                 >
-                  <Bot className="size-4" />
-                  <span className="flex-1">AI Analyser Phase</span>
+                  <FileText className="size-4" />
+                  <span className="flex-1">Reporting &amp; Operation Room</span>
                   {phase5Open ? (
                     <ChevronDown className="size-3.5 text-muted-foreground" />
                   ) : (
@@ -290,30 +285,34 @@ export function AppSidebar() {
               </SidebarMenuItem>
 
               {phase5Open &&
-                phase5SubItems.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      isActive={currentPage === item.id}
-                      onClick={() => setCurrentPage(item.id)}
-                      tooltip={item.label}
-                      className={`pl-8 ${
-                        currentPage === item.id
-                          ? "bg-primary/5 text-primary font-medium"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
-                    >
-                      <item.icon className="size-3.5" />
-                      <span className="text-[13px]">{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                phase5NavItems.map((item) => {
+                  const activeSection = parsePhase5Section(searchParams.get(PHASE5_QUERY))
+                  const active = currentPage === "phase5" && activeSection === item.section
+                  return (
+                    <SidebarMenuItem key={item.section}>
+                      <SidebarMenuButton
+                        isActive={active}
+                        onClick={() => goPhase5(item.section)}
+                        tooltip={item.label}
+                        className={`pl-8 ${
+                          active
+                            ? "bg-primary/5 text-primary font-medium"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        }`}
+                      >
+                        <item.icon className="size-3.5" />
+                        <span className="text-[13px]">{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
 
                 {/* Phase 4 - collapsible parent */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => {
                     setPhase4Open(!phase4Open)
-                    if (!isPhase4Section) setCurrentPage("phase4")
+                    if (!isPhase4Section) go("phase4")
                   }}
                   tooltip="Phase 4"
                   className={
@@ -337,7 +336,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       isActive={currentPage === item.id}
-                      onClick={() => setCurrentPage(item.id)}
+                      onClick={() => go(item.id)}
                       tooltip={item.label}
                       className={`pl-8 ${
                         currentPage === item.id
@@ -351,49 +350,28 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 ))}
 
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-              {/* Phase 6 - collapsible parent */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => {
-                    setPhase6Open(!phase6Open)
-                    if (!isPhase6Section) setCurrentPage("phase6")
-                  }}
-                  tooltip="Phase 6"
+                  isActive={currentPage === "settings"}
+                  onClick={() => go("settings")}
+                  tooltip="Settings"
                   className={
-                    isPhase6Section
+                    currentPage === "settings"
                       ? "bg-primary/10 text-primary font-medium border-l-2 border-primary rounded-none"
                       : "text-foreground hover:bg-muted"
                   }
                 >
-                  <FileText className="size-4" />
-                  <span className="flex-1">Reporting Phase</span>
-                  {phase6Open ? (
-                    <ChevronDown className="size-3.5 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="size-3.5 text-muted-foreground" />
-                  )}
+                  <Settings className="size-4" />
+                  <span>Settings</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-
-              {phase6Open &&
-                phase6SubItems.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      isActive={currentPage === item.id}
-                      onClick={() => setCurrentPage(item.id)}
-                      tooltip={item.label}
-                      className={`pl-8 ${
-                        currentPage === item.id
-                          ? "bg-primary/5 text-primary font-medium"
-                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                      }`}
-                    >
-                      <item.icon className="size-3.5" />
-                      <span className="text-[13px]">{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

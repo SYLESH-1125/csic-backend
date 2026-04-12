@@ -46,6 +46,7 @@ import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Progress } from "@/components/ui/progress"
 import { apiClient } from "@/lib/api-client"
+import { useApp } from "@/lib/app-context"
 
 /* ================================================================== */
 /* TYPES                                                               */
@@ -1281,6 +1282,7 @@ function PipelineEntryAnimation({
 /* MAIN COMPONENT                                                      */
 /* ================================================================== */
 export function ParsingPage() {
+  const { setActiveAuditId } = useApp()
   const [showUI, setShowUI] = useState(true)
   const [runPipeline, setRunPipeline] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
@@ -1311,11 +1313,13 @@ export function ParsingPage() {
       const raw = typeof window !== "undefined" ? localStorage.getItem("latest_ingestion_audit") : null
       const parsed = raw ? (JSON.parse(raw) as any) : null
       if (parsed?.auditId) {
+        const aid = String(parsed.auditId)
         setLatestAuditInfo({
-          auditId: String(parsed.auditId),
+          auditId: aid,
           sha256: String(parsed.sha256 || ""),
           filePath: String(parsed.filePath || ""),
         })
+        setActiveAuditId(aid)
 
         // Auto-start only if Phase 1 just navigated here (one-time flag).
         const auto = typeof window !== "undefined" ? localStorage.getItem("phase2_autostart_audit") : null

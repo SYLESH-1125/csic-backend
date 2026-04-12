@@ -16,7 +16,7 @@ import {
   Loader2,
   File as FileIcon,
   FolderOpen,
-  Link2,
+  Info,
   Hash,
   TreePine,
   X,
@@ -32,22 +32,14 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { apiClient } from "@/lib/api-client"
 import { WebSocketUploadClient } from "@/lib/websocket-client"
+import { getApiBaseUrl } from "@/lib/public-env"
 import { useApp } from "@/lib/app-context"
-import Script from "next/script"
-
-const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? ""
-const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY ?? ""
-const SCOPES = [
-  "https://www.googleapis.com/auth/drive.readonly",
-  "https://www.googleapis.com/auth/drive.metadata.readonly",
-].join(" ")
-
-
+import { useShellNavigate } from "@/lib/use-shell-navigate"
+import { CloudIngestionPanel } from "@/components/google-drive-ingestion"
 
 /* ================================================================== */
 /* TYPES                                                               */
@@ -89,7 +81,8 @@ interface SecurityPhase {
 /* MAIN COMPONENT                                                      */
 /* ================================================================== */
 export function IngestionPage() {
-  const { setCurrentPage } = useApp()
+  const { setActiveAuditId } = useApp()
+  const { go } = useShellNavigate()
   const [activeTab, setActiveTab] = useState("manual")
   const [uploadedFile, setUploadedFile] = useState<UploadedFile | null>(null)
   const [uploadMethod, setUploadMethod] = useState<string | null>(null)
@@ -318,6 +311,7 @@ export function IngestionPage() {
                 merkleRoot: merkleRootValue,
               }),
             )
+            setActiveAuditId(auditId)
           }
 
           if (merkleRootValue) {
@@ -367,7 +361,7 @@ export function IngestionPage() {
           } catch {
             // ignore
           }
-          setTimeout(() => setCurrentPage("parsing"), 900)
+          setTimeout(() => go("parsing"), 900)
         })
 
         wsClient.setErrorCallback((error) => {
@@ -397,7 +391,7 @@ export function IngestionPage() {
         setOverallResult("fail")
       }
     },
-    [startSecurityFlow, setCurrentPage]
+    [startSecurityFlow, go]
   )
 
   const handleManualUpload = useCallback(
@@ -409,235 +403,6 @@ export function IngestionPage() {
     [startPhase1Upload]
   )
 
-  const handleCloudUpload = useCallback(
-    (provider: string) => {
-      startSecurityFlow(
-        { name: `cloud_evidence_${Date.now()}.tar.gz`, size: 2412847104, type: "application/gzip" },
-        `Cloud (${provider})`
-      )
-    },
-    [startSecurityFlow]
-  )
-
-  const handleDirectUrlFetch = useCallback(
-    async (url: string) => {
-      if (!url || !url.trim()) {
-        alert("Please enter a valid file URL")
-        return
-      }
-
-      try {
-        setIsProcessing(true)
-        
-        // Use backend endpoint to fetch file (avoids CORS issues)
-        let blob: Blob
-        let filename = `cloud_file_${Date.now()}`
-        let contentType = 'application/octet-stream'
-        
-        try {
-          // First, fetch via backend to get the file
-          const fetchResponse = await fetch(`${(process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000').replace('://0.0.0.0', '://127.0.0.1').replace(/\/+$/, '')}/api/ingestion/fetch-url`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(apiClient.getToken() ? { 'Authorization': `Bearer ${apiClient.getToken()}` } : {}),
-            },
-            body: JSON.stringify({ url: url.trim() }),
-          })
-
-          if (!fetchResponse.ok) {
-            const errorData = await fetchResponse.json().catch(() => ({ detail: fetchResponse.statusText }))
-            const errorMessage = errorData.detail || `Failed to fetch file: ${fetchResponse.status} ${fetchResponse.statusText}`
-            
-            if (fetchResponse.status === 403 || fetchResponse.status === 401) {
-              alert(
-                "❌ File is not publicly accessible!\n\n" +
-                "To make the file accessible:\n\n" +
-                "For Google Drive:\n" +
-                "1. Right-click the file → Share\n" +
-                "2. Click 'Change to anyone with the link'\n" +
-                "3. Set permission to 'Viewer'\n" +
-                "4. Copy the link again\n\n" +
-                "For other services:\n" +
-                "• Ensure the file sharing is set to 'Public' or 'Anyone with link'\n" +
-                "• Check that no authentication is required"
-              )
-            } else {
-              alert(`Error: ${errorMessage}`)
-            }
-            setIsProcessing(false)
-            return
-          }
-
-          // Get filename from Content-Disposition header
-          const contentDisposition = fetchResponse.headers.get('content-disposition') || ''
-          if (contentDisposition) {
-            const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/)
-            if (filenameMatch) {
-              filename = filenameMatch[1].replace(/['"]/g, '')
-            }
-          } else {
-            // Try to extract from URL
-            const urlParts = url.split('/')
-            const lastPart = urlParts[urlParts.length - 1]
-            if (lastPart && lastPart.includes('.')) {
-              filename = lastPart.split('?')[0] // Remove query params
-            }
-          }
-
-          // Get content type
-          contentType = fetchResponse.headers.get('content-type') || 'application/octet-stream'
-
-          // Get the file blob
-          blob = await fetchResponse.blob()
-        } catch (fetchError) {
-          console.error('Fetch error:', fetchError)
-          alert(
-            "Failed to fetch file from URL. The file may be:\n\n" +
-            "• Private or restricted\n" +
-            "• Behind authentication\n" +
-            "• Invalid URL\n\n" +
-            "Please check the URL and ensure the file is publicly accessible."
-          )
-          setIsProcessing(false)
-          return
-        }
-        
-        // Create a File object from blob
-        // @ts-ignore - File constructor is available in modern browsers
-        const file: File = new File([blob], filename, { type: contentType })
-        
-        const uploadedFile = { 
-          name: filename, 
-          size: blob.size, 
-          type: contentType 
-        }
-        
-        startSecurityFlow(uploadedFile, "Cloud (Direct URL)")
-
-        // Create session and upload via WebSocket
-        const sessionResponse = await apiClient.createManualSession()
-        const wsClient = new WebSocketUploadClient(sessionResponse.session_id)
-        
-        wsClient.setProgressCallback((progress) => {
-          setSecurityPhases(prev => {
-            const phases = [...prev]
-            const uploadPhase = phases.find(p => p.id === "node1")
-            if (uploadPhase) {
-              uploadPhase.progress = progress.percentage
-              uploadPhase.logs.push({
-                time: new Date().toISOString(),
-                level: "INFO",
-                message: `Uploaded ${progress.chunkNumber}/${progress.totalChunks} chunks (${progress.percentage}%)`
-              })
-              phasesRef.current = phases
-            }
-            return phases
-          })
-        })
-
-        wsClient.setCompleteCallback((result) => {
-          const merkleRootValue = result.result?.merkle_root || result.result?.binary_signature || result.merkle_root || result.binary_signature || ""
-          const auditId = result.result?.audit_id || (result as any).audit_id || ""
-          const sha256 = result.result?.sha256 || (result as any).sha256 || ""
-          const filePath = result.result?.file_path || (result as any).file_path || ""
-          if (typeof window !== "undefined" && auditId) {
-            localStorage.setItem(
-              "latest_ingestion_audit",
-              JSON.stringify({
-                auditId,
-                sha256,
-                filePath,
-                filename: file.name,
-                merkleRoot: merkleRootValue,
-              }),
-            )
-          }
-          if (merkleRootValue) {
-            setMerkleRoot(merkleRootValue)
-            // Update Merkle Tree phase stats with actual merkle root
-            setSecurityPhases(prev => {
-              const phases = [...prev]
-              const merklePhase = phases.find(p => p.id === "merkle")
-              if (merklePhase && merklePhase.status === "success") {
-                merklePhase.stats = merklePhase.stats.map(stat => 
-                  stat.label === "Merkle Root" 
-                    ? { ...stat, value: `${merkleRootValue.slice(0, 12)}...${merkleRootValue.slice(-4)}` }
-                    : stat
-                )
-                phasesRef.current = phases
-              }
-              return phases
-            })
-          }
-          setSecurityPhases(prev => {
-            const phases = [...prev]
-            const uploadPhase = phases.find(p => p.id === "node1")
-            if (uploadPhase) {
-              uploadPhase.status = "success"
-              uploadPhase.progress = 100
-              uploadPhase.logs.push({
-                time: new Date().toISOString(),
-                level: "OK",
-                message: `Upload complete. Audit ID: ${result.result?.audit_id || result.audit_id || 'N/A'}`
-              })
-              phasesRef.current = phases
-            }
-            return phases
-          })
-          setIsProcessing(false)
-          setOverallResult("pass")
-          // Auto-handoff in UI to Phase 2 page after Phase 1 completion.
-          try {
-            const auditId = result.result?.audit_id || (result as any).audit_id || ""
-            if (typeof window !== "undefined" && auditId) {
-              localStorage.setItem("phase2_autostart_audit", auditId)
-            }
-          } catch {
-            // ignore
-          }
-          setTimeout(() => setCurrentPage("parsing"), 900)
-        })
-
-        wsClient.setErrorCallback((error) => {
-          setSecurityPhases(prev => {
-            const phases = [...prev]
-            const uploadPhase = phases.find(p => p.id === "node1")
-            if (uploadPhase) {
-              uploadPhase.status = "error"
-              uploadPhase.logs.push({
-                time: new Date().toISOString(),
-                level: "ERROR",
-                message: error.message
-              })
-              phasesRef.current = phases
-            }
-            return phases
-          })
-          setIsProcessing(false)
-          setOverallResult("fail")
-        })
-
-        await wsClient.uploadFile(file)
-      } catch (err) {
-        console.error('URL fetch failed:', err)
-        if (err instanceof TypeError && err.message.includes('Failed to fetch')) {
-          alert(
-            "Cannot access the file. The file may be:\n\n" +
-            "• Private or restricted\n" +
-            "• Behind authentication\n" +
-            "• Blocked by CORS policy\n\n" +
-            "Please make the file publicly accessible and try again."
-          )
-        } else {
-          alert(err instanceof Error ? err.message : 'Failed to fetch file from URL')
-        }
-        setIsProcessing(false)
-        setOverallResult("fail")
-      }
-    },
-    [startSecurityFlow, setCurrentPage]
-  )
 
   const handleJitGenerateSession = useCallback(async () => {
     setJitSessionGenerating(true)
@@ -678,8 +443,8 @@ export function IngestionPage() {
   const handleJitIngest = useCallback(() => {
     // For real JIT remote collection, a collector streams logs over WS and creates a ledger entry.
     // The UI should monitor the ledger/parsing pipeline rather than fabricating a local file.
-    setCurrentPage("ledger")
-  }, [setCurrentPage])
+    go("ledger")
+  }, [go])
 
   /* ---- Phase progress indicator ---- */
   const activePhaseIndex = securityPhases.findIndex((p) => p.status === "active")
@@ -730,7 +495,7 @@ export function IngestionPage() {
               </TabsTrigger>
               <TabsTrigger value="cloud" className="gap-2 text-sm font-medium" disabled={isProcessing}>
                 <Cloud className="size-4" />
-                Drive / Cloud
+                Google Drive
               </TabsTrigger>
               <TabsTrigger value="jit" className="gap-2 text-sm font-medium" disabled={isProcessing}>
                 <Zap className="size-4" />
@@ -754,9 +519,7 @@ export function IngestionPage() {
             <TabsContent value="cloud" className="mt-4">
               <Card className="border border-border">
                 <CardContent className="p-6">
-                  <CloudUploadPanel
-                    onConnect={handleCloudUpload}
-                    onDirectUrlFetch={handleDirectUrlFetch}
+                  <CloudIngestionPanel
                     onFileImport={(file) => startPhase1Upload(file, "Google Drive")}
                     isProcessing={isProcessing}
                   />
@@ -1183,189 +946,6 @@ function ManualUploadPanel({
 }
 
 /* ================================================================== */
-/* CLOUD UPLOAD PANEL                                                  */
-/* ================================================================== */
-function CloudUploadPanel({
-  onConnect,
-  onDirectUrlFetch,
-  onFileImport,
-  isProcessing,
-}: {
-  onConnect: (provider: string) => void
-  onDirectUrlFetch: (url: string) => void
-  onFileImport: (file: File) => Promise<void>
-  isProcessing: boolean
-}) {
-  const [url, setUrl] = useState("")
-  const [isFetching, setIsFetching] = useState(false)
-
-  const handleFetch = async () => {
-    if (!url.trim()) {
-      alert("Please enter a file URL")
-      return
-    }
-    setIsFetching(true)
-    try {
-      await onDirectUrlFetch(url)
-    } finally {
-      setIsFetching(false)
-    }
-  }
-
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && !isProcessing && !isFetching) {
-      handleFetch()
-    }
-  }
-
-  const [accessToken, setAccessToken] = useState<string | null>(null);
-
-  const handleAuthAndPicker = () => {
-    if (!CLIENT_ID) {
-      console.error("Missing Google CLIENT_ID. Set NEXT_PUBLIC_GOOGLE_CLIENT_ID in your environment.")
-      return
-    }
-    if (!API_KEY) {
-      console.error("Missing Google API_KEY. Set NEXT_PUBLIC_GOOGLE_API_KEY in your environment.")
-      return
-    }
-    if (!window.google?.accounts?.oauth2?.initTokenClient) {
-      console.error("Google Identity Services not available (window.google.accounts.oauth2). Check script loading.")
-      return
-    }
-
-    // 1. Initialize Token Client
-    const tokenClient = window.google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: SCOPES,
-      callback: async (response: any) => {
-        if (response.access_token) {
-          setAccessToken(response.access_token);
-          // 2. Load Picker once authenticated
-          if (!window.gapi?.load) {
-            console.error("Google API library (gapi) not available yet. Please wait and try again.")
-            return
-          }
-          window.gapi.load('picker', () => createPicker(response.access_token));
-        }
-      },
-    });
-    tokenClient.requestAccessToken();
-  };
-
-  const createPicker = (token: string) => {
-    if (!API_KEY) {
-      console.error("Missing Google API_KEY. Set NEXT_PUBLIC_GOOGLE_API_KEY in your environment.")
-      return
-    }
-    const importDriveFileToPhase1 = async (fileId: string) => {
-      try {
-        // Get metadata for filename/mimeType
-        const metaResp = await fetch(
-          `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=id,name,mimeType,size`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        if (!metaResp.ok) {
-          const text = await metaResp.text().catch(() => "")
-          throw new Error(`Drive metadata fetch failed (${metaResp.status}): ${text || metaResp.statusText}`)
-        }
-        const meta = (await metaResp.json()) as { name?: string; mimeType?: string }
-
-        // Download file bytes
-        const dlResp = await fetch(
-          `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        )
-        if (!dlResp.ok) {
-          const text = await dlResp.text().catch(() => "")
-          throw new Error(`Drive download failed (${dlResp.status}): ${text || dlResp.statusText}`)
-        }
-
-        const blob = await dlResp.blob()
-        const name = meta.name || `drive_file_${fileId}`
-        const mimeType = meta.mimeType || blob.type || "application/octet-stream"
-        const file = new File([blob], name, { type: mimeType })
-
-        await onFileImport(file)
-      } catch (e) {
-        console.error(e)
-        alert(e instanceof Error ? e.message : "Failed to import file from Google Drive")
-      }
-    }
-
-    const view = new window.google.picker.DocsView(window.google.picker.ViewId.DOCS)
-      .setMimeTypes('application/pdf');
-
-    const picker = new window.google.picker.PickerBuilder()
-      .addView(view)
-      .setOAuthToken(token)
-      .setDeveloperKey(API_KEY)
-      .setCallback((data: any) => {
-        if (data.action === window.google.picker.Action.PICKED) {
-          const doc = data[window.google.picker.Response.DOCUMENTS][0];
-          const fileId = doc?.id
-          if (fileId) {
-            void importDriveFileToPhase1(fileId)
-          } else {
-            alert("No file id returned from Google Picker")
-          }
-        }
-      })
-      .build();
-
-    picker.setVisible(true);
-  };
-
-
-  return (
-    <div className="flex flex-col gap-5">
-      <div>
-        <h4 className="text-sm font-semibold text-foreground mb-1">Cloud Storage Pull</h4>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          Paste a publicly accessible file URL (Google Drive, Dropbox, direct links, etc.). 
-          The system will check if the file is publicly accessible and fetch it automatically.
-        </p>
-      </div>
-
-      <div className="border border-border bg-muted/30 p-4">
-        <Label htmlFor="direct-url" className="text-xs font-semibold text-muted-foreground mb-2 block">
-          Paste a direct file URL (must be publicly accessible)
-        </Label>
-        <div className="flex gap-2">
-          {/* Load Google Identity Services */}
-      <Script
-        src="https://accounts.google.com/gsi/client"
-        strategy="afterInteractive"
-      />
-  
-      <Script
-        src="https://apis.google.com/js/api.js"
-        strategy="afterInteractive"
-      />
-      <button 
-        onClick={handleAuthAndPicker}
-        disabled={isProcessing || isFetching}
-        className="px-4 py-2 bg-blue-600 text-white rounded-md"
-      >
-        Import from Google Drive
-      </button>
-          
-        </div>
-        <p className="text-[10px] text-muted-foreground mt-2">
-          For Google Drive: Right-click file → Share → "Anyone with the link" → Copy link
-        </p>
-      </div>
-
-      <div className="grid grid-cols-3 gap-3">
-        <StatBox label="Endpoint" value="POST /api/ingestion/cloud" />
-        <StatBox label="Access" value="Public Files Only" />
-        <StatBox label="Transfer" value="Direct Download" />
-      </div>
-    </div>
-  )
-}
-
-/* ================================================================== */
 /* JIT INJECTION PANEL - with Generate Session first                   */
 /* ================================================================== */
 function JitInjectionPanel({
@@ -1395,7 +975,7 @@ function JitInjectionPanel({
 }) {
   const isValidating = rules.some((r) => r.checking)
   const ruleIcons = [Fingerprint, KeyRound, Wifi]
-  const apiBase = (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000").trim().replace(/\/+$/, "")
+  const apiBase = getApiBaseUrl()
 
   const linuxCmd = `python scripts/collectors/linux_jit_collector.py --api-base ${apiBase}`
   const windowsCmd =

@@ -1,0 +1,14 @@
+---
+description: NFLIP phases 1–4 integration — ingestion, parsing, hot/cold, Magic Query dataset
+alwaysApply: true
+---
+
+# Phases 1–4 (NFLIP / CSIC)
+
+- **Phase 1**: JIT + WebSocket ingestion, WORM + SQLite `AuditLog`. See `README.md`.
+- **Phase 2**: `/api/phase2` — commits write DuckDB **`normalized_logs`** (`data/analytics.duckdb`). Webhook to Phase 3 uses env **`PHASE3_WEBHOOK_URL`** (default `http://127.0.0.1:8000/api/phase3/phase2_webhook`).
+- **Phase 3**: Mounted at **`/api/phase3`** when optional deps load. Cold query: `POST /graphql_query` with `Target_User`; lineage is **`staging_id`**, not the audit UUID.
+- **Phase 4**: **`GET /api/phase4/parsed-logs?audit_id=`** maps committed rows for Magic Query. Next.js **`/api/magic-query/run`** should send **`audit_id`** (from **`useApp().activeAuditId`**, key `csic_active_audit_id`).
+- **AGENTS.md** at repo root has the full condensed map; keep it in sync when changing cross-phase contracts.
+
+When adding features: prefer extending **`/api/phase4`** for read-only analytics over executing raw SQL from the browser.

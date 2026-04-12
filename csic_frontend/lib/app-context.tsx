@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react"
 import { authService } from "./auth-service"
 
-type Page =
+export type Page =
   | "login"
   | "register"
   | "dashboard"
@@ -12,16 +12,20 @@ type Page =
   | "phase3"
   | "phase4"
   | "phase5"
-  | "phase6"
   | "ledger"
   | "quarantine"
   | "audit"
   | "health"
   | "settings"
 
+const ACTIVE_AUDIT_STORAGE_KEY = "csic_active_audit_id"
+
 interface AppContextType {
   currentPage: Page
   setCurrentPage: (page: Page) => void
+  /** Phase 1 ledger UUID — drives Phase 3–4 live datasets when set */
+  activeAuditId: string | null
+  setActiveAuditId: (auditId: string | null) => void
   isAuthenticated: boolean
   user: { id: string; email: string; full_name: string | null; is_admin: boolean } | null
   register: (email: string, password: string, fullName?: string) => Promise<void>
@@ -34,7 +38,29 @@ const AppContext = createContext<AppContextType | null>(null)
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentPage, setCurrentPage] = useState<Page>("login")
+  const [activeAuditId, setActiveAuditIdState] = useState<string | null>(null)
   const [authState, setAuthState] = useState(authService.getState())
+
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    try {
+      const v = localStorage.getItem(ACTIVE_AUDIT_STORAGE_KEY)
+      if (v) setActiveAuditIdState(v)
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  const setActiveAuditId = useCallback((auditId: string | null) => {
+    setActiveAuditIdState(auditId)
+    if (typeof window === "undefined") return
+    try {
+      if (auditId) localStorage.setItem(ACTIVE_AUDIT_STORAGE_KEY, auditId)
+      else localStorage.removeItem(ACTIVE_AUDIT_STORAGE_KEY)
+    } catch {
+      /* ignore */
+    }
+  }, [])
 
   useEffect(() => {
     const unsubscribe = authService.subscribe((state) => {
@@ -86,6 +112,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       value={{
         currentPage,
         setCurrentPage,
+        activeAuditId,
+        setActiveAuditId,
         isAuthenticated: authState.isAuthenticated,
         user: authState.user,
         register,

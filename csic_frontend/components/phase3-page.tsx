@@ -21,11 +21,10 @@ import {
   type Phase3GraphqlQueryResponse,
   type Phase3HealthResponse,
 } from "@/lib/api-client"
+import { publicEnv } from "@/lib/public-env"
+import { useApp } from "@/lib/app-context"
 
-const DEMO_MODE =
-  typeof process !== "undefined" &&
-  (process.env.NEXT_PUBLIC_CSIC_DEMO_MODE === "1" ||
-    process.env.NEXT_PUBLIC_CSIC_DEMO_MODE === "true")
+const DEMO_MODE = typeof process !== "undefined" && publicEnv.demoMode
 
 const MOCK_HEALTH: Phase3HealthResponse = {
   ok: true,
@@ -63,6 +62,7 @@ function truncate(s: string | undefined | null, max: number): string {
 }
 
 export function Phase3Page() {
+  const { activeAuditId } = useApp()
   const [targetUser, setTargetUser] = useState("unknown")
   const [health, setHealth] = useState<Phase3HealthResponse | null>(null)
   const [healthMock, setHealthMock] = useState(false)
@@ -142,6 +142,13 @@ export function Phase3Page() {
             (try <code className="text-xs bg-muted px-1 rounded">unknown</code> or{" "}
             <code className="text-xs bg-muted px-1 rounded">admin</code> if you ingested via the E2E script).
           </p>
+          {activeAuditId && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Active pipeline audit:{" "}
+              <code className="bg-muted px-1 rounded">{activeAuditId.slice(0, 10)}…</code> — Phase 3 rows are keyed by{" "}
+              <code className="bg-muted px-1 rounded">Lineage = staging_id</code> from Phase 2 commits (not the audit UUID).
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {DEMO_MODE && (

@@ -1,0 +1,187 @@
+{
+  "type": "v4-canvas",
+  "version": "1.0",
+  "pages": [
+    {
+      "id": "page-1",
+      "label": "Page 1",
+      "elements": [
+        {
+          "type": "component",
+          "x": 71,
+          "y": 278.35511779785156,
+          "width": 579,
+          "height": 362,
+          "data": {
+            "id": "evd-1774940778344-a8xv3l",
+            "type": "shap-explanation",
+            "source": "anomaly",
+            "title": "Anomaly Shap Importance",
+            "caption": "Anomaly Shap Importance inserted from anomaly module",
+            "figureNumber": 1,
+            "data": {
+              "chartType": "importance",
+              "features": "         ",
+              "prediction": 0.5266,
+              "base_value": 0.2354
+            },
+            "metadata": {
+              "timestamp": "2026-03-31T07:06:18.344Z",
+              "citationId": "[EVD-ANOMALY-001]",
+              "insertionActor": "investigator",
+              "sourceQuery": "anomaly-shap-importance",
+              "sourceVersion": 1,
+              "configHash": "cfg:41f98f27",
+              "verified": false
+            }
+          },
+          "id": "el-1774940778344-923",
+          "zIndex": 2
+        },
+        {
+          "type": "text",
+          "x": 261,
+          "y": 70,
+          "width": 400,
+          "height": 100,
+          "data": {
+            "textType": "heading",
+            "content": "<p>REPORT BY SANJAY</p>",
+            "style": "heading"
+          },
+          "id": "el-1774946369125-259",
+          "zIndex": 3
+        },
+        {
+          "type": "text",
+          "x": 57,
+          "y": 232,
+          "width": 400,
+          "height": 100,
+          "data": {
+            "textType": "heading",
+            "content": "<p>ANOMOLY ANALSIS</p>",
+            "style": "heading"
+          },
+          "id": "el-1774946384633-757",
+          "zIndex": 4
+        },
+        {
+          "type": "component",
+          "x": 74,
+          "y": 774,
+          "width": 628,
+          "height": 347,
+          "data": {
+            "id": "evd-1774946421792-8dcx6h",
+            "type": "chart",
+            "source": "timeline",
+            "title": "Timeline Area Chart",
+            "caption": "Timeline Area Chart inserted from timeline module",
+            "figureNumber": 1,
+            "data": {
+              "chartType": "timeline-area-chart",
+              "sourceModule": "timeline",
+              "summary": "@{total_events=243; total_anchors=29; sources=; actors=; time_span_start=2025-06-01 02:00:00; time_span_end=2025-06-15 20:36:44.325831; events_by_hour=}",
+              "events": "                                                 "
+            },
+            "metadata": {
+              "timestamp": "2026-03-31T08:40:21.792Z",
+              "citationId": "[EVD-TIMELINE-001]",
+              "insertionActor": "investigator",
+              "sourceQuery": "timeline-area-chart",
+              "sourceVersion": 1,
+              "configHash": "cfg:64807d8e",
+              "verified": false
+            }
+          },
+          "id": "el-1774946421792-701",
+          "zIndex": 5
+        },
+        {
+          "type": "text",
+          "x": 67,
+          "y": 671,
+          "width": 400,
+          "height": 100,
+          "data": {
+            "textType": "heading",
+            "content": "<p>TIMELINE </p>",
+            "style": "heading"
+          },
+          "id": "el-1774946456537-102",
+          "zIndex": 6
+        }
+      ]
+    },
+    {
+      "id": "page-1774947094520",
+      "label": "Page 2",
+      "elements": [
+        {
+          "type": "component",
+          "x": 0,
+          "y": 0,
+          "width": 400,
+          "height": 300,
+          "data": {
+            "id": "evd-1774947104706-30nvz0",
+            "type": "chart",
+            "source": "anomaly",
+            "title": "Anomaly Score Timeline",
+            "caption": "Anomaly Score Timeline inserted from anomaly module",
+            "figureNumber": 1,
+            "data": {
+              "chartType": "anomaly-score-timeline",
+              "sourceModule": "anomaly",
+              "summary": "@{run_id=4ad9606c-419d-41e3-9220-3cccbc854f89; model_type=ensemble; contamination=0.2; total_events=243; anomaly_count=49; anomaly_rate=20.16; score_stats=; top_anomalies=System.Object[]; by_source=; by_actor=; hash_value=f3ba3bd955c6e4f5eabd52ada5ed5aa68505923bfb863b915ac801775bbab408; shap_global_importance=System.Object[]; shap_per_event=System.Object[]; feature_descriptions=}",
+              "events": ""
+            },
+            "metadata": {
+              "timestamp": "2026-03-31T08:51:44.706Z",
+              "citationId": "[EVD-ANOMALY-001]",
+              "insertionActor": "investigator",
+              "sourceQuery": "anomaly-score-timeline",
+              "sourceVersion": 1,
+              "configHash": "cfg:d5ef60b",
+              "verified": false
+            }
+          },
+          "id": "el-1774947104706-208",
+          "zIndex": 1
+        },
+        {
+          "type": "component",
+          "x": 14.342376708984375,
+          "y": 309.2761001586914,
+          "width": 778,
+          "height": 812,
+          "data": {
+            "id": "evd-1774947127568-4uue0y",
+            "type": "table",
+            "source": "anomaly",
+            "title": "Anomaly Top List",
+            "caption": "Anomaly Top List inserted from anomaly module",
+            "figureNumber": 1,
+            "data": {
+              "columns": "tl_event_id score is_anomaly timestamp actor source_type action target",
+              "rows": "System.Object[] System.Object[] System.Object[] System.Object[] System.Object[] System.Object[] System.Object[] System.Object[] System.Object[] System.Object[]",
+              "summary": "10 rows captured from anomaly"
+            },
+            "metadata": {
+              "timestamp": "2026-03-31T08:52:07.568Z",
+              "citationId": "[EVD-ANOMALY-001]",
+              "insertionActor": "investigator",
+              "sourceQuery": "anomaly-top-list",
+              "sourceVersion": 1,
+              "configHash": "cfg:4f8d68e1",
+              "verified": false
+            }
+          },
+          "id": "el-1774947127568-790",
+          "zIndex": 2
+        }
+      ]
+    }
+  ]
+}
