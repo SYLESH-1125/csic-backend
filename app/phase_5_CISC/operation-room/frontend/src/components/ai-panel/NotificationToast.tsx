@@ -5,7 +5,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useInvestigationStore } from '@/stores/investigationStore';
+import { useInvestigationStore } from '@operation-room/stores/investigationStore';
 
 interface Notification {
   id: string;

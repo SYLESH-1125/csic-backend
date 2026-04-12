@@ -25,6 +25,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@operation-room/*": [
+        "../app/phase_5_CISC/operation-room/frontend/src/*"
       ]
     }
   },

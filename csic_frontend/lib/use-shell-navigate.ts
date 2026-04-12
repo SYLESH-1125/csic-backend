@@ -6,6 +6,7 @@ import { useApp } from "@/lib/app-context"
 import type { ShellPage } from "@/lib/app-navigation"
 import { APP_PAGE_QUERY } from "@/lib/app-navigation"
 import { PHASE5_CASE_QUERY, PHASE5_QUERY, type Phase5SectionId } from "@/lib/phase5-routes"
+import { PHASE6_PATH_QUERY } from "@/lib/phase6-routes"
 
 /**
  * Keeps the address bar in sync with the NFLIP shell: `?page=…`, and Operation Room `?phase5=…&case=…`.
@@ -35,6 +36,9 @@ export function useShellNavigate() {
           next.delete(PHASE5_QUERY)
           next.delete(PHASE5_CASE_QUERY)
         }
+        if (page !== "phase6") {
+          next.delete(PHASE6_PATH_QUERY)
+        }
       })
     },
     [replaceQuery, setCurrentPage]
@@ -48,6 +52,7 @@ export function useShellNavigate() {
         next.set(PHASE5_QUERY, section)
         if (caseId) next.set(PHASE5_CASE_QUERY, caseId)
         else next.delete(PHASE5_CASE_QUERY)
+        next.delete(PHASE6_PATH_QUERY)
       })
     },
     [replaceQuery, setCurrentPage]

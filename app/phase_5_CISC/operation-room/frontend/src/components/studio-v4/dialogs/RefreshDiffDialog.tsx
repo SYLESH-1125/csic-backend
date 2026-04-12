@@ -5,8 +5,8 @@ import {
   RefreshCw, Check, X, ArrowRight, Clock, Loader2,
   ChevronUp, ChevronDown, Equal,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
+import { cn } from '@operation-room/lib/utils'
+import { Button } from '@operation-room/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -14,10 +14,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { api } from '@/lib/api'
+} from '@operation-room/components/ui/dialog'
+import { Badge } from '@operation-room/components/ui/badge'
+import { ScrollArea } from '@operation-room/components/ui/scroll-area'
+import { api } from '@operation-room/lib/api'
 
 // ── Types ───────────────────────────────────────────────────────────────
 interface DataDiff {

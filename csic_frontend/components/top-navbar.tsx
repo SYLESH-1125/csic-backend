@@ -12,6 +12,7 @@ const pageLabels: Record<string, string> = {
   phase3: "Storage Phase / Hot & Cold Database",
   phase4: "Querying Phase / Analytics & Magic Query",
   phase5: "Reporting & Operation Room",
+  phase6: "Phase 6 — Operation Room (embedded UI)",
   ledger: "Ingestion Phase / Ledger View",
   quarantine: "Ingestion Phase / Quarantine Center",
   audit: "Ingestion Phase / Audit Trails",

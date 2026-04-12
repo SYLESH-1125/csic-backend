@@ -1,6 +1,6 @@
 'use client'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@operation-room/lib/utils'
 import { Extension } from '@tiptap/core'
 import { Color } from '@tiptap/extension-color'
 import { Placeholder } from '@tiptap/extension-placeholder'

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useRef, useCallback } from 'react'
 import type { Editor } from '@tiptap/core'
-import type { EvidenceBlockAttrs } from '@/components/tiptap/EvidenceBlockNode'
+import type { EvidenceBlockAttrs } from '@operation-room/components/tiptap/EvidenceBlockNode'
 
 // ── Hash utility ────────────────────────────────────────────────────────
 async function computeSHA256(data: string): Promise<string> {

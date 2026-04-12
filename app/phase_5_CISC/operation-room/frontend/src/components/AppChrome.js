@@ -2,8 +2,8 @@
 
 import { useMemo } from 'react';
 import { usePathname } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
-import TopHeader from '@/components/TopHeader';
+import Sidebar from '@operation-room/components/Sidebar';
+import TopHeader from '@operation-room/components/TopHeader';
 
 const isStudioPath = (pathname) => {
   if (!pathname) return false;

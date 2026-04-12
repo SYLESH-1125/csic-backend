@@ -13,22 +13,22 @@
  */
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@operation-room/components/ui/badge';
+import { Progress } from '@operation-room/components/ui/progress';
+import { ScrollArea } from '@operation-room/components/ui/scroll-area';
+import { Separator } from '@operation-room/components/ui/separator';
+import { Button } from '@operation-room/components/ui/button';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+} from '@operation-room/components/ui/collapsible';
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from '@operation-room/components/ui/tooltip';
 import {
   Play,
   Pause,

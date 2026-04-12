@@ -23,27 +23,27 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+} from '@operation-room/components/ui/dialog';
+import { Button } from '@operation-room/components/ui/button';
+import { Textarea } from '@operation-room/components/ui/textarea';
+import { Label } from '@operation-room/components/ui/label';
+import { Switch } from '@operation-room/components/ui/switch';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
+} from '@operation-room/components/ui/select';
+import { Slider } from '@operation-room/components/ui/slider';
+import { Badge } from '@operation-room/components/ui/badge';
+import { Progress } from '@operation-room/components/ui/progress';
+import { Separator } from '@operation-room/components/ui/separator';
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible';
+} from '@operation-room/components/ui/collapsible';
 import {
   Play,
   Settings,

@@ -11,9 +11,9 @@ import {
   MetricCard,
   FindingCard,
 } from '../ExpandablePanel'
-import { api } from '@/lib/api'
+import { api } from '@operation-room/lib/api'
 import { useStudioStore } from '../store/useStudioStore'
-import { Button } from '@/components/ui/button'
+import { Button } from '@operation-room/components/ui/button'
 
 interface CRUDPanelProps {
   caseId: string

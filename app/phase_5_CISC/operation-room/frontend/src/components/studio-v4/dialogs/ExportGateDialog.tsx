@@ -5,8 +5,8 @@ import {
   AlertTriangle, Shield, CheckCircle2, XCircle,
   FileDown, FileText, File, Loader2,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
+import { cn } from '@operation-room/lib/utils'
+import { Button } from '@operation-room/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -14,12 +14,12 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { api } from '@/lib/api'
+} from '@operation-room/components/ui/dialog'
+import { Input } from '@operation-room/components/ui/input'
+import { Label } from '@operation-room/components/ui/label'
+import { Badge } from '@operation-room/components/ui/badge'
+import { ScrollArea } from '@operation-room/components/ui/scroll-area'
+import { api } from '@operation-room/lib/api'
 
 // ── Types ───────────────────────────────────────────────────────────────
 interface Violation {

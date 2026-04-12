@@ -58,3 +58,7 @@ sentence-transformers>=2.2.2
 # Oracle 26AI Open-Source Implementation
 chromadb>=0.5.0
 rank-bm25>=0.2.2
+
+# Async reports / WebSocket relay (optional; needs Redis broker — e.g. Docker `redis:7-alpine` on 6379)
+redis>=5.0
+celery>=5.3

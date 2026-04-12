@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { Message } from '@/types/investigation';
+import { Message } from '@operation-room/types/investigation';
 
 interface ProgressMessageProps {
   message: Message;

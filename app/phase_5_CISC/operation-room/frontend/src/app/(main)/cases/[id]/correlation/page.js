@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo, Suspense } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { api } from '@operation-room/lib/api';
 import dynamic from 'next/dynamic';
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RTooltip,
@@ -643,7 +643,7 @@ export default function CorrelationPage() {
             color: '#1e293b' }}>
              Correlation & Root-Cause Analysis
           </h1>
-          <p style={{ ...mono, fontSize: 11, marginTop: 4, color: 'var(--text-muted)' }}>
+          <div style={{ ...mono, fontSize: 11, marginTop: 4, color: 'var(--text-muted)' }}>
             <Tip text="6-node pipeline: LoadEnrichedData → ExtractEntities → BuildGraph → ScoreEntities → GenerateNarrative → StoreAndAudit">
               LangGraph 6-Node Pipeline
             </Tip>
@@ -655,7 +655,7 @@ export default function CorrelationPage() {
             <Tip text="AI generates structured root-cause narrative with MITRE ATT&CK tactic mapping">
               MITRE ATT&CK Mapping
             </Tip>
-          </p>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <Link href={`/cases/${id}/anomalies`} className="btn btn-ghost"> Anomalies</Link>

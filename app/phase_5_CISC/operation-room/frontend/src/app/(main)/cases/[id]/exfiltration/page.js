@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { api } from '@operation-room/lib/api';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid,
@@ -1159,13 +1159,13 @@ export default function ExfiltrationPage() {
           <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.04em', color: '#1e293b' }}>
             Data Exfiltration Intelligence
           </h1>
-          <p style={{ ...mono, fontSize: 11, marginTop: 4, color: 'var(--text-muted)' }}>
+          <div style={{ ...mono, fontSize: 11, marginTop: 4, color: 'var(--text-muted)' }}>
             <Tip text="9-engine pipeline: Normalise → Graph → DataFlow → Channel → Intent → Ghost → Staging → Score → Explain">9-Engine Modular Pipeline</Tip>
             <span style={{ opacity: 0.3, margin: '0 8px' }}>&middot;</span>
             <Tip text="Constructs directed interaction graphs: User→File→Device→IP with READ/WRITE/SEND edges">Behaviour Graph Analysis</Tip>
             <span style={{ opacity: 0.3, margin: '0 8px' }}>&middot;</span>
             <Tip text="Detects ghost transfers, staging activity, and multi-channel exfiltration with configurable thresholds">Intent-Aware Detection</Tip>
-          </p>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <Link href={`/cases/${id}/network`} className="btn btn-ghost">Network</Link>

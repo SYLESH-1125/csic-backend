@@ -12,6 +12,7 @@ export type Page =
   | "phase3"
   | "phase4"
   | "phase5"
+  | "phase6"
   | "ledger"
   | "quarantine"
   | "audit"

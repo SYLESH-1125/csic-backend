@@ -1,4 +1,11 @@
 @import 'tailwindcss';
+
+/* v4 content detection is scoped from this file’s directory (`app/`); the shell lives in `../components` + `../lib`. */
+@source "../components/**/*.{js,ts,jsx,tsx}";
+@source "../hooks/**/*.{js,ts,jsx,tsx}";
+@source "../lib/**/*.{js,ts,jsx,tsx}";
+@source "./**/*.{js,ts,jsx,tsx}";
+
 @import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));

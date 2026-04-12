@@ -17,7 +17,7 @@ import {
   LucideIcon,
   ChevronRight,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@operation-room/lib/utils'
 import { useStudioStore, type PanelId } from './store/useStudioStore'
 import { FORENSIC_THEME, type ForensicModule } from './forensicTheme'
 

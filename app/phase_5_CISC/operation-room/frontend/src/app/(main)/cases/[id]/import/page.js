@@ -11,7 +11,7 @@ import {
   Download,
   RefreshCcw,
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api } from '@operation-room/lib/api';
 
 const SOURCE_OPTIONS = [
   { id: 'AUTH', label: 'Authentication' },

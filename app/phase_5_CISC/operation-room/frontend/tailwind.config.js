@@ -1,4 +1,16 @@
 /** @type {import('tailwindcss').Config} */
+const path = require('path')
+const orFrontendDir = __dirname
+const monorepoRoot = path.resolve(orFrontendDir, '..', '..', '..', '..')
+const embeddedNodeModules = path.join(monorepoRoot, 'csic_frontend', 'node_modules')
+function reqPlugin(name) {
+  return require(
+    require.resolve(name, {
+      paths: [path.join(orFrontendDir, 'node_modules'), embeddedNodeModules],
+    }),
+  )
+}
+
 module.exports = {
   darkMode: ["class"],
   content: [
@@ -143,5 +155,5 @@ module.exports = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate"), require("@tailwindcss/typography")],
+  plugins: [reqPlugin('tailwindcss-animate'), reqPlugin('@tailwindcss/typography')],
 }

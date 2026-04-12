@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useCallback, useState, useRef } from 'react'
-import { api } from '@/lib/api'
+import { api } from '@operation-room/lib/api'
 import { useStudioStore, type PanelId } from '../store/useStudioStore'
 
 /**

@@ -4,8 +4,8 @@
 
 'use client';
 
-import { useStudioStore } from '@/components/studio-v4/store/useStudioStore';
-import { useConfirmedFindings, useInvestigationStore, useUnreadQuestions } from '@/stores/investigationStore';
+import { useStudioStore } from '@operation-room/components/studio-v4/store/useStudioStore';
+import { useConfirmedFindings, useInvestigationStore, useUnreadQuestions } from '@operation-room/stores/investigationStore';
 import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import NotificationToast from './NotificationToast';

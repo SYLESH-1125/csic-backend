@@ -17,3 +17,4 @@ csic_frontend/.turbo/
 csic_frontend/.env.local
 csic_frontend/.env*.local
 csic_frontend/*.tsbuildinfo
+csic_frontend/vendor/

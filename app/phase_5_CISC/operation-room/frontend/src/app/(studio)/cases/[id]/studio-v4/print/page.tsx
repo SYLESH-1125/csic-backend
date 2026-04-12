@@ -1,11 +1,11 @@
 'use client'
 
 import React, { useEffect, useState } from 'react'
-import { api } from '@/lib/api'
-import { cn } from '@/lib/utils'
-import { EvidenceContent } from '@/components/tiptap/EvidenceBlockNode'
-import { CanvasElement, PageMeta, calculateElementMinHeight, useStudioStore } from '@/components/studio-v4/store/useStudioStore'
-import { AssumptionFootnotes } from '@/components/studio-v4/AssumptionFootnotes'
+import { api } from '@operation-room/lib/api'
+import { cn } from '@operation-room/lib/utils'
+import { EvidenceContent } from '@operation-room/components/tiptap/EvidenceBlockNode'
+import { CanvasElement, PageMeta, calculateElementMinHeight, useStudioStore } from '@operation-room/components/studio-v4/store/useStudioStore'
+import { AssumptionFootnotes } from '@operation-room/components/studio-v4/AssumptionFootnotes'
 
 // Define the precise A4 dimensions according to DocumentCanvas
 const A4_WIDTH = '210mm'

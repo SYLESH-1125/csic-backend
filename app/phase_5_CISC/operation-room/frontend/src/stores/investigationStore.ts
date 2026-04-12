@@ -12,7 +12,7 @@ import {
   ProgressUpdate,
   ReportProgress,
   ReportVersion
-} from '@/types/investigation';
+} from '@operation-room/types/investigation';
 import { create } from 'zustand';
 
 interface InvestigationState {

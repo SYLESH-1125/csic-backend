@@ -1,8 +1,8 @@
 'use client'
 
 import * as React from 'react'
-import type { EvidenceBlockData, EvidenceBlockType } from '@/components/evidence/EvidenceBlock'
-import type { ModuleType } from '@/lib/utils'
+import type { EvidenceBlockData, EvidenceBlockType } from '@operation-room/components/evidence/EvidenceBlock'
+import type { ModuleType } from '@operation-room/lib/utils'
 
 // ============================================================================
 // Types

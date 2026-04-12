@@ -2,8 +2,8 @@
  * Question Card Component - AI asks user for clarification
  */
 
-import { useInvestigationStore } from '@/stores/investigationStore';
-import { Message } from '@/types/investigation';
+import { useInvestigationStore } from '@operation-room/stores/investigationStore';
+import { Message } from '@operation-room/types/investigation';
 import { useState } from 'react';
 import QuestionTimer from './QuestionTimer';
 

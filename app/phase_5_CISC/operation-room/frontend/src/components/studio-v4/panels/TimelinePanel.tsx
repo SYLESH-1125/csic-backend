@@ -26,8 +26,8 @@ import {
   XAxis, CartesianGrid, RadarChart, PolarGrid, PolarAngleAxis,
   PolarRadiusAxis, Radar
 } from 'recharts'
-import { cn } from '@/lib/utils'
-import { api } from '@/lib/api'
+import { cn } from '@operation-room/lib/utils'
+import { api } from '@operation-room/lib/api'
 import {
   PanelHeader,
   PanelContent,
@@ -37,20 +37,20 @@ import {
   MetricCard,
   FindingCard,
 } from '../ExpandablePanel'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Button } from '@operation-room/components/ui/button'
+import { Badge } from '@operation-room/components/ui/badge'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@operation-room/components/ui/select'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible'
+} from '@operation-room/components/ui/collapsible'
 import { useStudioStore } from '../store/useStudioStore'
 
 // Types

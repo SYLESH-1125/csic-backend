@@ -7,17 +7,27 @@ const PAGE_TITLES = {
   '/cases/new': { title: 'Create New Case', subtitle: 'Case Initialization & Evidence Preservation' },
 };
 
+function normalizePathname(pathname) {
+  if (pathname.startsWith('/operation-room')) {
+    const rest = pathname.slice('/operation-room'.length);
+    if (!rest || rest === '') return '/';
+    return rest.startsWith('/') ? rest : `/${rest}`;
+  }
+  return pathname;
+}
+
 function getPageInfo(pathname) {
-  if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
-  if (pathname.includes('/timeline'))    return { title: 'Timeline Reconstruction', subtitle: 'Unified Event Timeline Analysis' };
-  if (pathname.includes('/anomalies'))   return { title: 'Anomaly Detection', subtitle: 'Explainable AI · IF, LOF, Ensemble, DistilBERT' };
-  if (pathname.includes('/correlation')) return { title: 'Correlation & Root-Cause', subtitle: 'Entity Graph · MITRE ATT&CK Mapping' };
-  if (pathname.includes('/crud'))        return { title: 'CRUD & Data-Access', subtitle: 'Operation Classification & Sensitivity Analysis' };
-  if (pathname.includes('/exfiltration')) return { title: 'Data Exfiltration Intelligence', subtitle: '9-Engine Pipeline · Behaviour Graphs · Intent-Aware Detection' };
-  if (pathname.includes('/network'))     return { title: 'Network & Exfiltration', subtitle: 'Flow Analysis · Threat Intelligence · Exfil Detection' };
-  if (pathname.includes('/depth'))       return { title: 'Depth & Impact', subtitle: '4D Penetration Assessment · Business Impact' };
-  if (pathname.includes('/studio-v4'))   return { title: 'Report Studio V4', subtitle: 'Canva-style Forensic Workspace · Evidence-Bound Editing' };
-  if (pathname.includes('/cases/'))      return { title: 'Case Dashboard', subtitle: 'Evidence & Chain-of-Custody Management' };
+  const p = normalizePathname(pathname);
+  if (PAGE_TITLES[p]) return PAGE_TITLES[p];
+  if (p.includes('/timeline'))    return { title: 'Timeline Reconstruction', subtitle: 'Unified Event Timeline Analysis' };
+  if (p.includes('/anomalies'))   return { title: 'Anomaly Detection', subtitle: 'Explainable AI · IF, LOF, Ensemble, DistilBERT' };
+  if (p.includes('/correlation')) return { title: 'Correlation & Root-Cause', subtitle: 'Entity Graph · MITRE ATT&CK Mapping' };
+  if (p.includes('/crud'))        return { title: 'CRUD & Data-Access', subtitle: 'Operation Classification & Sensitivity Analysis' };
+  if (p.includes('/exfiltration')) return { title: 'Data Exfiltration Intelligence', subtitle: '9-Engine Pipeline · Behaviour Graphs · Intent-Aware Detection' };
+  if (p.includes('/network'))     return { title: 'Network & Exfiltration', subtitle: 'Flow Analysis · Threat Intelligence · Exfil Detection' };
+  if (p.includes('/depth'))       return { title: 'Depth & Impact', subtitle: '4D Penetration Assessment · Business Impact' };
+  if (p.includes('/studio-v4'))   return { title: 'Report Studio V4', subtitle: 'Canva-style Forensic Workspace · Evidence-Bound Editing' };
+  if (p.includes('/cases/'))      return { title: 'Case Dashboard', subtitle: 'Evidence & Chain-of-Custody Management' };
   return { title: 'NFLIP', subtitle: 'National Forensic Log Intelligence Platform' };
 }
 

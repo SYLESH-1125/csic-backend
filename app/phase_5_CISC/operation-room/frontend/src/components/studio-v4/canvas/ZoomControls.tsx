@@ -1,7 +1,7 @@
 import React from 'react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@operation-room/components/ui/button'
 import { useStudioStore } from '../store/useStudioStore'
-import { cn } from '@/lib/utils'
+import { cn } from '@operation-room/lib/utils'
 
 export const ZoomControls = ({ className }: { className?: string }) => {
   const { zoom, zoomIn, zoomOut } = useStudioStore()

@@ -3,13 +3,13 @@
 import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@/lib/api';
-import { useFilterState } from '@/context/FilterStateProvider';
-import { AdvancedFilterBuilder } from '@/components/common/AdvancedFilterBuilder';
+import { api } from '@operation-room/lib/api';
+import { useFilterState } from '@operation-room/context/FilterStateProvider';
+import { AdvancedFilterBuilder } from '@operation-room/components/common/AdvancedFilterBuilder';
 import dynamic from 'next/dynamic';
 
 /* ── Lazy-load chart wrapper (single bundle, SSR-safe) ──── */
-const Charts = dynamic(() => import('@/components/TimelineCharts').then(m => ({
+const Charts = dynamic(() => import('@operation-room/components/TimelineCharts').then(m => ({
   default: () => null, // not used as default
   ActivityChart: m.ActivityChart,
   HourlyChart: m.HourlyChart,
@@ -20,12 +20,12 @@ const Charts = dynamic(() => import('@/components/TimelineCharts').then(m => ({
 })), { ssr: false });
 
 // Import individually for proper rendering
-const ActivityChart = dynamic(() => import('@/components/TimelineCharts').then(m => m.ActivityChart), { ssr: false });
-const HourlyChart   = dynamic(() => import('@/components/TimelineCharts').then(m => m.HourlyChart),  { ssr: false });
-const SourcePie     = dynamic(() => import('@/components/TimelineCharts').then(m => m.SourcePie),    { ssr: false });
-const ActorBar      = dynamic(() => import('@/components/TimelineCharts').then(m => m.ActorBar),     { ssr: false });
-const SeverityPie   = dynamic(() => import('@/components/TimelineCharts').then(m => m.SeverityPie),  { ssr: false });
-const ThreatRadar   = dynamic(() => import('@/components/TimelineCharts').then(m => m.ThreatRadar),  { ssr: false });
+const ActivityChart = dynamic(() => import('@operation-room/components/TimelineCharts').then(m => m.ActivityChart), { ssr: false });
+const HourlyChart   = dynamic(() => import('@operation-room/components/TimelineCharts').then(m => m.HourlyChart),  { ssr: false });
+const SourcePie     = dynamic(() => import('@operation-room/components/TimelineCharts').then(m => m.SourcePie),    { ssr: false });
+const ActorBar      = dynamic(() => import('@operation-room/components/TimelineCharts').then(m => m.ActorBar),     { ssr: false });
+const SeverityPie   = dynamic(() => import('@operation-room/components/TimelineCharts').then(m => m.SeverityPie),  { ssr: false });
+const ThreatRadar   = dynamic(() => import('@operation-room/components/TimelineCharts').then(m => m.ThreatRadar),  { ssr: false });
 
 /* ═══════════════════════════════════════════════════════════════
    Constants
@@ -573,13 +573,13 @@ export default function TimelinePage() {
             color: '#1e293b' }}>
             Timeline Reconstruction
           </h1>
-          <p style={{ ...mono, fontSize: 12, marginTop: 6, color: 'var(--text-muted)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+          <div style={{ ...mono, fontSize: 12, marginTop: 6, color: 'var(--text-muted)', display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <span>{stats?.total_events?.toLocaleString()} events</span><span style={{ opacity: 0.3 }}>|</span>
             <span>{stats?.total_anchors} anchors</span><span style={{ opacity: 0.3 }}>|</span>
             <span>{Object.keys(stats?.sources || {}).length} sources</span><span style={{ opacity: 0.3 }}>|</span>
             <span>{Object.keys(stats?.actors || {}).length} actors</span>
             {refreshing && <span style={{ color: '#0ea5e9' }}>Refreshing...</span>}
-          </p>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {built && (

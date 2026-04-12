@@ -1,4 +1,4 @@
-import { CanvasElement } from '@/components/studio-v4/store/useStudioStore'
+import { CanvasElement } from '@operation-room/components/studio-v4/store/useStudioStore'
 
 // Helper macro to generate generic element skeletons for template layouts
 const t = (

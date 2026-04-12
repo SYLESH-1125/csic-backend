@@ -25,8 +25,8 @@ import {
   ResponsiveContainer, ScatterChart, Scatter, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, PieChart as RechartsPieChart, Pie, Cell, ZAxis
 } from 'recharts'
-import { cn } from '@/lib/utils'
-import { api } from '@/lib/api'
+import { cn } from '@operation-room/lib/utils'
+import { api } from '@operation-room/lib/api'
 import {
   PanelHeader,
   PanelContent,
@@ -37,26 +37,26 @@ import {
   FindingCard,
 } from '../ExpandablePanel'
 import { useStudioStore } from '../store/useStudioStore'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
+import { Button } from '@operation-room/components/ui/button'
+import { Badge } from '@operation-room/components/ui/badge'
+import { Progress } from '@operation-room/components/ui/progress'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@operation-room/components/ui/select'
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
+} from '@operation-room/components/ui/tooltip'
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible'
+} from '@operation-room/components/ui/collapsible'
 import {
   Dialog,
   DialogContent,
@@ -65,9 +65,9 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-} from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { Slider } from '@/components/ui/slider'
+} from '@operation-room/components/ui/dialog'
+import { Label } from '@operation-room/components/ui/label'
+import { Slider } from '@operation-room/components/ui/slider'
 
 // Normalise the anomaly summary response so missing fields don't crash the UI
 const normalizeSummary = (data: Partial<AnomalySummary> & { error?: string } | null): AnomalySummary | null => {

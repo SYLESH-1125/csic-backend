@@ -1,8 +1,8 @@
 import { Node, mergeAttributes } from '@tiptap/core'
 import { ReactNodeViewRenderer, NodeViewWrapper } from '@tiptap/react'
 import React, { useEffect, useRef, useState } from 'react'
-import { useStudioStore, EvidenceCard } from '@/components/studio-v4/store/useStudioStore'
-import { HelperPopover } from '@/components/ui/HelperPopover'
+import { useStudioStore, EvidenceCard } from '@operation-room/components/studio-v4/store/useStudioStore'
+import { HelperPopover } from '@operation-room/components/ui/HelperPopover'
 
 const ClaimComponent = ({ node, updateAttributes }: any) => {
   const { evidenceCards, focusMode } = useStudioStore((state) => ({ evidenceCards: state.evidenceCards, focusMode: state.focusMode }))

@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStudioStore, CanvasElement } from './store/useStudioStore'
-import { Button } from '@/components/ui/button'
+import { Button } from '@operation-room/components/ui/button'
 import { CheckCircle, XCircle, ShieldAlert } from 'lucide-react'
 
 // Helper to recurse TipTap JSON AST to find claims

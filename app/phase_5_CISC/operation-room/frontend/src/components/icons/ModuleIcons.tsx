@@ -87,8 +87,8 @@ import {
   BarChart2,
   type LucideIcon,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import type { ModuleType, SeverityLevel } from '@/lib/utils'
+import { cn } from '@operation-room/lib/utils'
+import type { ModuleType, SeverityLevel } from '@operation-room/lib/utils'
 
 // Module icon mapping
 export const MODULE_ICONS: Record<ModuleType, LucideIcon> = {

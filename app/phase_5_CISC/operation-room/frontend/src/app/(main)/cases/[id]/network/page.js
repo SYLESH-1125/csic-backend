@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { api } from '@operation-room/lib/api';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid,
@@ -184,7 +184,7 @@ export default function NetworkPage() {
             color: '#1e293b' }}>
              Network & Exfiltration Analysis
           </h1>
-          <p style={{ ...mono, fontSize: 11, marginTop: 4, color: 'var(--text-muted)' }}>
+          <div style={{ ...mono, fontSize: 11, marginTop: 4, color: 'var(--text-muted)' }}>
             <Tip text="6-node pipeline: ParseFlows → ExtractFeatures → DetectExfiltration → EnrichThreatIntel → CorrelateWithCRUD → StoreAndAudit">
               LangGraph 6-Node Pipeline
             </Tip>
@@ -196,7 +196,7 @@ export default function NetworkPage() {
             <Tip text="Cross-references outbound flows with CRUD data reads to confirm exfiltration">
               CRUD Correlation
             </Tip>
-          </p>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <Link href={`/cases/${id}/crud`} className="btn btn-ghost">CRUD</Link>

@@ -5,8 +5,8 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { useInvestigationStore } from '@/stores/investigationStore';
-import { Evidence } from '@/types/investigation';
+import { useInvestigationStore } from '@operation-room/stores/investigationStore';
+import { Evidence } from '@operation-room/types/investigation';
 
 export default function EvidenceTab() {
   const { evidence } = useInvestigationStore();

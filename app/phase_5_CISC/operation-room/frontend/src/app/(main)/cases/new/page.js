@@ -16,7 +16,7 @@ import {
   ShieldAlert,
   ShieldCheck,
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api } from '@operation-room/lib/api';
 
 const LOG_SOURCES = [
   { id: 'AUTH', label: 'Authentication Logs', desc: 'AD, LDAP, SSO, MFA', icon: KeyRound },

@@ -24,11 +24,6 @@ class RegisterRequest(BaseModel):
     full_name: Optional[str] = None
 
 
-class RegisterResponse(BaseModel):
-    message: str
-    user: UserResponse
-
-
 class UserResponse(BaseModel):
     id: str
     email: str
@@ -37,4 +32,9 @@ class UserResponse(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class RegisterResponse(BaseModel):
+    message: str
+    user: UserResponse
 

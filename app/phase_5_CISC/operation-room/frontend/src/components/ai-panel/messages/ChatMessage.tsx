@@ -2,7 +2,7 @@
  * Chat Message Component - Renders different message types
  */
 
-import { Message } from '@/types/investigation';
+import { Message } from '@operation-room/types/investigation';
 import FindingCard from './FindingCard';
 import ProgressMessage from './ProgressMessage';
 import QuestionCard from './QuestionCard';

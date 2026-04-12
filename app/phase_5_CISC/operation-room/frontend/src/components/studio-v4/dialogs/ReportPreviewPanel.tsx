@@ -12,11 +12,11 @@
  */
 
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@operation-room/components/ui/dialog';
+import { Button } from '@operation-room/components/ui/button';
+import { Slider } from '@operation-room/components/ui/slider';
+import { Badge } from '@operation-room/components/ui/badge';
+import { ScrollArea } from '@operation-room/components/ui/scroll-area';
 import {
   Eye,
   EyeOff,
@@ -35,7 +35,7 @@ import {
   Minimize2,
 } from 'lucide-react';
 import { useStudioStore, PageMeta, CanvasElement } from '../store/useStudioStore';
-import { cn } from '@/lib/utils';
+import { cn } from '@operation-room/lib/utils';
 
 // Page dimensions (A4 at 96 DPI)
 const PAGE_WIDTH = 794; // 210mm

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FilterCondition, FilterGroup, useFilterState } from '@/context/FilterStateProvider';
+import { FilterCondition, FilterGroup, useFilterState } from '@operation-room/context/FilterStateProvider';
 import { Plus, X, Filter } from 'lucide-react';
 
 interface AdvancedFilterBuilderProps {

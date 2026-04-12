@@ -1,6 +1,6 @@
 "use client"
 
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipProvider } from '@operation-room/components/ui/tooltip';
 
 export default function StudioLayout({ children }) {
 	return (

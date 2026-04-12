@@ -6,11 +6,11 @@ import {
   Palette, BarChart3, Layout, Ruler, Pin, RefreshCw,
   ChevronDown, X, Eye, EyeOff,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Separator } from '@/components/ui/separator'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
+import { cn } from '@operation-room/lib/utils'
+import { Button } from '@operation-room/components/ui/button'
+import { Separator } from '@operation-room/components/ui/separator'
+import { Switch } from '@operation-room/components/ui/switch'
+import { Label } from '@operation-room/components/ui/label'
 import { RefreshDiffDialog } from '../dialogs/RefreshDiffDialog'
 import {
   Select,
@@ -18,7 +18,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@operation-room/components/ui/select'
 import { useStudioStore } from '../store/useStudioStore'
 
 // ── Forensic-safe color palettes ────────────────────────────────────────

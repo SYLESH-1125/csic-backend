@@ -1,31 +1,31 @@
 'use client'
 
-import { api } from '@/lib/api'
+import { api } from '@operation-room/lib/api'
 import type { Editor } from '@tiptap/core'
 import dynamic from 'next/dynamic'
 import { useParams, useRouter } from 'next/navigation'
 import React, { memo, useCallback, useEffect, useRef, useState } from 'react'
 
 // V4 Canva-style Layout
-import { CanvaLayout, DocumentCanvas, useStudioStore } from '@/components/studio-v4'
-import { EditorProvider } from '@/components/studio-v4/context/EditorContext'
-import { ExportPreviewModal } from '@/components/studio-v4/dialogs/ExportPreviewModal'
-import { GhostWriterWizard } from '@/components/studio-v4/dialogs/GhostWriterWizard'
-import { InvestigationConfig, InvestigationConfigDialog } from '@/components/studio-v4/dialogs/InvestigationConfigDialog'
-import { ReportPreviewPanel } from '@/components/studio-v4/dialogs/ReportPreviewPanel'
-import { ChartInspector } from '@/components/studio-v4/toolbar/ChartInspector'
-import { MASTER_TEMPLATES } from '@/lib/templates'
+import { CanvaLayout, DocumentCanvas, useStudioStore } from '@operation-room/components/studio-v4'
+import { EditorProvider } from '@operation-room/components/studio-v4/context/EditorContext'
+import { ExportPreviewModal } from '@operation-room/components/studio-v4/dialogs/ExportPreviewModal'
+import { GhostWriterWizard } from '@operation-room/components/studio-v4/dialogs/GhostWriterWizard'
+import { InvestigationConfig, InvestigationConfigDialog } from '@operation-room/components/studio-v4/dialogs/InvestigationConfigDialog'
+import { ReportPreviewPanel } from '@operation-room/components/studio-v4/dialogs/ReportPreviewPanel'
+import { ChartInspector } from '@operation-room/components/studio-v4/toolbar/ChartInspector'
+import { MASTER_TEMPLATES } from '@operation-room/lib/templates'
 
 // Investigation hook
-import { useInvestigationStream } from '@/hooks/useInvestigationStream'
+import { useInvestigationStream } from '@operation-room/hooks/useInvestigationStream'
 
 // TipTap Editor
-import type { ReportEditorRef } from '@/components/tiptap/ReportEditorV2'
+import type { ReportEditorRef } from '@operation-room/components/tiptap/ReportEditorV2'
 import { Loader2, WifiOff, X } from 'lucide-react'
 
 // Lazy-load TipTap editor
 const ReportEditorV2 = dynamic(
-  () => import('@/components/tiptap/ReportEditorV2').then(mod => mod.ReportEditorV2),
+  () => import('@operation-room/components/tiptap/ReportEditorV2').then(mod => mod.ReportEditorV2),
   {
     ssr: false,
     loading: () => (

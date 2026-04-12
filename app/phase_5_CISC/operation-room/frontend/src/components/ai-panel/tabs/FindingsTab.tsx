@@ -4,8 +4,8 @@
 
 'use client';
 
-import { useInvestigationStore } from '@/stores/investigationStore';
-import { Finding } from '@/types/investigation';
+import { useInvestigationStore } from '@operation-room/stores/investigationStore';
+import { Finding } from '@operation-room/types/investigation';
 import { useMemo, useState } from 'react';
 
 export default function FindingsTab() {

@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { api } from '@operation-room/lib/api';
 import {
   ScatterChart, Scatter, XAxis, YAxis, ZAxis, CartesianGrid,
   ResponsiveContainer, Tooltip as RTooltip, Cell,
@@ -327,7 +327,7 @@ export default function AnomalyPage() {
             color: '#1e293b' }}>
             Anomaly Detection Agent
           </h1>
-          <p style={{ ...mono, fontSize: 11.5, marginTop: 6, color: 'var(--text-muted)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ ...mono, fontSize: 11.5, marginTop: 6, color: 'var(--text-muted)', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Tip text="The pipeline runs 7 nodes: LoadData → ExtractFeatures → TrainAndScore → SHAP Explain → StoreResults → UpdateCoC → GenerateSummary">
               <span>LangGraph 7-Node Pipeline</span>
             </Tip>
@@ -339,7 +339,7 @@ export default function AnomalyPage() {
             <Tip text="SHAP (SHapley Additive exPlanations) uses game theory to explain each prediction by computing the contribution of each feature.">
               <span>SHAP Explainability</span>
             </Tip>
-          </p>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <Link href={`/cases/${id}/timeline`} className="btn btn-ghost">Timeline</Link>

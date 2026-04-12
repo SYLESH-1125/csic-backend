@@ -8,27 +8,27 @@ import {
   Trash2, Settings, GripVertical, Maximize2, Minimize2,
   FileText, ExternalLink, Hash, Info, Activity, Crosshair, Grid, List, Filter, Check
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@operation-room/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@operation-room/components/ui/dropdown-menu'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover'
-import { cn } from '@/lib/utils'
+} from '@operation-room/components/ui/popover'
+import { cn } from '@operation-room/lib/utils'
 
 // Import premium chart components
-import { ShapFeatureImportance, ShapWaterfall } from '@/components/charts/ShapCharts'
-import { TimelineVerticalChart, TimelineSwimlane, TimelineSummary } from '@/components/charts/TimelineCharts'
-import { ActivityChart, HourlyChart, SourcePie, ActorBar, ThreatRadar } from '@/components/TimelineCharts'
-import { NetworkFlowTable, NetworkTopology, NetworkStats } from '@/components/charts/NetworkCharts'
-import { CorrelationGraph, CausalChainView, CorrelationSummary } from '@/components/charts/CorrelationCharts'
+import { ShapFeatureImportance, ShapWaterfall } from '@operation-room/components/charts/ShapCharts'
+import { TimelineVerticalChart, TimelineSwimlane, TimelineSummary } from '@operation-room/components/charts/TimelineCharts'
+import { ActivityChart, HourlyChart, SourcePie, ActorBar, ThreatRadar } from '@operation-room/components/TimelineCharts'
+import { NetworkFlowTable, NetworkTopology, NetworkStats } from '@operation-room/components/charts/NetworkCharts'
+import { CorrelationGraph, CausalChainView, CorrelationSummary } from '@operation-room/components/charts/CorrelationCharts'
 import { 
   ScatterChart, Scatter, AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ZAxis 

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AlertCircle, FilePlus, ChevronRight, Check } from 'lucide-react'
 import playbooksData from '../../app/(studio)/cases/[id]/studio-v4/templates/playbooks.json'
-import { Button } from '@/components/ui/button'
+import { Button } from '@operation-room/components/ui/button'
 import { useStudioStore } from './store/useStudioStore'
 
 import { createPortal } from 'react-dom'

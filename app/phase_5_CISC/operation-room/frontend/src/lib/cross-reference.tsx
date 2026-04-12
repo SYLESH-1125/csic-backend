@@ -1,7 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react'
-import { ModuleSource, EvidenceType } from '@/components/tiptap/EvidenceBlockNode'
+import { ModuleSource, EvidenceType } from '@operation-room/components/tiptap/EvidenceBlockNode'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Cross-Reference System for Evidence Citations

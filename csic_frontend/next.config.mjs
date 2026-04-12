@@ -1,12 +1,23 @@
 import { createRequire } from 'module'
-import { dirname } from 'path'
+import path from 'path'
 import { fileURLToPath } from 'url'
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const operationRoomSrc = path.resolve(
+  __dirname,
+  '../app/phase_5_CISC/operation-room/frontend/src',
+)
 const require = createRequire(import.meta.url)
 const { loadEnvConfig } = require('@next/env')
 // Load .env / .env.local from this app folder (csic_frontend), not from process.cwd() when that differs.
 loadEnvConfig(__dirname)
+
+/** Must include `/api/phase5` when using the Forensic Engine monolith (Phase 5 mount). */
+const backendOrigin = (
+  process.env.OPROOM_BACKEND_ORIGIN ||
+  process.env.NEXT_PUBLIC_OPROOM_BACKEND_ORIGIN ||
+  'http://127.0.0.1:8000/api/phase5'
+).replace(/\/+$/, '')
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -16,6 +27,39 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/deep-research/:path*',
+        destination: `${backendOrigin}/api/deep-research/:path*`,
+      },
+      {
+        source: '/api/:path*',
+        destination: `${backendOrigin}/api/:path*`,
+      },
+    ]
+  },
+  experimental: {
+    externalDir: true,
+    proxyTimeout: 300000,
+  },
+  webpack(config) {
+    const nm = path.join(__dirname, 'node_modules')
+    config.resolve.modules = [nm, ...(config.resolve.modules || ['node_modules'])]
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@operation-room': operationRoomSrc,
+    }
+    config.resolve.alias.canvas = path.join(__dirname, 'lib/empty-module.js')
+    return config
+  },
+  turbopack: {
+    /** Keep root here so `node_modules` resolves from this app; Operation Room is wired via `--webpack` + aliases. */
+    root: __dirname,
+    resolveAlias: {
+      canvas: path.join(__dirname, 'lib/empty-module.js'),
+    },
+  },
   // Ensure client bundle receives these even if cwd-based loading missed .env.local
   env: {
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000',
@@ -23,6 +67,8 @@ const nextConfig = {
     NEXT_PUBLIC_GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
     NEXT_PUBLIC_GOOGLE_API_KEY: process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '',
     NEXT_PUBLIC_CSIC_DEMO_MODE: process.env.NEXT_PUBLIC_CSIC_DEMO_MODE || '',
+    /** Operation Room “home” when embedded in this app (see middleware + app/operation-room). */
+    NEXT_PUBLIC_OR_OPERATION_HOME: process.env.NEXT_PUBLIC_OR_OPERATION_HOME || '/operation-room',
   },
 }
 

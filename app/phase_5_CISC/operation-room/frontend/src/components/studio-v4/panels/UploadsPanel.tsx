@@ -11,7 +11,7 @@ import {
 import {
   PanelContent,
 } from '../ExpandablePanel'
-import { Button } from '@/components/ui/button'
+import { Button } from '@operation-room/components/ui/button'
 
 const MOCK_UPLOADS = [
   { id: 'up-1', name: 'Company_Logo.png', type: 'image', url: '/api/placeholder/logo.svg' },

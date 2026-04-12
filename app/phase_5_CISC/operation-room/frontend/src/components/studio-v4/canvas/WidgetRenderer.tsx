@@ -3,8 +3,8 @@
 import React, { useMemo } from 'react'
 import { Rnd } from 'react-rnd'
 import { CanvasElement, useStudioStore, calculateElementMinHeight } from '../store/useStudioStore'
-import { EvidenceContent } from '@/components/tiptap/EvidenceBlockNode'
-import { cn } from '@/lib/utils'
+import { EvidenceContent } from '@operation-room/components/tiptap/EvidenceBlockNode'
+import { cn } from '@operation-room/lib/utils'
 import { GripHorizontal, X, Settings2, ShieldCheck, ShieldAlert } from 'lucide-react'
 
 export const WidgetRenderer = ({

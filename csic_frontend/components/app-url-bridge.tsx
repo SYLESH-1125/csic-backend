@@ -16,11 +16,12 @@ export function AppUrlBridge() {
 
   useEffect(() => {
     if (!isAuthenticated) return
-    if (searchParams.has(PHASE5_QUERY)) {
+    const pageParam = searchParams.get(APP_PAGE_QUERY)
+    if (searchParams.has(PHASE5_QUERY) && pageParam !== "phase6") {
       setCurrentPage("phase5")
       return
     }
-    const shell = parseShellPage(searchParams.get(APP_PAGE_QUERY))
+    const shell = parseShellPage(pageParam)
     if (shell) setCurrentPage(shell)
   }, [isAuthenticated, searchParams, setCurrentPage])
 

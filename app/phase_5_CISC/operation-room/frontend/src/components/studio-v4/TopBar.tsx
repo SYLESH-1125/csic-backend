@@ -15,21 +15,21 @@ import {
   Sparkles,
   StopCircle,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@operation-room/lib/utils'
 import { useStudioStore } from './store/useStudioStore'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Button } from '@operation-room/components/ui/button'
+import { Input } from '@operation-room/components/ui/input'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@operation-room/components/ui/dropdown-menu'
 import { FORENSIC_THEME } from './forensicTheme'
 import { PlaybookLauncher } from './PlaybookLauncher'
-import { HelperPopover } from '@/components/ui/HelperPopover'
-import { Progress } from '@/components/ui/progress'
+import { HelperPopover } from '@operation-room/components/ui/HelperPopover'
+import { Progress } from '@operation-room/components/ui/progress'
 
 interface TopBarProps {
   onBack?: () => void

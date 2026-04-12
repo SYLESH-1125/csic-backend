@@ -1,14 +1,14 @@
 import React from 'react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@operation-room/components/ui/button'
 import { useStudioStore } from '../store/useStudioStore'
-import { cn } from '@/lib/utils'
+import { cn } from '@operation-room/lib/utils'
 import { Plus, Trash2 } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@operation-room/components/ui/dropdown-menu'
 
 interface PageNavigatorProps {
   className?: string

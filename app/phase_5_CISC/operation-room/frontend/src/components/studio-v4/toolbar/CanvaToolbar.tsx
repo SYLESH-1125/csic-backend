@@ -28,10 +28,10 @@ import {
   FileText,
   LayoutGrid,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Separator } from '@/components/ui/separator'
+import { cn } from '@operation-room/lib/utils'
+import { Button } from '@operation-room/components/ui/button'
+import { Input } from '@operation-room/components/ui/input'
+import { Separator } from '@operation-room/components/ui/separator'
 import type { Editor } from '@tiptap/core'
 import {
   Select,
@@ -39,25 +39,25 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from '@operation-room/components/ui/select'
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover'
+} from '@operation-room/components/ui/popover'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@operation-room/components/ui/dropdown-menu'
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
-import { Toggle } from '@/components/ui/toggle'
+} from '@operation-room/components/ui/tooltip'
+import { Toggle } from '@operation-room/components/ui/toggle'
 
 // Color presets
 const TEXT_COLORS = [

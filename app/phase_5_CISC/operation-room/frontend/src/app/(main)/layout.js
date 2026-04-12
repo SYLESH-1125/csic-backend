@@ -1,6 +1,6 @@
 
-import AppChrome from '@/components/AppChrome';
-import { FilterStateProvider } from '@/context/FilterStateProvider';
+import AppChrome from '@operation-room/components/AppChrome';
+import { FilterStateProvider } from '@operation-room/context/FilterStateProvider';
 
 export default function MainLayout({ children }) {
   return (

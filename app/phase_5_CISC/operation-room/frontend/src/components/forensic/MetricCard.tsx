@@ -1,16 +1,16 @@
 'use client'
 
 import * as React from 'react'
-import { cn } from '@/lib/utils'
+import { cn } from '@operation-room/lib/utils'
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
-import type { ModuleType } from '@/lib/utils'
-import { MODULE_ICON_COLORS, MODULE_BG_COLORS, MODULE_ICONS } from '@/components/icons/ModuleIcons'
+} from '@operation-room/components/ui/tooltip'
+import type { ModuleType } from '@operation-room/lib/utils'
+import { MODULE_ICON_COLORS, MODULE_BG_COLORS, MODULE_ICONS } from '@operation-room/components/icons/ModuleIcons'
 
 interface MetricCardProps {
   title: string

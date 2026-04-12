@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@operation-room/components/ui/dialog';
 import { useStudioStore } from '../store/useStudioStore';
-import { api } from '@/lib/api';
+import { api } from '@operation-room/lib/api';
 import { Shield } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Sector, Legend } from 'recharts';
 

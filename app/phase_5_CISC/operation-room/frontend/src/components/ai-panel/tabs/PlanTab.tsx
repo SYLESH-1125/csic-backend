@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useInvestigationStore } from '@/stores/investigationStore';
+import { useInvestigationStore } from '@operation-room/stores/investigationStore';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 type Priority = 'high' | 'medium' | 'low';

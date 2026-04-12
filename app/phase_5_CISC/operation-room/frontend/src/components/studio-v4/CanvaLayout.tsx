@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Sparkles, PanelRightClose } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@operation-room/lib/utils'
 import { useStudioStore, type PanelId } from './store/useStudioStore'
 import { IconRail, RAIL_ITEMS } from './IconRail'
 import { TopBar } from './TopBar'
@@ -17,16 +17,16 @@ import { TimelinePanel, AnomalyPanel, VaultPanel, NetworkPanel, CorrelationPanel
 import { TextPanel } from './panels/TextPanel'
 import { ElementsPanel } from './panels/ElementsPanel'
 import { UploadsPanel } from './panels/UploadsPanel'
-import { Button } from '@/components/ui/button'
+import { Button } from '@operation-room/components/ui/button'
 import type { Editor } from '@tiptap/core'
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
+} from '@operation-room/components/ui/tooltip'
 
 // Import the Deep Research AI Panel
-import AIPanel from '@/components/ai-panel/AIPanel'
+import AIPanel from '@operation-room/components/ai-panel/AIPanel'
 
 type InsertComponentHandler = (componentId: string, config?: Record<string, unknown>) => void
 type InsertFindingHandler = (finding: { title: string; content: string; source: string }) => void

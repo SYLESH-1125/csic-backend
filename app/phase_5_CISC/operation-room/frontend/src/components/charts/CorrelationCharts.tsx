@@ -1,12 +1,12 @@
 'use client'
 
 import * as React from 'react'
-import { cn } from '@/lib/utils'
-import { useStudioStore } from '@/components/studio-v4/store/useStudioStore'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { ActionTooltip } from '@/components/ui/ActionTooltip'
+import { cn } from '@operation-room/lib/utils'
+import { useStudioStore } from '@operation-room/components/studio-v4/store/useStudioStore'
+import { Badge } from '@operation-room/components/ui/badge'
+import { Card, CardContent, CardHeader, CardTitle } from '@operation-room/components/ui/card'
+import { ScrollArea } from '@operation-room/components/ui/scroll-area'
+import { ActionTooltip } from '@operation-room/components/ui/ActionTooltip'
 import {
   GitBranch,
   Circle,

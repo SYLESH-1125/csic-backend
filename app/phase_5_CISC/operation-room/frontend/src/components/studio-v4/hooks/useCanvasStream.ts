@@ -9,7 +9,7 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { useStudioStore, CanvasElement, PageMeta } from '../store/useStudioStore';
-import type { StreamEvent, Finding, Visualization, Hypothesis } from '@/hooks/useInvestigationStream';
+import type { StreamEvent, Finding, Visualization, Hypothesis } from '@operation-room/hooks/useInvestigationStream';
 
 // Extended types for flexible handling
 interface LocalVisualization extends Visualization {

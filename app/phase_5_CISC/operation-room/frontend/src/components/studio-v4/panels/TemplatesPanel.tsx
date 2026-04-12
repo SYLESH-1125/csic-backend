@@ -14,10 +14,10 @@ import {
   ChevronRight
 } from 'lucide-react'
 import { PanelContent } from '../ExpandablePanel'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { api } from '@/lib/api'
+import { Input } from '@operation-room/components/ui/input'
+import { Button } from '@operation-room/components/ui/button'
+import { Badge } from '@operation-room/components/ui/badge'
+import { api } from '@operation-room/lib/api'
 
 // Template Categories
 const TEMPLATE_CATEGORIES = [

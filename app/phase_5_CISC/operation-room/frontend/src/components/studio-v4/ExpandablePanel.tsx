@@ -3,12 +3,12 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Search } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@operation-room/lib/utils'
 import { useStudioStore, type PanelId } from './store/useStudioStore'
 import { FORENSIC_THEME, themeFromPanel, type ForensicModule } from './forensicTheme'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button } from '@operation-room/components/ui/button'
+import { Input } from '@operation-room/components/ui/input'
+import { ScrollArea } from '@operation-room/components/ui/scroll-area'
 
 // Panel header with search
 interface PanelHeaderProps {

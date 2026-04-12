@@ -16,7 +16,7 @@ import {
   ShieldCheck,
   Upload,
 } from 'lucide-react';
-import { api } from '@/lib/api';
+import { api } from '@operation-room/lib/api';
 
 const ACTION_ICONS = {
   CASE_CREATED: FilePlus2,

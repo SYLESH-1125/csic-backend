@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useInvestigationStore } from '@/stores/investigationStore';
+import { useInvestigationStore } from '@operation-room/stores/investigationStore';
 
 export default function ProgressTab() {
   const { progressUpdate, phase, progress, findings, evidence, chatMessages, investigationId, reset, setActiveTab } = useInvestigationStore();

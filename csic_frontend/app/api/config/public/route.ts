@@ -1,14 +1,9 @@
-import { createRequire } from "module"
+import { loadEnvConfig } from "@next/env"
 import { NextResponse } from "next/server"
 import { existsSync, readFileSync } from "fs"
-import { dirname, join } from "path"
+import { join } from "path"
 
 export const dynamic = "force-dynamic"
-
-const require = createRequire(import.meta.url)
-const { loadEnvConfig } = require("@next/env") as {
-  loadEnvConfig: (dir: string) => { combinedEnv: Record<string, string | undefined> }
-}
 
 const NEXT_CONFIG_NAMES = ["next.config.mjs", "next.config.ts", "next.config.js"] as const
 

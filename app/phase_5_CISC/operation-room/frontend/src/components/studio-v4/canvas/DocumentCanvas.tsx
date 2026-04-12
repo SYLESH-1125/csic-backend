@@ -1,10 +1,10 @@
 'use client'
 
 import React, { useRef } from 'react'
-import { cn } from '@/lib/utils'
+import { cn } from '@operation-room/lib/utils'
 import { useStudioStore, CanvasElement } from '../store/useStudioStore'
 import { Plus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@operation-room/components/ui/button'
 import { WidgetRenderer } from './WidgetRenderer'
 import { TextRenderer } from './TextRenderer'
 import { AlignmentOverlay } from './AlignmentOverlay'

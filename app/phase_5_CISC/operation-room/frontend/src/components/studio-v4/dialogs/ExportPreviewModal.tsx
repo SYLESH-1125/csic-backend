@@ -1,6 +1,6 @@
 import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@operation-room/components/ui/dialog';
+import { Button } from '@operation-room/components/ui/button';
 import { Eye, AlertTriangle } from 'lucide-react';
 import { useStudioStore } from '../store/useStudioStore';
 

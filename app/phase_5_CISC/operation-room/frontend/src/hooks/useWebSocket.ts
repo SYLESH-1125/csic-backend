@@ -2,8 +2,8 @@
  * WebSocket hook for real-time investigation updates
  */
 
-import { useInvestigationStore } from '@/stores/investigationStore';
-import type { Finding, ProgressUpdate } from '@/types/investigation';
+import { useInvestigationStore } from '@operation-room/stores/investigationStore';
+import type { Finding, ProgressUpdate } from '@operation-room/types/investigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 const normalizeProgress = (value: unknown): number => {

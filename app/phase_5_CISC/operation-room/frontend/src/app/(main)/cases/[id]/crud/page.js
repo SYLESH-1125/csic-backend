@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { api } from '@operation-room/lib/api';
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RTooltip,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
@@ -233,13 +233,13 @@ export default function CrudPage() {
             color: '#1e293b' }}>
              CRUD & Data-Access Analysis
           </h1>
-          <p style={{ ...mono, fontSize: 11, marginTop: 4, color: 'var(--text-muted)' }}>
+          <div style={{ ...mono, fontSize: 11, marginTop: 4, color: 'var(--text-muted)' }}>
             <Tip text="5-node pipeline: LoadAndClassify → ComputeMetrics → DetectPatterns → BuildMatrix → StoreAndAudit">LangGraph 5-Node Pipeline</Tip>
             <span style={{ opacity: 0.3, margin: '0 8px' }}>·</span>
             <Tip text="Classifies each event as Create/Read/Update/Delete with sensitivity scoring (LOW→CRITICAL)">Sensitivity Classification</Tip>
             <span style={{ opacity: 0.3, margin: '0 8px' }}>·</span>
             <Tip text="Detects suspicious patterns: off-hours bulk reads, audit trail modification, burst activity">Pattern Detection</Tip>
-          </p>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <Link href={`/cases/${id}/correlation`} className="btn btn-ghost"> Correlation</Link>

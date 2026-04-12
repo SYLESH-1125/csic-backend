@@ -13,7 +13,7 @@ import {
   AlertCircle,
   RefreshCw
 } from 'lucide-react'
-import { api } from '@/lib/api'
+import { api } from '@operation-room/lib/api'
 import {
   PanelHeader,
   PanelContent,
@@ -22,14 +22,14 @@ import {
   ComponentCard,
 } from '../ExpandablePanel'
 import { useStudioStore } from '../store/useStudioStore'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Button } from '@operation-room/components/ui/button'
+import { Badge } from '@operation-room/components/ui/badge'
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@/components/ui/tabs'
+} from '@operation-room/components/ui/tabs'
 
 // Correlation Components Constants
 const CORRELATION_COMPONENTS = [

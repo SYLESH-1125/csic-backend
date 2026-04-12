@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AlertTriangle, FolderOpen, LockOpen, Plus, ShieldCheck, Download, Trash } from 'lucide-react';
-import { api } from '@/lib/api';
-import StatsCard from '@/components/StatsCard';
-import CaseCard from '@/components/CaseCard';
+import { api } from '@operation-room/lib/api';
+import StatsCard from '@operation-room/components/StatsCard';
+import CaseCard from '@operation-room/components/CaseCard';
 
 export default function Dashboard() {
   const [cases, setCases] = useState([]);

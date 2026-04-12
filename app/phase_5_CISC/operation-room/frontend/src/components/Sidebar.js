@@ -15,8 +15,20 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 
+const orHome =
+  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_OR_OPERATION_HOME
+    ? process.env.NEXT_PUBLIC_OR_OPERATION_HOME
+    : '/';
+
 const MAIN_NAV_ITEMS = [
-  { href: '/', icon: Home, label: 'Main Dashboard', module: 'case', isActive: (pathname) => pathname === '/' },
+  {
+    href: orHome,
+    icon: Home,
+    label: 'Main Dashboard',
+    module: 'case',
+    isActive: (pathname) =>
+      pathname === orHome || (orHome === '/' && pathname === '/') || pathname === '/operation-room',
+  },
   { href: '/cases/new', icon: Plus, label: 'New Case', module: 'case', isActive: (pathname) => pathname === '/cases/new' },
 ];
 
@@ -88,8 +100,10 @@ const INVESTIGATION_ITEMS = [
 ];
 
 const resolveCaseId = (pathname) => {
-  const match = pathname.match(/^\/cases\/([^/]+)/);
-  return match ? match[1] : null;
+  const m1 = pathname.match(/^\/cases\/([^/]+)/);
+  if (m1) return m1[1];
+  const m2 = pathname.match(/^\/operation-room\/cases\/([^/]+)/);
+  return m2 ? m2[1] : null;
 };
 
 export default function Sidebar() {

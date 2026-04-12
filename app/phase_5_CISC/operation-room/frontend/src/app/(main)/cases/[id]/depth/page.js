@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@/lib/api';
+import { api } from '@operation-room/lib/api';
 import {
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   BarChart, Bar, PieChart, Pie, Cell,
@@ -195,7 +195,7 @@ export default function DepthPage() {
             color: '#1e293b' }}>
              Depth &amp; Impact Assessment
           </h1>
-          <p style={{ ...mono, fontSize: 11, marginTop: 4, color: 'var(--text-muted)' }}>
+          <div style={{ ...mono, fontSize: 11, marginTop: 4, color: 'var(--text-muted)' }}>
             <Tip text="7-node pipeline: LoadAllData → AccountDepth → SystemDepth → DataDepth → ControlDepth → ScoreImpact → StoreAndAudit">
               LangGraph 7-Node Pipeline
             </Tip>
@@ -207,7 +207,7 @@ export default function DepthPage() {
             <Tip text="Configurable weights for each dimension. Adjust and recompute severity in real time.">
               Interactive Scoring
             </Tip>
-          </p>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           <Link href={`/cases/${id}/network`} className="btn btn-ghost">Network</Link>

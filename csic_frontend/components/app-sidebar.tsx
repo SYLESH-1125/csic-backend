@@ -21,6 +21,7 @@ import {
   Clock,
   Sparkles,
   Settings,
+  MonitorPlay,
 } from "lucide-react"
 import {
   Sidebar,
@@ -306,6 +307,22 @@ export function AppSidebar() {
                     </SidebarMenuItem>
                   )
                 })}
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  isActive={currentPage === "phase6"}
+                  onClick={() => go("phase6")}
+                  tooltip="Phase 6 — Operation Room UI"
+                  className={
+                    currentPage === "phase6"
+                      ? "bg-primary/10 text-primary font-medium border-l-2 border-primary rounded-none"
+                      : "text-foreground hover:bg-muted"
+                  }
+                >
+                  <MonitorPlay className="size-4" />
+                  <span className="flex-1">Phase 6 — Operation Room UI</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
                 {/* Phase 4 - collapsible parent */}
               <SidebarMenuItem>

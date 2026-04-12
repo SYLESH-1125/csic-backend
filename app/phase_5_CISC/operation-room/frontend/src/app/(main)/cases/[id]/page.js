@@ -4,8 +4,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Download, FolderPlus, Link2, Package, Search, PlayCircle, Loader2, CheckCircle2, ShieldAlert } from 'lucide-react';
-import { api } from '@/lib/api';
-import StatusBadge from '@/components/StatusBadge';
+import { api } from '@operation-room/lib/api';
+import StatusBadge from '@operation-room/components/StatusBadge';
 
 // Playbook Definitions
 const PLAYBOOKS = {
@@ -165,13 +165,13 @@ export default function CaseDetailPage() {
       <div className="page-header animate-in">
         <div>
           <h1>{caseData.title}</h1>
-          <p style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 6 }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 6 }}>
             <StatusBadge value={caseData.status} />
             <StatusBadge value={caseData.priority} />
             <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>
               Created {new Date(caseData.created_at).toLocaleString()}
             </span>
-          </p>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <Link href={`/cases/${id}/import`} className="btn btn-primary">

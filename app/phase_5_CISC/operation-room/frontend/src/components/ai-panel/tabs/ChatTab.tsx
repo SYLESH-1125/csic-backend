@@ -5,8 +5,8 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useInvestigationStore } from '@/stores/investigationStore';
-import { useWebSocket } from '@/hooks/useWebSocket';
+import { useInvestigationStore } from '@operation-room/stores/investigationStore';
+import { useWebSocket } from '@operation-room/hooks/useWebSocket';
 import { useParams } from 'next/navigation';
 import ChatMessage from '../messages/ChatMessage';
 

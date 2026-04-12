@@ -41,7 +41,12 @@ class Settings(BaseSettings):
     COC_VERBOSITY: str = "STANDARD"
 
     # ── CORS ─────────────────────────────────────────────────────────────
-    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:3001"]
+    CORS_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+    ]
 
     model_config = {"env_prefix": "OPROOM_", "env_file": ".env", "extra": "ignore"}
     

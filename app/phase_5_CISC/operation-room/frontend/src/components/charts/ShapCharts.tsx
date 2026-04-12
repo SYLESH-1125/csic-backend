@@ -1,14 +1,14 @@
 'use client'
 
 import * as React from 'react'
-import { cn } from '@/lib/utils'
+import { cn } from '@operation-room/lib/utils'
 import { 
   Tooltip, 
   TooltipContent, 
   TooltipProvider, 
   TooltipTrigger 
-} from '@/components/ui/tooltip'
-import { Badge } from '@/components/ui/badge'
+} from '@operation-room/components/ui/tooltip'
+import { Badge } from '@operation-room/components/ui/badge'
 import { Info, TrendingUp, TrendingDown } from 'lucide-react'
 
 /**

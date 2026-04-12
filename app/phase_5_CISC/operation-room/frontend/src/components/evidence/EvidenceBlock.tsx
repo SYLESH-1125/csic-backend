@@ -1,16 +1,16 @@
 'use client'
 
 import * as React from 'react'
-import { cn } from '@/lib/utils'
-import { Card, CardContent, CardFooter } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import { cn } from '@operation-room/lib/utils'
+import { Card, CardContent, CardFooter } from '@operation-room/components/ui/card'
+import { Badge } from '@operation-room/components/ui/badge'
+import { Button } from '@operation-room/components/ui/button'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip'
+} from '@operation-room/components/ui/tooltip'
 import {
   MoreHorizontal,
   RefreshCw,
@@ -28,10 +28,10 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { ModuleIcon, MODULE_NAMES, MODULE_BG_COLORS } from '@/components/icons/ModuleIcons'
-import type { ModuleType } from '@/lib/utils'
-import { truncateHash, formatRelativeTime } from '@/lib/utils'
+} from '@operation-room/components/ui/dropdown-menu'
+import { ModuleIcon, MODULE_NAMES, MODULE_BG_COLORS } from '@operation-room/components/icons/ModuleIcons'
+import type { ModuleType } from '@operation-room/lib/utils'
+import { truncateHash, formatRelativeTime } from '@operation-room/lib/utils'
 
 // Evidence Block Types
 export type EvidenceBlockType = 
