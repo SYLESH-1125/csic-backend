@@ -86,7 +86,7 @@ async def trigger_phase2_processing(
         }
     """
     try:
-        import os
+        import os, asyncio
         auto_trigger = os.getenv("AUTO_TRIGGER_PHASE2", "true").lower()
         if auto_trigger in {"0", "false", "no", "off"}:
             return
@@ -94,23 +94,23 @@ async def trigger_phase2_processing(
             f"[WSRouter] Auto-triggering Phase 2: audit_id={audit_id} "
             f"file_path={file_path} source_ip={source_ip}"
         )
-        
-        # IMPORTANT: run Phase 2 with its own DB session.
-        # The WebSocket request-scoped session is closed in the WS handler's finally block,
-        # and passing it into an asyncio task can lead to using a closed session.
-        phase2_db: Optional[Session] = None
-        try:
-            phase2_db = SessionLocal()
-            result = process_file_phase2(
-                db=phase2_db,
-                audit_id=audit_id,
-                file_path=file_path,
-                source_ip=source_ip,
-            )
-        finally:
-            if phase2_db is not None:
-                phase2_db.close()
-        
+
+        def _run_phase2():
+            phase2_db: Optional[Session] = None
+            try:
+                phase2_db = SessionLocal()
+                return process_file_phase2(
+                    db=phase2_db,
+                    audit_id=audit_id,
+                    file_path=file_path,
+                    source_ip=source_ip,
+                )
+            finally:
+                if phase2_db is not None:
+                    phase2_db.close()
+
+        result = await asyncio.to_thread(_run_phase2)
+
         logger.info(
             f"[WSRouter] Phase 2 processing started: audit_id={audit_id} "
             f"staging_ids={result.get('staging_ids', [])} "

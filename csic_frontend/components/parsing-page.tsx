@@ -25,7 +25,6 @@ import {
   CheckCircle2,
   XCircle,
   Terminal,
-  Fingerprint,
   File,
   Eye,
   Pencil,
@@ -72,6 +71,7 @@ interface ParsingPhase {
 
 interface StagingRow {
   id: number
+  staging_id: string
   timestamp: string
   event_template: string
   ip_address: string
@@ -139,15 +139,15 @@ function ts(): string {
 
 
 /* ================================================================== */
-/* 7 PARSING PHASES                                                    */
+/* 6 PARSING PHASES (matches diagram: Nodes 1-6)                       */
 /* ================================================================== */
 function getInitialParsingPhases(): ParsingPhase[] {
   return [
     {
       id: "lineage",
       label: "Lineage Anchoring",
-      subtitle: "Binding file hash, byte offsets, and forensic chain to source evidence",
-      description: "Anchors the parsing session to the original evidence file via cryptographic lineage metadata.",
+      subtitle: "Log Row Hash to DuckDB, Row ID to SQLite Audit Ledger, immutable pointer",
+      description: "Anchors each log line via SHA-256 hash + byte offset, writes to DuckDB and SQLite for forensic chain.",
       status: "idle",
       progress: 0,
       logs: [],
@@ -156,8 +156,8 @@ function getInitialParsingPhases(): ParsingPhase[] {
     {
       id: "decoder",
       label: "Recursive De-obfuscation",
-      subtitle: "Entropy analysis, multi-layer decoding, and encoding detection",
-      description: "Detects and reverses obfuscation layers including Base64, hex, gzip, and nested encodings.",
+      subtitle: "Shannon entropy trigger, URL/Base64/Hex decoder ring, MAX_RECURSION_DEPTH=5",
+      description: "Detects high-entropy obfuscation via Shannon analysis, then recursively decodes URL, Base64, and hex layers.",
       status: "idle",
       progress: 0,
       logs: [],
@@ -166,8 +166,8 @@ function getInitialParsingPhases(): ParsingPhase[] {
     {
       id: "translator",
       label: "Universal Translator (DRAIN3)",
-      subtitle: "Log template extraction, variable isolation, and event clustering",
-      description: "Runs DRAIN3 algorithm to extract log templates and isolate dynamic variables across all log lines.",
+      subtitle: "LRU Parse Cache, fast variable extraction, AI Parse Tree, template registry",
+      description: "Extracts log templates via DRAIN3-style mining, isolates dynamic variables, and caches to template_registry.",
       status: "idle",
       progress: 0,
       logs: [],
@@ -175,19 +175,9 @@ function getInitialParsingPhases(): ParsingPhase[] {
     },
     {
       id: "ner",
-      label: "NER Tagging",
-      subtitle: "Named entity recognition pass for IPs, users, processes, and paths",
-      description: "Identifies and tags named entities using forensic NER model.",
-      status: "idle",
-      progress: 0,
-      logs: [],
-      stats: [],
-    },
-    {
-      id: "pii",
-      label: "PII Verification",
-      subtitle: "Scanning for personally identifiable information and sensitive data",
-      description: "Detects SSNs, emails, phone numbers, credit cards, and other PII patterns.",
+      label: "NER Tagging & Fallback Validation",
+      subtitle: "Entity recognition, RE2 regex validation, Lock Tags, SQLi neutralization",
+      description: "Tags IPs, emails, users, paths via NER model + regex. Validates with RE2, applies SQLi neutralization.",
       status: "idle",
       progress: 0,
       logs: [],
@@ -195,9 +185,9 @@ function getInitialParsingPhases(): ParsingPhase[] {
     },
     {
       id: "chronograph",
-      label: "Chronograph",
-      subtitle: "Timestamp normalization, timezone alignment, and temporal validation",
-      description: "Normalizes all timestamps to UTC/ISO-8601 and validates chronological order.",
+      label: "Chronograph (Timeline Sync)",
+      subtitle: "Timestamp extraction, ambiguity resolution, heuristic inference, ISO-8601 UTC",
+      description: "Extracts timestamps, resolves DD/MM vs MM/DD ambiguity via heuristic engine, normalizes to ISO-8601 UTC.",
       status: "idle",
       progress: 0,
       logs: [],
@@ -205,9 +195,9 @@ function getInitialParsingPhases(): ParsingPhase[] {
     },
     {
       id: "human_commit",
-      label: "Human-in-Loop Commit",
-      subtitle: "Raw evidence requires officer review before staging commit",
-      description: "Officer must review raw ingestion records, verify hashes, and approve before final commit.",
+      label: "Human-in-the-Loop Commit",
+      subtitle: "Web UI Preview, human overrides, final row hash, staging to DuckDB commit",
+      description: "Officer reviews staged data, applies overrides. On commit: final hash written to audit ledger, data moves to DuckDB, Phase 3 webhook fires.",
       status: "idle",
       progress: 0,
       logs: [],
@@ -217,116 +207,9 @@ function getInitialParsingPhases(): ParsingPhase[] {
 }
 
 /* ================================================================== */
-/* PROGRESS LOGS PER PHASE                                             */
+/* PHASE NODE NAMES (used by SSE -> phase index mapping)               */
 /* ================================================================== */
-function getParsingProgressLog(phaseIndex: number, progress: number): LogEntry | null {
-  switch (phaseIndex) {
-    case 0:
-      if (progress > 10 && progress <= 15) return { time: ts(), level: "INFO", message: "Loading source evidence metadata from WORM ledger..." }
-      if (progress > 25 && progress <= 30) return { time: ts(), level: "INFO", message: "Verifying file hash: SHA-256(a3f2...c8d1) against ledger record" }
-      if (progress > 40 && progress <= 45) return { time: ts(), level: "INFO", message: "Byte offset mapping: 0x0000 -> 0x2F4A8C00 | 48 segments anchored" }
-      if (progress > 60 && progress <= 65) return { time: ts(), level: "INFO", message: `Lineage chain: evidence -> ingestion -> parsing` }
-      if (progress > 80 && progress <= 85) return { time: ts(), level: "INFO", message: "Cryptographic binding established. Forensic chain intact." }
-      break
-    case 1:
-      if (progress > 10 && progress <= 15) return { time: ts(), level: "INFO", message: "Running Shannon entropy analysis across 48 log segments..." }
-      if (progress > 25 && progress <= 30) return { time: ts(), level: "INFO", message: "Entropy range: 0.18 - 0.72 | No high-entropy anomalies detected" }
-      if (progress > 40 && progress <= 45) return { time: ts(), level: "INFO", message: "Scanning for Base64, hex, gzip, and URL-encoded layers..." }
-      if (progress > 55 && progress <= 60) return { time: ts(), level: "WARN", message: "2 log entries contain Base64-encoded payloads -> decoded successfully" }
-      if (progress > 70 && progress <= 75) return { time: ts(), level: "INFO", message: "Recursive depth: max 2 layers | All layers resolved" }
-      if (progress > 88 && progress <= 93) return { time: ts(), level: "INFO", message: "De-obfuscation pass complete. All segments in cleartext." }
-      break
-    case 2:
-      if (progress > 10 && progress <= 15) return { time: ts(), level: "INFO", message: "Initializing DRAIN3 engine | Similarity threshold: 0.65 | Depth: 4" }
-      if (progress > 25 && progress <= 30) return { time: ts(), level: "INFO", message: "Feeding 48 log lines into template extraction pipeline..." }
-      if (progress > 40 && progress <= 45) return { time: ts(), level: "INFO", message: "Cluster [1..3]: 'User <*> logged in from <*>' - 8 matches" }
-      if (progress > 55 && progress <= 60) return { time: ts(), level: "INFO", message: "Cluster [4..6]: 'Process <*> started on port <*>' - 8 matches" }
-      if (progress > 70 && progress <= 75) return { time: ts(), level: "INFO", message: "Variable extraction: 142 dynamic tokens isolated across 6 templates" }
-      if (progress > 88 && progress <= 93) return { time: ts(), level: "OK", message: "6 unique templates learned | Coverage: 100% of input lines" }
-      break
-    case 3:
-      if (progress > 10 && progress <= 15) return { time: ts(), level: "INFO", message: "Loading forensic NER model (v3.2.1)..." }
-      if (progress > 25 && progress <= 30) return { time: ts(), level: "INFO", message: "Scanning extracted variables for entity classification..." }
-      if (progress > 40 && progress <= 45) return { time: ts(), level: "INFO", message: "Tagged: 12 IP addresses, 6 usernames, 6 process names" }
-      if (progress > 55 && progress <= 60) return { time: ts(), level: "INFO", message: "Tagged: 3 hostnames, 4 file paths, 1 email address" }
-      if (progress > 70 && progress <= 75) return { time: ts(), level: "INFO", message: "Confidence scores: min 0.88, max 0.99, mean 0.95" }
-      if (progress > 88 && progress <= 93) return { time: ts(), level: "OK", message: "32 entities tagged across 48 records | Model accuracy: 97.2%" }
-      break
-    case 4:
-      if (progress > 10 && progress <= 15) return { time: ts(), level: "INFO", message: "Initializing PII scanner | Patterns: SSN, Email, Phone, CC, AADHAAR" }
-      if (progress > 25 && progress <= 30) return { time: ts(), level: "INFO", message: "Scanning 48 parsed records for PII patterns..." }
-      if (progress > 40 && progress <= 45) return { time: ts(), level: "WARN", message: "PII DETECTED: 1 email address (admin@nflip.gov.in) in record #5" }
-      if (progress > 55 && progress <= 60) return { time: ts(), level: "INFO", message: "SSN scan: 0 matches | Phone scan: 0 matches | CC scan: 0 matches" }
-      if (progress > 70 && progress <= 75) return { time: ts(), level: "INFO", message: "AADHAAR scan: 0 matches | Passport scan: 0 matches" }
-      if (progress > 80 && progress <= 85) return { time: ts(), level: "INFO", message: "Applying redaction policy: MASK_PARTIAL for email entities" }
-      if (progress > 90 && progress <= 95) return { time: ts(), level: "INFO", message: "PII audit record written. Redaction metadata preserved for compliance." }
-      break
-    case 5:
-      if (progress > 10 && progress <= 15) return { time: ts(), level: "INFO", message: "Detecting timestamp formats across 48 records..." }
-      if (progress > 25 && progress <= 30) return { time: ts(), level: "INFO", message: "Formats found: ISO-8601 (42), BSD syslog (6) | Parsing..." }
-      if (progress > 40 && progress <= 45) return { time: ts(), level: "WARN", message: "3 entries have MM/DD vs DD/MM ambiguity -> resolved via context heuristic" }
-      if (progress > 55 && progress <= 60) return { time: ts(), level: "INFO", message: "Timezone alignment: all records normalized to UTC (offset +00:00)" }
-      if (progress > 70 && progress <= 75) return { time: ts(), level: "INFO", message: "Chronological sort: 48/48 records in monotonic order" }
-      if (progress > 88 && progress <= 93) return { time: ts(), level: "OK", message: "All timestamps normalized to ISO-8601/UTC | 0 unresolvable entries" }
-      break
-    case 6:
-      if (progress > 10 && progress <= 15) return { time: ts(), level: "INFO", message: "Loading raw ingestion records from WORM ledger..." }
-      if (progress > 25 && progress <= 30) return { time: ts(), level: "INFO", message: "Preparing 12 evidence records for human review..." }
-      if (progress > 40 && progress <= 45) return { time: ts(), level: "INFO", message: "Attaching SHA-256 hashes, Merkle roots, and chain metadata" }
-      if (progress > 55 && progress <= 60) return { time: ts(), level: "INFO", message: "Flagging 2 records with unverified hash chains for manual check" }
-      if (progress > 70 && progress <= 75) return { time: ts(), level: "WARN", message: "HUMAN REVIEW REQUIRED: Raw evidence records need officer verification" }
-      if (progress > 88 && progress <= 93) return { time: ts(), level: "INFO", message: "Staging area prepared. Waiting for officer to review and approve..." }
-      break
-  }
-  return null
-}
-
-function getParsingCompleteLogs(phaseIndex: number): LogEntry[] {
-  switch (phaseIndex) {
-    case 0:
-      return [
-        { time: ts(), level: "OK", message: `COMPLETE: Lineage chain sealed | Evidence hash verified` },
-        { time: ts(), level: "OK", message: `Audit record: parsing session bound to ingestion` },
-      ]
-    case 1:
-      return [
-        { time: ts(), level: "OK", message: "COMPLETE: 2 encoded payloads decoded, 0 obfuscation remaining" },
-        { time: ts(), level: "OK", message: "All 48 segments verified cleartext. Entropy: nominal." },
-      ]
-    case 2:
-      return [
-        { time: ts(), level: "OK", message: "COMPLETE: 6 templates extracted | 142 variables isolated" },
-        { time: ts(), level: "OK", message: "DRAIN3 cluster accuracy: 99.1% | No unmatched lines" },
-      ]
-    case 3:
-      return [
-        { time: ts(), level: "OK", message: "COMPLETE: 32 entities tagged (IP:12, User:6, Process:6, Host:3, Path:4, Email:1)" },
-        { time: ts(), level: "OK", message: "NER model v3.2.1 - mean confidence: 0.95" },
-      ]
-    case 4:
-      return [
-        { time: ts(), level: "OK", message: "COMPLETE: 1 PII item detected, 0 SSN, 0 phone, 0 CC" },
-        { time: ts(), level: "OK", message: "Redaction applied: MASK_PARTIAL | Compliance: GDPR + IT Act 2000" },
-      ]
-    case 5:
-      return [
-        { time: ts(), level: "OK", message: "COMPLETE: 48/48 timestamps normalized to ISO-8601 UTC" },
-        { time: ts(), level: "OK", message: "3 ambiguous dates resolved. Chronological order verified." },
-      ]
-    case 6:
-      return [
-        { time: ts(), level: "WARN", message: "AWAITING HUMAN: 12 raw evidence records ready for officer review" },
-        { time: ts(), level: "INFO", message: "Click 'Review Raw Evidence' to inspect and verify records" },
-      ]
-    default:
-      return []
-  }
-}
-
-function getParsingPhaseStats(phaseIndex: number): { label: string; value: string }[] {
-  // Stats will be populated from actual API data when available
-  return []
-}
+const NODE_TO_PHASE_INDEX: Record<number, number> = { 1: 0, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5 }
 
 /* ================================================================== */
 /* RAW EVIDENCE DATA (from API)                                       */
@@ -421,7 +304,7 @@ function FullPhaseCard({
   index: number
   onReviewClick?: () => void
 }) {
-  const icons = [Anchor, Unlock, Languages, ScanSearch, Fingerprint, Clock4, UserCheck]
+  const icons = [Anchor, Unlock, Languages, ScanSearch, Clock4, UserCheck]
   const Icon = icons[index] || ShieldCheck
   const logEndRef = useRef<HTMLDivElement>(null)
 
@@ -733,13 +616,37 @@ function HumanReviewOverlay({
 
   const allVerified = data.length > 0 && verifiedRows.size === data.length
 
-  const handleVerifyAndCommit = () => {
+  const handleVerifyAndCommit = async () => {
     setVerifying(true)
-    setTimeout(() => {
-      setVerifying(false)
+    try {
+      const raw = typeof window !== "undefined" ? localStorage.getItem("latest_ingestion_audit") : null
+      const parsed = raw ? (JSON.parse(raw) as { auditId?: string }) : null
+      const auditId = parsed?.auditId
+      if (!auditId) throw new Error("No audit ID found")
+
+      const overrides: Record<string, any> = {}
+      if (changeCount > 0) {
+        for (const row of data) {
+          overrides[row.staging_id] = {
+            original: row.original,
+            decoded: row.decoded,
+            template: row.template,
+            status: row.status,
+          }
+        }
+      }
+      await apiClient.commitStagingBatch(auditId, {
+        human_overrides: changeCount > 0 ? overrides : undefined,
+        confirm: true,
+      })
       setShowSuccess(true)
-      setTimeout(() => onVerify(), 1800)
-    }, 2000)
+      setTimeout(() => onVerify(), 1500)
+    } catch (err) {
+      console.error("Commit failed:", err)
+      alert(err instanceof Error ? err.message : "Commit failed")
+    } finally {
+      setVerifying(false)
+    }
   }
 
   const columns: { key: keyof Phase2ReviewRow; label: string; width: string; mono?: boolean }[] = [
@@ -766,7 +673,7 @@ function HumanReviewOverlay({
               <h2 className="text-base font-bold text-foreground flex items-center gap-2">
                 Human-in-Loop Evidence Review
                 <Badge className="bg-amber-500/10 text-amber-600 border border-amber-500/20 hover:bg-amber-500/10 text-[10px]">
-                  PHASE 7
+                  NODE 6
                 </Badge>
               </h2>
               <p className="text-xs text-muted-foreground mt-0.5">
@@ -1032,120 +939,224 @@ function HumanReviewOverlay({
 }
 
 /* ================================================================== */
-/* PIPELINE ENTRY ANIMATION                                            */
+/* PIPELINE ENTRY ANIMATION (SSE-driven)                               */
 /* ================================================================== */
-function PipelineEntryAnimation({ 
+function PipelineEntryAnimation({
   onComplete,
-  latestAuditInfo 
-}: { 
+  latestAuditInfo,
+}: {
   onComplete: () => void
   latestAuditInfo: { auditId: string; sha256: string; filePath: string } | null
 }) {
   const [phases, setPhases] = useState<ParsingPhase[]>(getInitialParsingPhases())
   const [isProcessing, setIsProcessing] = useState(false)
-  const [overallResult, setOverallResult] = useState<"pass" | null>(null)
+  const [overallResult, setOverallResult] = useState<"pass" | "fail" | null>(null)
   const [showReviewOverlay, setShowReviewOverlay] = useState(false)
+  const [completionStats, setCompletionStats] = useState<Record<string, any>>({})
   const phasesRef = useRef<ParsingPhase[]>(getInitialParsingPhases())
   const flowRef = useRef<HTMLDivElement>(null)
 
   const activePhaseIndex = phases.findIndex((p) => p.status === "active" || p.status === "awaiting_human")
 
   useEffect(() => {
-    const startTimer = setTimeout(() => {
-      setIsProcessing(true)
-      const fresh = getInitialParsingPhases()
-      phasesRef.current = fresh
-      setPhases([...fresh])
+    if (!latestAuditInfo?.auditId) return
 
-      let currentPhase = 0
+    const apiBase = typeof window !== "undefined"
+      ? (process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000")
+      : "http://127.0.0.1:8000"
 
-      const advancePhase = () => {
-        if (currentPhase >= phasesRef.current.length) {
+    const params = new URLSearchParams({ audit_id: latestAuditInfo.auditId })
+    if (latestAuditInfo.filePath) params.set("file_path", latestAuditInfo.filePath)
+
+    setIsProcessing(true)
+    const fresh = getInitialParsingPhases()
+    phasesRef.current = fresh
+    setPhases([...fresh])
+
+    const evtSource = new EventSource(`${apiBase}/api/phase2/process-stream?${params}`)
+    let totalLines = 0
+    const nodeLineCounts: Record<number, number> = {}
+
+    evtSource.onmessage = (evt) => {
+      try {
+        const data = JSON.parse(evt.data)
+
+        if (data.type === "already_processed") {
+          evtSource.close()
+          // All 5 processing nodes already ran — mark them done, pause at Node 6
+          const p = phasesRef.current
+          for (let i = 0; i < 5; i++) {
+            p[i].status = "success"
+            p[i].progress = 100
+            p[i].logs = [
+              { time: ts(), level: "OK", message: `Already processed (${data.rows} rows staged)` },
+            ]
+          }
+          p[5].status = "awaiting_human"
+          p[5].progress = 100
+          p[5].logs = [
+            { time: ts(), level: "WARN", message: `${data.rows} records staged — awaiting human review` },
+            { time: ts(), level: "INFO", message: "Click 'Review Raw Evidence' to inspect and approve" },
+          ]
+          setPhases([...p])
           setIsProcessing(false)
-          setOverallResult("pass")
-          setTimeout(() => onComplete(), 1200)
+          setCompletionStats({ rows_processed: data.rows })
           return
         }
 
-        const p = phasesRef.current
-        p[currentPhase].status = "active"
-        p[currentPhase].logs = [
-          { time: ts(), level: "INFO", message: `Starting ${p[currentPhase].label}...` },
-        ]
-        setPhases([...p])
+        if (data.type === "progress") {
+          const p = phasesRef.current
+          const pct = data.percent || 0
+          for (let i = 0; i < 5; i++) {
+            if (p[i].status === "idle") p[i].status = "active"
+            p[i].progress = Math.min(pct, 99)
+          }
+          if (data.message) {
+            const phase = p[0]
+            phase.logs = [{ time: ts(), level: "INFO", message: data.message }]
+          }
+          setPhases([...p])
+          return
+        }
 
-        let progress = 0
-        const phaseIndex = currentPhase
-        const totalTicks = 20
-        let tick = 0
+        if (data.type === "init") {
+          totalLines = data.total_lines || 1
+          return
+        }
 
-        const progressInterval = setInterval(() => {
-          tick++
-          progress = Math.min(100, (tick / totalTicks) * 100)
+        if (data.type === "node") {
+          const phaseIdx = NODE_TO_PHASE_INDEX[data.node]
+          if (phaseIdx === undefined) return
+          const p = phasesRef.current
 
-          const phase = phasesRef.current[phaseIndex]
-          phase.progress = progress
+          nodeLineCounts[data.node] = (nodeLineCounts[data.node] || 0) + 1
+          const pct = Math.min(100, Math.round((data.line / (totalLines || 1)) * 100))
 
-          const logMilestone = getParsingProgressLog(phaseIndex, progress)
-          if (logMilestone) {
-            const exists = phase.logs.some((l) => l.message === logMilestone.message)
-            if (!exists) {
-              phase.logs = [...phase.logs, logMilestone]
+          // Mark previous phases as success if they aren't already
+          for (let i = 0; i < phaseIdx; i++) {
+            if (p[i].status !== "success") {
+              p[i].status = "success"
+              p[i].progress = 100
             }
           }
 
-          setPhases([...phasesRef.current])
-
-          if (progress >= 100) {
-            clearInterval(progressInterval)
-
-            // Phase 7 (index 6) pauses for human review
-            if (phaseIndex === 6) {
-              phase.status = "awaiting_human"
-              phase.logs = [...phase.logs, ...getParsingCompleteLogs(phaseIndex)]
-              phase.stats = getParsingPhaseStats(phaseIndex)
-              setPhases([...phasesRef.current])
-              setIsProcessing(false)
-              return
-            }
-
-            phase.status = "success"
-            phase.logs = [...phase.logs, ...getParsingCompleteLogs(phaseIndex)]
-            phase.stats = getParsingPhaseStats(phaseIndex)
-            setPhases([...phasesRef.current])
-            currentPhase++
-            setTimeout(advancePhase, 700)
+          const phase = p[phaseIdx]
+          if (phase.status === "idle") {
+            phase.status = "active"
+            phase.logs = [{ time: ts(), level: "INFO", message: `Starting ${phase.label}...` }]
           }
-        }, 150)
+          phase.progress = pct
+          // Keep last 30 log lines to avoid memory explosion on large files
+          const newLog: LogEntry = { time: ts(), level: "INFO", message: data.msg }
+          phase.logs = [...phase.logs.slice(-29), newLog]
+
+          setPhases([...p])
+          return
+        }
+
+        if (data.type === "complete") {
+          evtSource.close()
+          const p = phasesRef.current
+          // Mark nodes 1-5 as success
+          for (let i = 0; i < 5; i++) {
+            p[i].status = "success"
+            p[i].progress = 100
+            if (p[i].logs.length === 0 || p[i].logs[p[i].logs.length - 1]?.level !== "OK") {
+              p[i].logs = [...p[i].logs, { time: ts(), level: "OK", message: `COMPLETE` }]
+            }
+          }
+          // Populate stats on phases from completion data
+          p[0].stats = [
+            { label: "Rows", value: String(data.rows_processed) },
+            { label: "Algorithm", value: "SHA-256" },
+          ]
+          p[1].stats = [
+            { label: "Obfuscated", value: String(data.obfuscated_lines || 0) },
+            { label: "Cleartext", value: String((data.rows_processed || 0) - (data.obfuscated_lines || 0)) },
+          ]
+          p[2].stats = [
+            { label: "Templates", value: String(data.templates_learned || 0) },
+            { label: "Rows", value: String(data.rows_processed) },
+          ]
+          p[3].stats = [
+            { label: "Entities", value: String(data.entities_detected || 0) },
+            ...(data.entity_breakdown
+              ? Object.entries(data.entity_breakdown as Record<string, number>).slice(0, 3).map(([k, v]) => ({ label: k, value: String(v) }))
+              : []),
+          ]
+          p[4].stats = [
+            { label: "Normalized", value: String(data.timestamps_normalized || 0) },
+            { label: "Ambiguous", value: String(data.timestamps_ambiguous || 0) },
+          ]
+
+          // Node 6 awaits human review
+          p[5].status = "awaiting_human"
+          p[5].progress = 100
+          p[5].logs = [
+            { time: ts(), level: "INFO", message: `${data.rows_processed} records staged successfully` },
+            { time: ts(), level: "WARN", message: "AWAITING HUMAN: Click 'Review Raw Evidence' to inspect and approve" },
+          ]
+          setPhases([...p])
+          setIsProcessing(false)
+          setCompletionStats(data)
+          return
+        }
+
+        if (data.type === "error") {
+          evtSource.close()
+          setIsProcessing(false)
+          setOverallResult("fail")
+          const p = phasesRef.current
+          const active = p.findIndex((ph) => ph.status === "active")
+          if (active >= 0) {
+            p[active].status = "error"
+            p[active].logs = [...p[active].logs, { time: ts(), level: "ERROR", message: data.message }]
+          }
+          setPhases([...p])
+          return
+        }
+      } catch {
+        // ignore parse errors
       }
+    }
 
-      setTimeout(advancePhase, 500)
-    }, 400)
+    evtSource.onerror = () => {
+      evtSource.close()
+      const allDone = phasesRef.current.slice(0, 5).every((ph) => ph.status === "success")
+      if (!allDone) {
+        setIsProcessing(false)
+        const p = phasesRef.current
+        const activeIdx = p.findIndex((ph) => ph.status === "active")
+        if (activeIdx >= 0) {
+          p[activeIdx].logs = [...p[activeIdx].logs, { time: ts(), level: "WARN", message: "Connection lost — refresh to retry" }]
+        } else {
+          p[0].status = "error"
+          p[0].logs = [{ time: ts(), level: "ERROR", message: "Cannot connect to backend — ensure the server is running and refresh" }]
+        }
+        setPhases([...p])
+      }
+    }
 
-    return () => clearTimeout(startTimer)
-  }, [onComplete])
+    return () => evtSource.close()
+  }, [latestAuditInfo])
 
   const handleHumanVerified = useCallback(() => {
     setShowReviewOverlay(false)
-    // Mark Phase 7 as success
     const p = phasesRef.current
-    p[6].status = "success"
-    p[6].stats = [
-      { label: "Records", value: "12" },
-      { label: "Flagged", value: "2" },
-      { label: "Verified", value: "12 / 12" },
+    p[5].status = "success"
+    p[5].stats = [
+      { label: "Records", value: String(completionStats.rows_processed || 0) },
       { label: "Status", value: "COMMITTED" },
     ]
-    p[6].logs = [
-      ...p[6].logs,
-      { time: ts(), level: "OK", message: "HUMAN VERIFICATION COMPLETE: All 12 records approved by officer" },
-      { time: ts(), level: "OK", message: "Evidence committed to staging area. Chain-of-custody intact." },
-      { time: ts(), level: "OK", message: `Staging area prepared` },
+    p[5].logs = [
+      ...p[5].logs,
+      { time: ts(), level: "OK", message: "HUMAN VERIFICATION COMPLETE: All records approved and committed" },
+      { time: ts(), level: "OK", message: "Evidence committed to DuckDB. Phase 3 webhook fired." },
     ]
     setPhases([...p])
     setOverallResult("pass")
     setTimeout(() => onComplete(), 1500)
-  }, [onComplete])
+  }, [onComplete, completionStats])
 
   return (
     <>
@@ -1164,20 +1175,18 @@ function PipelineEntryAnimation({
                 <File className="size-5 text-primary" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-foreground">Hybrid Parsing & Normalization Pipeline</p>
+                <p className="text-sm font-semibold text-foreground">Hybrid Parsing & Data Normalization Pipeline</p>
                 <div className="flex items-center gap-3 mt-1">
                   {latestAuditInfo ? (
                     <>
                       <span className="font-mono text-xs text-muted-foreground">Source: {latestAuditInfo.filePath || "N/A"}</span>
-                      <span className="text-xs text-muted-foreground">SHA-256: {latestAuditInfo.sha256 ? `${latestAuditInfo.sha256.slice(0, 4)}...${latestAuditInfo.sha256.slice(-4)}` : "N/A"}</span>
+                      <span className="text-xs text-muted-foreground">SHA-256: {latestAuditInfo.sha256 ? `${latestAuditInfo.sha256.slice(0, 8)}...${latestAuditInfo.sha256.slice(-4)}` : "N/A"}</span>
                       <Badge className="bg-primary/10 text-primary border border-primary/20 hover:bg-primary/10 text-xs">
-                        Audit ID: {latestAuditInfo.auditId.slice(0, 13)}...
+                        Audit: {latestAuditInfo.auditId.slice(0, 13)}...
                       </Badge>
                     </>
                   ) : (
-                    <>
-                      <span className="font-mono text-xs text-muted-foreground">No staging data available</span>
-                    </>
+                    <span className="font-mono text-xs text-muted-foreground">No staging data available</span>
                   )}
                 </div>
               </div>
@@ -1186,10 +1195,10 @@ function PipelineEntryAnimation({
               {isProcessing && (
                 <Badge className="bg-primary/10 text-primary border border-primary/20 hover:bg-primary/10 text-xs gap-1.5 px-3 py-1">
                   <Loader2 className="size-3.5 animate-spin" />
-                  Phase {activePhaseIndex + 1} / {phases.length}
+                  Node {activePhaseIndex + 1} / {phases.length}
                 </Badge>
               )}
-              {!isProcessing && !overallResult && phases[6]?.status === "awaiting_human" && (
+              {!isProcessing && !overallResult && phases[5]?.status === "awaiting_human" && (
                 <Badge className="bg-amber-500/10 text-amber-600 border border-amber-500/20 hover:bg-amber-500/10 text-xs gap-1.5 px-3 py-1">
                   <Eye className="size-3.5" />
                   AWAITING HUMAN REVIEW
@@ -1198,19 +1207,25 @@ function PipelineEntryAnimation({
               {overallResult === "pass" && (
                 <Badge className="bg-success/10 text-success border border-success/20 hover:bg-success/10 text-xs gap-1.5 px-3 py-1">
                   <CheckCircle2 className="size-3.5" />
-                  ALL PHASES PASSED
+                  ALL NODES PASSED
+                </Badge>
+              )}
+              {overallResult === "fail" && (
+                <Badge className="bg-destructive/10 text-destructive border border-destructive/20 hover:bg-destructive/10 text-xs gap-1.5 px-3 py-1">
+                  <XCircle className="size-3.5" />
+                  PIPELINE ERROR
                 </Badge>
               )}
             </div>
           </div>
 
           {/* Mini progress overview */}
-          <div className="mt-4 grid grid-cols-7 gap-2">
+          <div className="mt-4 grid grid-cols-6 gap-2">
             {phases.map((phase, i) => (
               <div key={phase.id} className="flex flex-col gap-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-semibold tracking-wider text-muted-foreground uppercase truncate">
-                    P{i + 1}: {phase.label.split(" ")[0]}
+                    N{i + 1}: {phase.label.split(" ")[0]}
                   </span>
                   <PhaseStatusDot status={phase.status} />
                 </div>
@@ -1238,7 +1253,7 @@ function PipelineEntryAnimation({
               key={phase.id}
               phase={phase}
               index={index}
-              onReviewClick={index === 6 && phase.status === "awaiting_human" ? () => setShowReviewOverlay(true) : undefined}
+              onReviewClick={index === 5 && phase.status === "awaiting_human" ? () => setShowReviewOverlay(true) : undefined}
             />
           ))}
         </div>
@@ -1251,17 +1266,17 @@ function PipelineEntryAnimation({
                 <CheckCircle2 className="size-8 text-success" />
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-success">Parsing Pipeline Complete - Staging Ready</h3>
+                <h3 className="text-xl font-bold text-success">Parsing Pipeline Complete — Staging Committed</h3>
                 <p className="mt-2 text-sm text-success/80 leading-relaxed">
-                  All 7 parsing phases completed. Officer verified 12 raw evidence records.
-                  Transitioning to human validation interface...
+                  All 6 nodes completed. Officer reviewed and committed evidence records.
+                  Transitioning to staging validation interface...
                 </p>
                 <div className="mt-4 grid grid-cols-4 gap-3">
                   {[
-                    { label: "Records Staged", value: "48" },
-                    { label: "Evidence Verified", value: "12 / 12" },
-                    { label: "Entities Tagged", value: "32" },
-                    { label: "PII Found", value: "1 (masked)" },
+                    { label: "Records Staged", value: String(completionStats.rows_processed || 0) },
+                    { label: "Templates Learned", value: String(completionStats.templates_learned || 0) },
+                    { label: "Entities Tagged", value: String(completionStats.entities_detected || 0) },
+                    { label: "Timestamps OK", value: String(completionStats.timestamps_normalized || 0) },
                   ].map((s) => (
                     <div key={s.label} className="border border-success/20 bg-success/5 p-3 flex flex-col gap-1">
                       <span className="text-[10px] font-semibold tracking-wider text-success/60 uppercase">{s.label}</span>
@@ -1299,13 +1314,15 @@ export function ParsingPage() {
   const [flags, setFlags] = useState<ValidationFlag[]>([])
   const [latestAuditInfo, setLatestAuditInfo] = useState<{ auditId: string; sha256: string; filePath: string } | null>(null)
 
+  const [serverStats, setServerStats] = useState<Record<string, any> | null>(null)
+
   const metrics = useMemo(() => ({
-    logsParsed: stagingData.length,
-    templatesLearned: 0,
-    entitiesDetected: entities.length,
+    logsParsed: serverStats?.total ?? stagingData.length,
+    templatesLearned: serverStats?.has_template_count ?? 0,
+    entitiesDetected: serverStats?.has_ner_tags_count ?? entities.length,
     piiDetected: 0,
-    ambiguousTimestamps: flags.length
-  }), [stagingData.length, entities.length, flags.length])
+    ambiguousTimestamps: serverStats?.missing_timestamp_count ?? flags.length,
+  }), [serverStats, stagingData.length, entities.length, flags.length])
 
   useEffect(() => {
     // Load latest audit from Phase 1 (if present) but do not start parsing automatically.
@@ -1355,7 +1372,14 @@ export function ParsingPage() {
         return
       }
 
-      // Query staging entries from Phase 2
+      // Fetch real statistics from backend (Part G)
+      try {
+        const stats = await apiClient.getPhase2Statistics(auditId)
+        setServerStats(stats)
+      } catch {
+        setServerStats(null)
+      }
+
       const queryResponse = await apiClient.queryStaging({
         audit_id: auditId,
         status: 'pending',
@@ -1363,19 +1387,15 @@ export function ParsingPage() {
         offset: 0
       })
 
-      // Transform staging entries to StagingRow format
       const transformedRows: StagingRow[] = []
       const allEntities: DetectedEntity[] = []
       const allFlags: ValidationFlag[] = []
-
-      // Fetch detailed previews for each staging entry
       let firstAuditInfo: { auditId: string; sha256: string; filePath: string } | null = null
       
       for (const entry of queryResponse.entries) {
         try {
           const preview = await apiClient.getStagingPreview(entry.staging_id)
           
-          // Capture audit info from first entry
           if (!firstAuditInfo && preview.audit) {
             firstAuditInfo = {
               auditId: preview.audit.audit_id,
@@ -1384,17 +1404,12 @@ export function ParsingPage() {
             }
           }
           
-          // Extract data from preview
           const extractedVars = preview.extracted_variables || {}
           const nerTags = preview.ner_tags || {}
           const decodedPayload = preview.decoded_payload || {}
           
-          // Get raw log line - try multiple sources
-          // The original line might be in extracted_variables.original or decoded_payload.decoded
-          // If not available, reconstruct from template + variables
           let rowData = extractedVars.original || decodedPayload.decoded || ""
           if (!rowData && preview.template?.template) {
-            // Reconstruct from template by replacing variables
             rowData = preview.template.template
             Object.entries(extractedVars).forEach(([key, value]) => {
               if (key !== 'original' && key !== 'template') {
@@ -1402,44 +1417,28 @@ export function ParsingPage() {
               }
             })
           }
-          if (!rowData) {
-            rowData = `[Staging ${entry.staging_id}]`
-          }
+          if (!rowData) rowData = `[Staging ${entry.staging_id}]`
           
-          // Extract entities from NER tags
           if (nerTags) {
             Object.entries(nerTags).forEach(([type, values]) => {
               const valuesList = Array.isArray(values) ? values : [values]
               valuesList.forEach((value: any) => {
                 if (value) {
-                  allEntities.push({
-                    type,
-                    value: String(value),
-                    confidence: 0.85
-                  })
+                  allEntities.push({ type, value: String(value), confidence: 0.85 })
                 }
               })
             })
           }
 
-          // Extract IP address, user, process from NER tags or variables
           const ipAddress = (nerTags?.ip_address && (Array.isArray(nerTags.ip_address) ? nerTags.ip_address[0] : nerTags.ip_address)) 
-            || extractedVars?.ip_address 
-            || extractedVars?.ip 
-            || preview.audit?.source_ip 
-            || "N/A"
+            || extractedVars?.ip_address || extractedVars?.ip || preview.audit?.source_ip || "N/A"
           const user = (nerTags?.user && (Array.isArray(nerTags.user) ? nerTags.user[0] : nerTags.user))
-            || extractedVars?.user 
-            || extractedVars?.username 
-            || "N/A"
+            || extractedVars?.user || extractedVars?.username || "N/A"
           const processName = (nerTags?.process && (Array.isArray(nerTags.process) ? nerTags.process[0] : nerTags.process))
-            || extractedVars?.process 
-            || extractedVars?.process_name 
-            || "N/A"
+            || extractedVars?.process || extractedVars?.process_name || "N/A"
           const eventTemplate = preview.template?.template || extractedVars?.template || "Unknown template"
           const timestamp = preview.normalized_timestamp || preview.created_at || new Date().toISOString()
           
-          // Check for ambiguous timestamp
           if (!preview.normalized_timestamp && preview.extracted_variables) {
             allFlags.push({
               type: "ambiguous_timestamp",
@@ -1450,7 +1449,8 @@ export function ParsingPage() {
 
           transformedRows.push({
             id: transformedRows.length + 1,
-            timestamp: timestamp,
+            staging_id: entry.staging_id,
+            timestamp,
             event_template: eventTemplate,
             ip_address: String(ipAddress),
             process_name: String(processName),
@@ -1502,13 +1502,24 @@ export function ParsingPage() {
     setTimeout(() => setCopiedRowId(null), 1500)
   }, [])
 
-  const handleCommit = useCallback(() => {
+  const handleCommit = useCallback(async () => {
+    if (!latestAuditInfo?.auditId) return
     setCommitting(true)
-    setTimeout(() => {
-      setCommitting(false)
+    try {
+      const overrides = Object.keys(entityOverrides).length > 0 ? entityOverrides : undefined
+      await apiClient.commitStagingBatch(latestAuditInfo.auditId, {
+        human_overrides: overrides,
+        confirm: true,
+      })
       setCommitted(true)
-    }, 2400)
-  }, [])
+      void loadStagingData()
+    } catch (err) {
+      console.error("Commit failed:", err)
+      alert(err instanceof Error ? err.message : "Commit failed")
+    } finally {
+      setCommitting(false)
+    }
+  }, [latestAuditInfo, entityOverrides])
 
   const handleAnimationComplete = useCallback(() => {
     setShowUI(true)

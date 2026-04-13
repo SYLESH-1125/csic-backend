@@ -7,11 +7,18 @@ import datetime as dt
 from pathlib import Path
 from typing import Any, Dict
 
-from fastapi import BackgroundTasks, FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, HTTPException, Query
 
 from .janitor import JanitorFlags, run_janitor_loop
 from .privacy import apply_redactions, compute_privacy_confidence, is_privacy_bypass_enabled
-from .schemas import ExtendRequest, GraphQLQueryRequest, LockRequest, Phase2Payload, RemoveRequest
+from .schemas import (
+    ExtendRequest,
+    GraphQLQueryRequest,
+    LockRequest,
+    Phase2Payload,
+    QueryLogsRequest,
+    RemoveRequest,
+)
 from .storage import (
     StorageConfig,
     commit_cold,
@@ -21,7 +28,9 @@ from .storage import (
     insert_hot_event,
     lock_lineage,
     query_cold,
+    query_hot,
     remove_lineage,
+    remove_lineage_s3,
     rollback_cold,
     stage_to_cold,
 )
@@ -58,8 +67,21 @@ async def _ingest(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     target_user = str(payload.get("Target_User") or "").strip()
     notes = str(payload.get("Notes") or "")
+    audit_id = str(payload.get("audit_id") or "")
+    source_type = str(payload.get("source_type") or "")
+    extracted_variables = str(payload.get("extracted_variables") or "{}")
+    ner_tags = str(payload.get("ner_tags") or "{}")
+    normalized_timestamp_str = payload.get("normalized_timestamp")
+    row_hash = str(payload.get("row_hash") or payload.get("final_row_hash") or "")
 
     created_at = _now_utc()
+
+    normalized_timestamp = None
+    if normalized_timestamp_str:
+        try:
+            normalized_timestamp = dt.datetime.fromisoformat(str(normalized_timestamp_str))
+        except Exception:
+            pass
 
     if is_privacy_bypass_enabled():
         notes_redacted = notes
@@ -75,7 +97,6 @@ async def _ingest(payload: Dict[str, Any]) -> Dict[str, Any]:
 
     stage_path = None
     try:
-        # Phase 1: stage cold object
         stage_path = stage_to_cold(
             _config,
             {
@@ -83,11 +104,16 @@ async def _ingest(payload: Dict[str, Any]) -> Dict[str, Any]:
                 "Notes": notes,
                 "Notes_Redacted": notes_redacted,
                 "Lineage": lineage,
+                "audit_id": audit_id,
+                "source_type": source_type,
+                "extracted_variables": extracted_variables,
+                "ner_tags": ner_tags,
+                "normalized_timestamp": normalized_timestamp,
+                "row_hash": row_hash,
                 "created_at": created_at,
             },
         )
 
-        # Phase 2: hot insert (transaction-like; DuckDB auto-commits but we keep ordering)
         insert_hot_event(
             _hot,
             lineage=lineage,
@@ -99,16 +125,21 @@ async def _ingest(payload: Dict[str, Any]) -> Dict[str, Any]:
             ttl_seconds=ttl_seconds,
             pii_redactions=redactions,
             privacy_confidence=privacy_conf,
+            audit_id=audit_id,
+            source_type=source_type,
+            extracted_variables=extracted_variables,
+            ner_tags=ner_tags,
+            normalized_timestamp=normalized_timestamp,
+            row_hash=row_hash,
         )
 
-        # Commit staged cold
-        final_path = commit_cold(_config, lineage)
+        cold_ref = commit_cold(_config, lineage)
         return {
             "ok": True,
             "event_id": event_id,
             "lineage": lineage,
             "hot_db": _config.hot_db_path,
-            "cold_object": str(final_path) if final_path else None,
+            "cold_object": cold_ref,
             "pii_redactions": redactions,
             "privacy_confidence": privacy_conf,
         }
@@ -145,6 +176,7 @@ async def extend(req: ExtendRequest):
 @new_app.post("/remove")
 async def remove(req: RemoveRequest):
     remove_lineage(_hot, req.Lineage)
+    remove_lineage_s3(req.Lineage)
     for s in (_janitor_flags.notified_20, _janitor_flags.notified_10, _janitor_flags.notified_0):
         s.discard(req.Lineage)
     return {"ok": True, "status": "removed", "lineage": req.Lineage}
@@ -165,13 +197,51 @@ async def graphql_query(req: GraphQLQueryRequest):
     return {"ok": True, "status": "Rehydration Success", "depth": req.depth, "count": len(data), "data": data}
 
 
+@new_app.get("/query-logs")
+async def query_logs_endpoint(
+    source_type: str = Query(default="", description="Filter by log source type"),
+    time_start: str = Query(default="", description="ISO-8601 start timestamp"),
+    time_end: str = Query(default="", description="ISO-8601 end timestamp"),
+    target_user: str = Query(default="", description="Filter by target user"),
+    limit: int = Query(default=5000, ge=1, le=20000),
+    offset: int = Query(default=0, ge=0),
+):
+    """
+    Query both hot DuckDB and cold Parquet storage with flexible filters.
+    Used by the Operation Room import to pull processed logs.
+    Merges results, deduplicates by Lineage, and returns up to `limit` rows.
+    """
+    kw = dict(target_user=target_user, source_type=source_type,
+              time_start=time_start, time_end=time_end,
+              limit=limit, offset=offset)
+
+    hot_data = query_hot(_hot, **kw)
+    cold_data = query_cold(_config, **kw)
+
+    seen: set[str] = set()
+    merged: list[dict] = []
+    for row in hot_data + cold_data:
+        lineage = row.get("Lineage", "")
+        if lineage and lineage in seen:
+            continue
+        seen.add(lineage)
+        merged.append(row)
+
+    merged.sort(key=lambda r: r.get("created_at", ""), reverse=True)
+    page = merged[offset:offset + limit] if offset else merged[:limit]
+    return {"ok": True, "count": len(page), "data": page}
+
+
 @new_app.get("/health")
 async def health():
+    from .s3_client import is_s3_enabled
+
     return {
         "ok": True,
         "phase": 3,
         "hot_db_path": _config.hot_db_path,
         "cold_dir": _config.cold_dir,
         "ttl_seconds": _config.ttl_seconds,
+        "s3_enabled": is_s3_enabled(),
+        "s3_bucket": os.getenv("S3_BUCKET_NAME", ""),
     }
-

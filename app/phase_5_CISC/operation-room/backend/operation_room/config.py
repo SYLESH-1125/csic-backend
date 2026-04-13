@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     # ── NLP Query Agent ──────────────────────────────────────────────────
     NLP_AGENT_URL: str = "http://localhost:9000"  # mock default
 
+    # ── Phase 3 API (S3 cold storage query) ───────────────────────────
+    PHASE3_API_BASE: str = "http://127.0.0.1:8000/api/phase3"
+
     # ── Hashing ──────────────────────────────────────────────────────────
     HASH_ALGORITHM: str = "sha256"  # sha256 | sha512 | blake2b
 

@@ -111,7 +111,7 @@ async def upload_log(
         # Phase 1 -> Phase 2 handoff (async, gated)
         async def _trigger_phase2(audit_id: str, filename: str, src_ip: str | None) -> None:
             from pathlib import Path
-            import os
+            import os, asyncio
             from app.config import settings
             from app.db.session import SessionLocal
             from app.phase2.service import process_file_phase2
@@ -120,13 +120,15 @@ async def upload_log(
             if auto_trigger in {"0", "false", "no", "off"}:
                 return
 
-            phase2_db = SessionLocal()
-            try:
-                # Deterministic WORM location: data/worm/<audit_id>/<filename>
-                worm_path = str(Path(settings.WORM_STORAGE_PATH) / str(audit_id) / filename)
-                process_file_phase2(db=phase2_db, audit_id=audit_id, file_path=worm_path, source_ip=src_ip)
-            finally:
-                phase2_db.close()
+            def _run():
+                phase2_db = SessionLocal()
+                try:
+                    worm_path = str(Path(settings.WORM_STORAGE_PATH) / str(audit_id) / filename)
+                    process_file_phase2(db=phase2_db, audit_id=audit_id, file_path=worm_path, source_ip=src_ip)
+                finally:
+                    phase2_db.close()
+
+            await asyncio.to_thread(_run)
 
         background_tasks.add_task(_trigger_phase2, result.id, result.filename, source_ip)
 

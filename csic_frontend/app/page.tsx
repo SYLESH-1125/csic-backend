@@ -16,8 +16,6 @@ import { SettingsPage } from "@/components/settings-page"
 import { ParsingPage } from "@/components/parsing-page"
 import { Phase3Page } from "@/components/phase3-page"
 import { Phase4Page } from "@/components/phase4-page"
-import { Phase5Page } from "@/components/phase5-page"
-import { Phase6Page } from "@/components/phase6-page"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { AppUrlBridge } from "@/components/app-url-bridge"
@@ -58,45 +56,20 @@ function AppContent() {
         <AppSidebar />
         <SidebarInset className="flex min-h-0 flex-1 flex-col">
           <TopNavbar />
-          {currentPage === "phase6" ? (
-            <main className="min-h-0 flex-1">
-              <Suspense
-                fallback={
-                  <div className="flex items-center justify-center p-12 text-sm text-muted-foreground">
-                    Loading Operation Room UI…
-                  </div>
-                }
-              >
-                <Phase6Page />
-              </Suspense>
+          <ScrollArea className="min-h-0 flex-1">
+            <main>
+              {currentPage === "dashboard" && <DashboardPage />}
+              {currentPage === "ingestion" && <IngestionPage />}
+              {currentPage === "parsing" && <ParsingPage />}
+              {currentPage === "phase3" && <Phase3Page />}
+              {currentPage === "phase4" && <Phase4Page />}
+              {currentPage === "ledger" && <LedgerPage />}
+              {currentPage === "quarantine" && <QuarantinePage />}
+              {currentPage === "audit" && <AuditPage />}
+              {currentPage === "health" && <HealthPage />}
+              {currentPage === "settings" && <SettingsPage />}
             </main>
-          ) : (
-            <ScrollArea className="min-h-0 flex-1">
-              <main>
-                {currentPage === "dashboard" && <DashboardPage />}
-                {currentPage === "ingestion" && <IngestionPage />}
-                {currentPage === "parsing" && <ParsingPage />}
-                {currentPage === "phase3" && <Phase3Page />}
-                {currentPage === "phase4" && <Phase4Page />}
-                {currentPage === "phase5" && (
-                  <Suspense
-                    fallback={
-                      <div className="flex items-center justify-center p-12 text-sm text-muted-foreground">
-                        Loading Operation Room…
-                      </div>
-                    }
-                  >
-                    <Phase5Page />
-                  </Suspense>
-                )}
-                {currentPage === "ledger" && <LedgerPage />}
-                {currentPage === "quarantine" && <QuarantinePage />}
-                {currentPage === "audit" && <AuditPage />}
-                {currentPage === "health" && <HealthPage />}
-                {currentPage === "settings" && <SettingsPage />}
-              </main>
-            </ScrollArea>
-          )}
+          </ScrollArea>
         </SidebarInset>
       </SidebarProvider>
     </Suspense>

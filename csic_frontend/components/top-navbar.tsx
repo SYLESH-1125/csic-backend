@@ -6,17 +6,15 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useApp } from "@/lib/app-context"
 
 const pageLabels: Record<string, string> = {
-  dashboard: "Main Dashboard",
-  ingestion: "Ingestion Phase / Injection Control",
-  parsing: "Parsing Phase / Hybrid Parsing & Normalization",
-  phase3: "Storage Phase / Hot & Cold Database",
-  phase4: "Querying Phase / Analytics & Magic Query",
-  phase5: "Reporting & Operation Room",
-  phase6: "Phase 6 — Operation Room (embedded UI)",
-  ledger: "Ingestion Phase / Ledger View",
-  quarantine: "Ingestion Phase / Quarantine Center",
-  audit: "Ingestion Phase / Audit Trails",
-  health: "Ingestion Phase / System Health",
+  dashboard: "Dashboard",
+  ingestion: "Phase 1 — Ingestion / Injection Control",
+  ledger: "Phase 1 — Ingestion / Ledger View",
+  quarantine: "Phase 1 — Ingestion / Quarantine Center",
+  audit: "Phase 1 — Ingestion / Audit Trails",
+  health: "Phase 1 — Ingestion / System Health",
+  parsing: "Phase 2 — Parsing & Normalization",
+  phase3: "Phase 3 — Hot & Cold Storage",
+  phase4: "Phase 4 — Querying & Analytics",
   settings: "Settings",
 }
 

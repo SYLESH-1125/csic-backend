@@ -7,7 +7,7 @@ from typing import Set
 
 import duckdb
 
-from .storage import select_live_rows, tombstone_lineage
+from .storage import remove_lineage_s3, select_live_rows, tombstone_lineage
 
 
 @dataclass
@@ -33,7 +33,6 @@ async def run_janitor_loop(con: duckdb.DuckDBPyConnection, flags: JanitorFlags, 
             if isinstance(created_at, str):
                 continue
 
-            # DuckDB returns timezone-aware TIMESTAMPTZ as datetime
             diff = (now - created_at).total_seconds()
             left = int((ttl_seconds or 0) - diff)
 
@@ -47,4 +46,5 @@ async def run_janitor_loop(con: duckdb.DuckDBPyConnection, flags: JanitorFlags, 
                 flags.notified_0.add(lineage)
                 if bool(is_locked):
                     tombstone_lineage(con, str(lineage))
-
+                else:
+                    remove_lineage_s3(str(lineage))

@@ -1,6 +1,6 @@
 'use client';
-import { usePathname } from 'next/navigation';
-import { LogOut, ShieldCheck, UserRound } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ArrowLeft, ShieldCheck, UserRound } from 'lucide-react';
 
 const PAGE_TITLES = {
   '/': { title: 'Main Dashboard', subtitle: 'National Forensic Log Intelligence Platform' },
@@ -33,6 +33,7 @@ function getPageInfo(pathname) {
 
 export default function TopHeader() {
   const pathname = usePathname();
+  const router = useRouter();
   const { title, subtitle } = getPageInfo(pathname);
 
   return (
@@ -50,9 +51,13 @@ export default function TopHeader() {
           <UserRound size={13} />
           Investigator
         </span>
-        <button className="btn btn-ghost btn-sm">
-          <LogOut size={13} />
-          Logout
+        <button
+          className="btn btn-sm"
+          style={{ backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '6px', padding: '6px 14px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 500, fontSize: '13px' }}
+          onClick={() => router.push('/')}
+        >
+          <ArrowLeft size={13} />
+          Main Dashboard
         </button>
       </div>
     </div>

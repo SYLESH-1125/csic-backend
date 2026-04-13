@@ -356,8 +356,7 @@ def commit_staging(
                     audit_id VARCHAR NOT NULL,
                     row_hash VARCHAR NOT NULL,
                     final_row_hash VARCHAR NOT NULL,
-                    committed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    FOREIGN KEY (audit_id) REFERENCES audit_logs(id)
+                    committed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             
@@ -494,14 +493,56 @@ def _signal_phase3(
         import httpx
 
         base_url = os.getenv("PHASE3_WEBHOOK_URL", "http://127.0.0.1:8000/api/phase3/phase2_webhook").rstrip("/")
-        # Provide Phase 3 expected keys; lineage must be stable and unique.
+
+        # Read back the committed row from DuckDB so Phase 3 gets full data
+        ev_json = "{}"
+        ner_json = "{}"
+        norm_ts = None
+        try:
+            conn = get_duckdb_connection()
+            row = conn.execute(
+                "SELECT extracted_variables, ner_tags, normalized_timestamp "
+                "FROM normalized_logs WHERE staging_id = ? LIMIT 1",
+                [staging_id],
+            ).fetchone()
+            conn.close()
+            if row:
+                ev_json = row[0] if row[0] else "{}"
+                ner_json = row[1] if row[1] else "{}"
+                norm_ts = row[2].isoformat() if row[2] else None
+        except Exception as read_exc:
+            logger.warning(f"[Node6] Could not read committed row for Phase 3 enrichment: {read_exc}")
+
+        ev = {}
+        try:
+            ev = json.loads(ev_json) if ev_json and ev_json != "{}" else {}
+        except Exception:
+            pass
+        ner = {}
+        try:
+            ner = json.loads(ner_json) if ner_json and ner_json != "{}" else {}
+        except Exception:
+            pass
+
+        user = (
+            ner.get("user", [None])[0] if isinstance(ner.get("user"), list) else ner.get("user")
+        ) or ev.get("user") or ev.get("username") or "unknown"
+        src = ev.get("source_type") or ev.get("facility") or ""
+        notes = ev.get("original") or ev.get("template") or (
+            f"staging_id={staging_id} audit_id={audit_id}"
+        )
+
         payload = {
-            "Target_User": "unknown",
-            "Notes": (
-                f"phase2_commit_complete audit_id={audit_id} staging_id={staging_id} "
-                f"final_row_hash={final_row_hash} committed_at={committed_at.isoformat()}"
-            ),
+            "Target_User": str(user),
+            "Notes": str(notes),
             "Lineage": staging_id,
+            "audit_id": audit_id,
+            "source_type": str(src),
+            "extracted_variables": ev_json,
+            "ner_tags": ner_json,
+            "normalized_timestamp": norm_ts,
+            "row_hash": final_row_hash,
+            "final_row_hash": final_row_hash,
         }
         with httpx.Client(timeout=5.0) as client:
             r = client.post(base_url, json=payload)

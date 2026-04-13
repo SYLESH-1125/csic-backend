@@ -3,8 +3,11 @@ Phase 2 API Router
 REST endpoints for Universal Translator pipeline
 """
 
+import json
+import time
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -12,17 +15,18 @@ from app.core.logging import logger
 from app.db.session import SessionLocal
 from app.phase2.service import (
     process_file_phase2,
+    process_file_phase2_stream,
     get_staging_previews,
     commit_staging_batch,
     get_staging_preview,
-    commit_staging
+    commit_staging,
 )
 from app.phase2.node6_staging import (
     get_staging_preview as get_preview,
     confirm_staging,
     reject_staging,
     query_staging,
-    get_staging_statistics
+    get_staging_statistics,
 )
 
 router = APIRouter()
@@ -106,6 +110,73 @@ async def process_phase2(
         raise HTTPException(status_code=500, detail=error_detail)
 
 
+@router.get("/process-stream")
+async def process_phase2_stream(
+    audit_id: str,
+    file_path: str = "",
+    source_ip: Optional[str] = None,
+):
+    """
+    SSE endpoint that streams per-node, per-line progress while running
+    the full Phase 2 pipeline.  The frontend connects with EventSource.
+
+    If staging rows already exist for this audit (e.g. AUTO_TRIGGER_PHASE2
+    already ran), emits a fast "already_processed" event instead.
+    """
+    sse_headers = {
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+    }
+
+    def _generate():
+        import os
+        db = SessionLocal()
+        try:
+            from app.db.models import StagingArea
+
+            auto_on = os.getenv("AUTO_TRIGGER_PHASE2", "true").lower() not in {
+                "0", "false", "no", "off",
+            }
+
+            existing = (
+                db.query(StagingArea)
+                .filter(StagingArea.audit_id == audit_id)
+                .count()
+            )
+            if existing > 0:
+                yield f"data: {json.dumps({'type': 'already_processed', 'rows': existing, 'audit_id': audit_id})}\n\n"
+                return
+
+            if auto_on:
+                for attempt in range(60):
+                    time.sleep(2)
+                    db.expire_all()
+                    existing = (
+                        db.query(StagingArea)
+                        .filter(StagingArea.audit_id == audit_id)
+                        .count()
+                    )
+                    if existing > 0:
+                        yield f"data: {json.dumps({'type': 'already_processed', 'rows': existing, 'audit_id': audit_id})}\n\n"
+                        return
+                    pct = min(99, int((attempt + 1) / 60 * 100))
+                    yield f"data: {json.dumps({'type': 'progress', 'percent': pct, 'message': f'Phase 2 processing in progress... ({attempt+1})'})}\n\n"
+
+            for event in process_file_phase2_stream(db, audit_id, file_path, source_ip):
+                yield f"data: {json.dumps(event, default=str)}\n\n"
+        except Exception as exc:
+            yield f"data: {json.dumps({'type': 'error', 'message': str(exc)})}\n\n"
+        finally:
+            db.close()
+
+    return StreamingResponse(
+        _generate(),
+        media_type="text/event-stream",
+        headers=sse_headers,
+    )
+
+
 @router.get("/preview/{staging_id}")
 async def preview_staging(
     staging_id: str,
@@ -187,25 +258,33 @@ async def commit_single_staging(
 async def commit_audit_staging(
     audit_id: str,
     request: CommitRequest,
-    db: Session = Depends(get_db)
 ):
     """
     Commit all staging entries for an audit.
-    
+
     Batch commit with human overrides.
     """
+    import asyncio
+
     if not request.confirm:
         raise HTTPException(
             status_code=400,
             detail="Commit confirmation required"
         )
-    
+
+    def _run():
+        db = SessionLocal()
+        try:
+            return commit_staging_batch(
+                db=db,
+                audit_id=audit_id,
+                human_overrides=request.human_overrides,
+            )
+        finally:
+            db.close()
+
     try:
-        result = commit_staging_batch(
-            db=db,
-            audit_id=audit_id,
-            human_overrides=request.human_overrides
-        )
+        result = await asyncio.to_thread(_run)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

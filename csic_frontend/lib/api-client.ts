@@ -699,15 +699,12 @@ class ApiClient {
   }
 
   async commitStagingBatch(
-    stagingIds: string[],
+    auditId: string,
     request: CommitRequest
   ): Promise<CommitResponse> {
-    return this.request<CommitResponse>('/api/phase2/commit/batch', {
+    return this.request<CommitResponse>(`/api/phase2/commit/audit/${auditId}`, {
       method: 'POST',
-      body: JSON.stringify({
-        staging_ids: stagingIds,
-        ...request,
-      }),
+      body: JSON.stringify(request),
     })
   }
 
@@ -751,6 +748,11 @@ class ApiClient {
     if (params.offset !== undefined) queryParams.append('offset', params.offset.toString())
 
     return this.request(`/api/phase2/query?${queryParams.toString()}`)
+  }
+
+  async getPhase2Statistics(auditId?: string): Promise<Record<string, any>> {
+    const q = auditId ? `?audit_id=${auditId}` : ''
+    return this.request<Record<string, any>>(`/api/phase2/statistics${q}`)
   }
 
   // ==========================================================================

@@ -188,26 +188,14 @@ export function IngestionPage() {
     }
   }, [])
 
-  const startSecurityFlow = useCallback((file: UploadedFile, method: string) => {
-    setUploadedFile(file)
-    setUploadMethod(method)
-    setIsProcessing(true)
-    setOverallResult(null)
-    const fresh = getInitialPhases()
-    phasesRef.current = fresh
-    setSecurityPhases([...fresh])
-    setShowPipeline(true)
-
-    setTimeout(() => {
-      flowRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
-    }, 300)
-
-    let currentPhase = 0
+  const runRemainingPhases = useCallback((file: UploadedFile, startFromPhase: number) => {
+    let currentPhase = startFromPhase
 
     const advancePhase = () => {
       if (currentPhase >= phasesRef.current.length) {
         setIsProcessing(false)
         setOverallResult("pass")
+        setTimeout(() => go("parsing"), 900)
         return
       }
 
@@ -253,7 +241,27 @@ export function IngestionPage() {
       }, 150)
     }
 
-    setTimeout(advancePhase, 500)
+    advancePhase()
+  }, [go])
+
+  const startSecurityFlow = useCallback((file: UploadedFile, method: string) => {
+    setUploadedFile(file)
+    setUploadMethod(method)
+    setIsProcessing(true)
+    setOverallResult(null)
+    const fresh = getInitialPhases()
+
+    // Immediately set Phase 1 as active (chunk upload in progress)
+    fresh[0].status = "active"
+    fresh[0].logs = [{ time: ts(), level: "INFO", message: `Starting ${fresh[0].label}...` }]
+
+    phasesRef.current = fresh
+    setSecurityPhases([...fresh])
+    setShowPipeline(true)
+
+    setTimeout(() => {
+      flowRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }, 300)
   }, [])
 
   /* ---- Upload handlers ---- */
@@ -261,31 +269,28 @@ export function IngestionPage() {
     async (file: File, sourceLabel: string) => {
       try {
         const sessionResponse = await apiClient.createManualSession()
-        const uploadedFile = {
+        const uploadedFileInfo = {
           name: file.name,
           size: file.size,
           type: file.type || "application/octet-stream",
         }
 
-        startSecurityFlow(uploadedFile, sourceLabel)
+        startSecurityFlow(uploadedFileInfo, sourceLabel)
 
         const wsClient = new WebSocketUploadClient(sessionResponse.session_id)
 
         wsClient.setProgressCallback((progress) => {
-          setSecurityPhases((prev) => {
-            const phases = [...prev]
-            const uploadPhase = phases.find((p) => p.id === "node1")
-            if (uploadPhase) {
-              uploadPhase.progress = progress.percentage
-              uploadPhase.logs.push({
-                time: new Date().toISOString(),
-                level: "INFO",
-                message: `Uploaded ${progress.chunkNumber}/${progress.totalChunks} chunks (${progress.percentage}%)`,
-              })
-              phasesRef.current = phases
+          const phases = phasesRef.current
+          const p = phases[0]
+          if (p) {
+            p.progress = progress.percentage
+            const msg = `Chunk ${progress.chunkNumber}/${progress.totalChunks} hashed & uploaded (${progress.percentage}%)`
+            const exists = p.logs.some((l) => l.message === msg)
+            if (!exists) {
+              p.logs = [...p.logs, { time: ts(), level: "INFO", message: msg }]
             }
-            return phases
-          })
+            setSecurityPhases([...phases])
+          }
         })
 
         wsClient.setCompleteCallback((result) => {
@@ -296,89 +301,54 @@ export function IngestionPage() {
             result.binary_signature ||
             ""
 
-          // Persist last audit for Phase 2 UI to pick up.
           const auditId = result.result?.audit_id || (result as any).audit_id || ""
           const sha256 = result.result?.sha256 || (result as any).sha256 || ""
           const filePath = result.result?.file_path || (result as any).file_path || ""
           if (typeof window !== "undefined" && auditId) {
             localStorage.setItem(
               "latest_ingestion_audit",
-              JSON.stringify({
-                auditId,
-                sha256,
-                filePath,
-                filename: file.name,
-                merkleRoot: merkleRootValue,
-              }),
+              JSON.stringify({ auditId, sha256, filePath, filename: file.name, merkleRoot: merkleRootValue }),
             )
             setActiveAuditId(auditId)
           }
+          if (merkleRootValue) setMerkleRoot(merkleRootValue)
 
-          if (merkleRootValue) {
-            setMerkleRoot(merkleRootValue)
-            setSecurityPhases((prev) => {
-              const phases = [...prev]
-              const merklePhase = phases.find((p) => p.id === "merkle")
-              if (merklePhase && merklePhase.status === "success") {
-                merklePhase.stats = merklePhase.stats.map((stat) =>
-                  stat.label === "Merkle Root"
-                    ? {
-                        ...stat,
-                        value: `${merkleRootValue.slice(0, 12)}...${merkleRootValue.slice(-4)}`,
-                      }
-                    : stat
-                )
-                phasesRef.current = phases
-              }
-              return phases
-            })
+          // Mark Phase 1 (Chunk Splitting) as complete with real data
+          const phases = phasesRef.current
+          const p1 = phases[0]
+          if (p1) {
+            p1.status = "success"
+            p1.progress = 100
+            p1.logs = [
+              ...p1.logs,
+              { time: ts(), level: "OK", message: `Upload complete. Audit ID: ${auditId || "N/A"}` },
+              { time: ts(), level: "OK", message: `SHA-256: ${sha256 ? sha256.slice(0, 16) + "..." : "N/A"}` },
+            ]
+            p1.stats = getPhaseStats(0, uploadedFileInfo, "")
           }
+          setSecurityPhases([...phases])
 
-          setSecurityPhases((prev) => {
-            const phases = [...prev]
-            const uploadPhase = phases.find((p) => p.id === "node1")
-            if (uploadPhase) {
-              uploadPhase.status = "success"
-              uploadPhase.progress = 100
-              uploadPhase.logs.push({
-                time: new Date().toISOString(),
-                level: "OK",
-                message: `Upload complete. Audit ID: ${result.result?.audit_id || result.audit_id || "N/A"}`,
-              })
-              phasesRef.current = phases
-            }
-            return phases
-          })
-          setIsProcessing(false)
-          setOverallResult("pass")
-          // Auto-handoff in UI to Phase 2 page after Phase 1 completion.
-          // Set one-time autostart flag so clicking Phase 2 tab later doesn't auto-run.
+          // Now run phases 2-5 sequentially (backend has already processed them)
+          setTimeout(() => {
+            runRemainingPhases(uploadedFileInfo, 1)
+          }, 500)
+
+          // Auto-handoff flag for Phase 2 page
           try {
-            const auditId = result.result?.audit_id || (result as any).audit_id || ""
             if (typeof window !== "undefined" && auditId) {
               localStorage.setItem("phase2_autostart_audit", auditId)
             }
-          } catch {
-            // ignore
-          }
-          setTimeout(() => go("parsing"), 900)
+          } catch { /* ignore */ }
         })
 
         wsClient.setErrorCallback((error) => {
-          setSecurityPhases((prev) => {
-            const phases = [...prev]
-            const uploadPhase = phases.find((p) => p.id === "node1")
-            if (uploadPhase) {
-              uploadPhase.status = "error"
-              uploadPhase.logs.push({
-                time: new Date().toISOString(),
-                level: "ERROR",
-                message: error.message,
-              })
-              phasesRef.current = phases
-            }
-            return phases
-          })
+          const phases = phasesRef.current
+          const p1 = phases[0]
+          if (p1) {
+            p1.status = "error"
+            p1.logs = [...p1.logs, { time: ts(), level: "ERROR", message: error.message }]
+          }
+          setSecurityPhases([...phases])
           setIsProcessing(false)
           setOverallResult("fail")
         })
@@ -391,7 +361,7 @@ export function IngestionPage() {
         setOverallResult("fail")
       }
     },
-    [startSecurityFlow, go]
+    [startSecurityFlow, runRemainingPhases, setActiveAuditId]
   )
 
   const handleManualUpload = useCallback(

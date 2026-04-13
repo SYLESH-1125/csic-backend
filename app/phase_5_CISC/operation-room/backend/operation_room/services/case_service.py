@@ -117,13 +117,19 @@ def get_case(case_id: str) -> dict:
     """Retrieve full case detail."""
     conn = open_vault(case_id)
     try:
-        row = conn.execute(
-            "SELECT * FROM case_metadata WHERE case_id = ?", [case_id]
-        ).fetchone()
+        try:
+            result = conn.execute(
+                "SELECT * FROM case_metadata WHERE case_id = ?", [case_id]
+            )
+        except Exception:
+            raise ValueError(f"Case {case_id} not found in vault (no case_metadata table)")
+        row = result.fetchone()
         if not row:
             raise ValueError(f"Case {case_id} not found in vault")
-
-        cols = [desc[0] for desc in conn.description]
+        desc = result.description if hasattr(result, "description") else conn.description
+        if not desc:
+            raise ValueError(f"Case {case_id}: could not read column metadata from vault")
+        cols = [d[0] for d in desc]
         case = dict(zip(cols, row))
 
         # Parse JSON fields
@@ -136,13 +142,23 @@ def get_case(case_id: str) -> dict:
             if case.get(field) and not isinstance(case[field], str):
                 case[field] = str(case[field])
 
-        # Count evidence and CoC entries
-        ev_count = conn.execute(
-            "SELECT COUNT(*) FROM evidence_hashes WHERE case_id = ?", [case_id]
-        ).fetchone()[0]
-        coc_count = conn.execute(
-            "SELECT COUNT(*) FROM chain_of_custody WHERE case_id = ?", [case_id]
-        ).fetchone()[0]
+        # Count evidence and CoC entries (tables may not exist in older vaults)
+        ev_count = 0
+        coc_count = 0
+        try:
+            row = conn.execute(
+                "SELECT COUNT(*) FROM evidence_hashes WHERE case_id = ?", [case_id]
+            ).fetchone()
+            ev_count = row[0] if row else 0
+        except Exception:
+            pass
+        try:
+            row = conn.execute(
+                "SELECT COUNT(*) FROM chain_of_custody WHERE case_id = ?", [case_id]
+            ).fetchone()
+            coc_count = row[0] if row else 0
+        except Exception:
+            pass
         case["evidence_count"] = ev_count
         case["coc_count"] = coc_count
 
