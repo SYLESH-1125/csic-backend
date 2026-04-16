@@ -15,8 +15,7 @@ import { HealthPage } from "@/components/health-page"
 import { SettingsPage } from "@/components/settings-page"
 import { ParsingPage } from "@/components/parsing-page"
 import { Phase3Page } from "@/components/phase3-page"
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { MasterLayout } from "@/components/master-layout"
 import { AppUrlBridge } from "@/components/app-url-bridge"
 
 function AppContent() {
@@ -50,26 +49,18 @@ function AppContent() {
         </div>
       }
     >
-      <SidebarProvider>
-        <AppUrlBridge />
-        <AppSidebar />
-        <SidebarInset className="flex min-h-0 flex-1 flex-col">
-          <TopNavbar />
-          <ScrollArea className="min-h-0 flex-1">
-            <main>
-              {currentPage === "dashboard" && <DashboardPage />}
-              {currentPage === "ingestion" && <IngestionPage />}
-              {currentPage === "parsing" && <ParsingPage />}
-              {currentPage === "phase3" && <Phase3Page />}
-              {currentPage === "ledger" && <LedgerPage />}
-              {currentPage === "quarantine" && <QuarantinePage />}
-              {currentPage === "audit" && <AuditPage />}
-              {currentPage === "health" && <HealthPage />}
-              {currentPage === "settings" && <SettingsPage />}
-            </main>
-          </ScrollArea>
-        </SidebarInset>
-      </SidebarProvider>
+      <AppUrlBridge />
+      <MasterLayout>
+        {currentPage === "dashboard" && <DashboardPage />}
+        {currentPage === "ingestion" && <IngestionPage />}
+        {currentPage === "parsing" && <ParsingPage />}
+        {currentPage === "phase3" && <Phase3Page />}
+        {currentPage === "ledger" && <LedgerPage />}
+        {currentPage === "quarantine" && <QuarantinePage />}
+        {currentPage === "audit" && <AuditPage />}
+        {currentPage === "health" && <HealthPage />}
+        {currentPage === "settings" && <SettingsPage />}
+      </MasterLayout>
     </Suspense>
   )
 }

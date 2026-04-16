@@ -9,7 +9,6 @@ import {
   ShieldAlert,
   ClipboardList,
   Activity,
-  Shield,
   ChevronDown,
   ChevronRight,
   Workflow,
@@ -49,15 +48,26 @@ const phase3SubItems: { id: ShellPage; label: string; icon: typeof Upload }[] = 
   { id: "phase3", label: "Hot/Cold DB", icon: Database },
 ]
 
-function PhaseNumber({ n }: { n: number }) {
+function IconBox({ active, colorHex, children }: { active: boolean; colorHex: string; children: React.ReactNode }) {
+  const boxStyle = {
+    backgroundColor: active ? colorHex : "#f1f5f9",
+    color: active ? "#ffffff" : colorHex,
+  }
+
   return (
-    <span className="flex size-[18px] shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary leading-none">
-      {n}
-    </span>
+    <div style={boxStyle} className="flex size-7 shrink-0 items-center justify-center rounded-lg transition-all duration-300 shadow-sm">
+      {children}
+    </div>
   )
 }
 
-export function AppSidebar() {
+function StatusDot({ colorHex }: { colorHex: string }) {
+  return (
+    <div style={{ backgroundColor: colorHex }} className="size-1.5 rounded-full ml-auto shrink-0 shadow-sm" />
+  )
+}
+
+export function AppSidebar({ className }: { className?: string }) {
   const { currentPage } = useApp()
   const { go } = useShellNavigate()
   const router = useRouter()
@@ -73,200 +83,253 @@ export function AppSidebar() {
   const isParsingSection = currentPage === "parsing"
   const isPhase3Section = currentPage === "phase3"
 
-  const activeStyle = "bg-primary/10 text-primary font-medium border-l-2 border-primary rounded-none"
-  const defaultStyle = "text-foreground hover:bg-muted"
-  const subActiveStyle = "bg-primary/5 text-primary font-medium"
-  const subDefaultStyle = "text-muted-foreground hover:bg-muted hover:text-foreground"
+  const new_ = "Main Dashboard"
+
+  const activeStyle = {
+    border: "2px solid #3b82f6",
+    backgroundColor: "#eff6ff",
+    color: "#1d4ed8",
+    fontWeight: "700",
+    borderRadius: "0.75rem"
+  }
+
+  const inactiveStyle = {
+    border: "2px solid transparent",
+    color: "#64748b",
+    fontWeight: "600",
+    borderRadius: "0.75rem"
+  }
+
+  const activeSubStyle = {
+    color: "#2563eb",
+    fontWeight: "700",
+    backgroundColor: "#eff6ff",
+    borderRadius: "0.5rem"
+  }
+
+  const inactiveSubStyle = {
+    color: "#64748b",
+    fontWeight: "500",
+    borderRadius: "0.5rem"
+  }
 
   return (
-    <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarHeader className="border-b border-sidebar-border px-4 py-3">
+    <Sidebar variant="sidebar" collapsible="icon" style={{ backgroundColor: "#fafaf9", borderRight: "1px solid #e2e8f0", width: "280px", minWidth: "280px", fontFamily: "'Inter', system-ui, sans-serif" }} className="z-40 transition-all duration-300 m-0 p-0 rounded-none">
+
+      <SidebarHeader className="px-5 py-6">
         <div className="flex items-center gap-3">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-md border border-primary bg-primary/10">
-            <Shield className="size-4 text-primary" />
+
+          <div
+            className="flex shrink-0 items-center justify-center rounded-full bg-white border border-slate-200 shadow-sm overflow-hidden"
+            style={{ width: "48px", height: "48px", minWidth: "48px", minHeight: "48px" }}
+          >
+            <img
+              src="/sakshi-logo.jpg"
+              alt="Sakshi Ledger Logo"
+              style={{ width: "100%", height: "100%", objectFit: "cover", transform: "scale(1.25)" }}
+            />
           </div>
+
           <div className="flex flex-col gap-0 group-data-[collapsible=icon]:hidden">
-            <span className="text-xs font-bold tracking-wider text-foreground uppercase">NFLIP</span>
-            <span className="text-[9px] text-muted-foreground leading-tight">Forensic Intelligence</span>
+            <span style={{ color: "#0f172a", letterSpacing: "-0.02em" }} className="text-[16px] font-extrabold">SAKSHI LEDGER</span>
+            <span style={{ color: "#64748b" }} className="text-[9px] font-bold">From Digital Traces to Defensible Truth</span>
           </div>
+
         </div>
       </SidebarHeader>
 
-      <SidebarContent>
-        {/* ── Overview ─────────────────────────────────────────── */}
+      <SidebarContent className="overflow-x-hidden px-3">
+
+        <div className="h-4" />
+
         <SidebarGroup>
+          <SidebarGroupLabel style={{ color: "#94a3b8", letterSpacing: "0.05em" }} className="text-[9px] font-bold uppercase mb-2 px-2">
+            Security Protocol Phases
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={currentPage === "dashboard"}
+                <button
                   onClick={() => go("dashboard")}
-                  tooltip="Dashboard"
-                  className={currentPage === "dashboard" ? activeStyle : defaultStyle}
+                  style={currentPage === "dashboard" ? activeStyle : inactiveStyle}
+                  className="flex items-center w-full gap-3 px-3 py-2 transition-all hover:bg-slate-100"
                 >
-                  <LayoutDashboard className="size-4" />
-                  <span>Dashboard</span>
-                </SidebarMenuButton>
+                  <IconBox active={currentPage === "dashboard"} colorHex="#f59e0b">
+                    <LayoutDashboard className="size-3.5" />
+                  </IconBox>
+                  <span className="flex-1 text-left text-sm font-bold">{new_}</span>
+                  <StatusDot colorHex="#fbbf24" />
+                </button>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarSeparator />
+        <div className="h-3" />
 
-        {/* ── Pipeline Phases ──────────────────────────────────── */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] font-semibold tracking-widest text-muted-foreground uppercase">
-            Pipeline Phases
+          <SidebarGroupLabel style={{ color: "#94a3b8", letterSpacing: "0.05em" }} className="text-[9px] font-bold uppercase mb-2 px-2">
+            Investigation Modules
           </SidebarGroupLabel>
-          <SidebarGroupContent>
+          <SidebarGroupContent className="flex flex-col gap-1">
             <SidebarMenu>
 
-              {/* ── Phase 1: Ingestion ── */}
               <SidebarMenuItem>
-                <SidebarMenuButton
+                <button
                   onClick={() => {
                     setIngestionOpen(!ingestionOpen)
                     if (!isIngestionSection) go("ingestion")
                   }}
-                  tooltip="Phase 1 — Ingestion"
-                  className={isIngestionSection ? activeStyle : defaultStyle}
+                  style={isIngestionSection ? activeStyle : inactiveStyle}
+                  className="flex items-center w-full gap-3 px-3 py-2 transition-all hover:bg-slate-100"
                 >
-                  <PhaseNumber n={1} />
-                  <span className="flex-1">Ingestion</span>
-                  {ingestionOpen
-                    ? <ChevronDown className="size-3.5 text-muted-foreground" />
-                    : <ChevronRight className="size-3.5 text-muted-foreground" />}
-                </SidebarMenuButton>
+                  <IconBox active={isIngestionSection} colorHex="#3b82f6">
+                    <Upload className="size-3.5" />
+                  </IconBox>
+                  <span className="flex-1 text-left text-sm font-bold">Ingestion</span>
+                  <StatusDot colorHex="#22d3ee" />
+                </button>
               </SidebarMenuItem>
-              {ingestionOpen &&
-                ingestionSubItems.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      isActive={currentPage === item.id}
-                      onClick={() => go(item.id)}
-                      tooltip={item.label}
-                      className={`pl-9 ${currentPage === item.id ? subActiveStyle : subDefaultStyle}`}
-                    >
-                      <item.icon className="size-3.5" />
-                      <span className="text-[13px]">{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
 
-              {/* ── Phase 2: Parsing ── */}
+              {ingestionOpen && (
+                <div style={{ borderLeft: "2px solid #cbd5e1" }} className="ml-6 pl-2.5 mt-1 flex flex-col gap-0.5">
+                  {ingestionSubItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => go(item.id)}
+                      style={currentPage === item.id ? activeSubStyle : inactiveSubStyle}
+                      className="flex items-center w-full gap-3 px-3 py-1.5 transition-colors hover:bg-slate-100"
+                    >
+                      <span className="flex-1 text-left text-xs font-medium">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="h-1" />
+
               <SidebarMenuItem>
-                <SidebarMenuButton
+                <button
                   onClick={() => {
                     setParsingOpen(!parsingOpen)
                     if (!isParsingSection) go("parsing")
                   }}
-                  tooltip="Phase 2 — Parsing"
-                  className={isParsingSection ? activeStyle : defaultStyle}
+                  style={isParsingSection ? activeStyle : inactiveStyle}
+                  className="flex items-center w-full gap-3 px-3 py-2 transition-all hover:bg-slate-100"
                 >
-                  <PhaseNumber n={2} />
-                  <span className="flex-1">Parsing</span>
-                  {parsingOpen
-                    ? <ChevronDown className="size-3.5 text-muted-foreground" />
-                    : <ChevronRight className="size-3.5 text-muted-foreground" />}
-                </SidebarMenuButton>
+                  <IconBox active={isParsingSection} colorHex="#10b981">
+                    <Workflow className="size-3.5" />
+                  </IconBox>
+                  <span className="flex-1 text-left text-sm font-bold">Parsing</span>
+                  <StatusDot colorHex="#34d399" />
+                </button>
               </SidebarMenuItem>
-              {parsingOpen &&
-                parsingSubItems.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      isActive={currentPage === item.id}
-                      onClick={() => go(item.id)}
-                      tooltip={item.label}
-                      className={`pl-9 ${currentPage === item.id ? subActiveStyle : subDefaultStyle}`}
-                    >
-                      <item.icon className="size-3.5" />
-                      <span className="text-[13px]">{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
 
-              {/* ── Phase 3: Storage ── */}
+              {parsingOpen && (
+                <div style={{ borderLeft: "2px solid #cbd5e1" }} className="ml-6 pl-2.5 mt-1 flex flex-col gap-0.5">
+                  {parsingSubItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => go(item.id)}
+                      style={currentPage === item.id ? activeSubStyle : inactiveSubStyle}
+                      className="flex items-center w-full gap-3 px-3 py-1.5 transition-colors hover:bg-slate-100"
+                    >
+                      <span className="flex-1 text-left text-xs font-medium">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              <div className="h-1" />
+
               <SidebarMenuItem>
-                <SidebarMenuButton
+                <button
                   onClick={() => {
                     setPhase3Open(!phase3Open)
                     if (!isPhase3Section) go("phase3")
                   }}
-                  tooltip="Phase 3 — Storage"
-                  className={isPhase3Section ? activeStyle : defaultStyle}
+                  style={isPhase3Section ? activeStyle : inactiveStyle}
+                  className="flex items-center w-full gap-3 px-3 py-2 transition-all hover:bg-slate-100"
                 >
-                  <PhaseNumber n={3} />
-                  <span className="flex-1">Data Storage</span>
-                  {phase3Open
-                    ? <ChevronDown className="size-3.5 text-muted-foreground" />
-                    : <ChevronRight className="size-3.5 text-muted-foreground" />}
-                </SidebarMenuButton>
+                  <IconBox active={isPhase3Section} colorHex="#6366f1">
+                    <Database className="size-3.5" />
+                  </IconBox>
+                  <span className="flex-1 text-left text-sm font-bold">Data Storage</span>
+                  <StatusDot colorHex="#818cf8" />
+                </button>
               </SidebarMenuItem>
-              {phase3Open &&
-                phase3SubItems.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      isActive={currentPage === item.id}
-                      onClick={() => go(item.id)}
-                      tooltip={item.label}
-                      className={`pl-9 ${currentPage === item.id ? subActiveStyle : subDefaultStyle}`}
-                    >
-                      <item.icon className="size-3.5" />
-                      <span className="text-[13px]">{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
 
-              {/* ── Phase 5: Operation Room (includes Magic Query at /cases/:id/import) ── */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => router.push("/operation-room")}
-                  tooltip="Phase 5 — Operation Room"
-                  className={defaultStyle}
-                >
-                  <PhaseNumber n={5} />
-                  <span className="flex-1">Operation Room</span>
-                  <ChevronRight className="size-3.5 text-muted-foreground" />
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+              {phase3Open && (
+                <div style={{ borderLeft: "2px solid #cbd5e1" }} className="ml-6 pl-2.5 mt-1 flex flex-col gap-0.5">
+                  {phase3SubItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => go(item.id)}
+                      style={currentPage === item.id ? activeSubStyle : inactiveSubStyle}
+                      className="flex items-center w-full gap-3 px-3 py-1.5 transition-colors hover:bg-slate-100"
+                    >
+                      <span className="flex-1 text-left text-xs font-medium">{item.label}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
 
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarSeparator />
+        <div className="h-4" />
 
-        {/* ── Settings ─────────────────────────────────────────── */}
         <SidebarGroup>
+          <SidebarGroupLabel style={{ color: "#94a3b8", letterSpacing: "0.05em" }} className="text-[9px] font-bold uppercase mb-2 px-2">
+            Execution Phase
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton
-                  isActive={currentPage === "settings"}
-                  onClick={() => go("settings")}
-                  tooltip="Settings"
-                  className={currentPage === "settings" ? activeStyle : defaultStyle}
+                <button
+                  onClick={() => router.push("/operation-room")}
+                  style={inactiveStyle}
+                  className="flex items-center w-full gap-3 px-3 py-2 transition-all hover:bg-slate-100"
                 >
-                  <Settings className="size-4" />
-                  <span>Settings</span>
-                </SidebarMenuButton>
+                  <IconBox active={false} colorHex="#f43f5e">
+                    <Activity className="size-3.5" />
+                  </IconBox>
+                  <span className="flex-1 text-left text-sm font-bold">Operation Room</span>
+                  <StatusDot colorHex="#fb7185" />
+                </button>
               </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        <div className="h-4" />
+
+        <SidebarGroup>
+          <SidebarGroupLabel style={{ color: "#94a3b8", letterSpacing: "0.05em" }} className="text-[9px] font-bold uppercase mb-2 px-2">
+            System Control
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <button
+                  onClick={() => go("settings")}
+                  style={currentPage === "settings" ? activeStyle : inactiveStyle}
+                  className="flex items-center w-full gap-3 px-3 py-2 transition-all hover:bg-slate-100"
+                >
+                  <IconBox active={currentPage === "settings"} colorHex="#64748b">
+                    <Settings className="size-3.5" />
+                  </IconBox>
+                  <span className="flex-1 text-left text-sm font-bold">Settings</span>
+                  <StatusDot colorHex="#94a3b8" />
+                </button>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border px-4 py-3">
-        <div className="flex flex-col gap-1 group-data-[collapsible=icon]:hidden">
-          <p className="text-[9px] font-medium tracking-wider text-muted-foreground uppercase">
-            Classification
-          </p>
-          <p className="text-[10px] font-bold tracking-wider text-destructive uppercase">
-            Restricted
-          </p>
-        </div>
-      </SidebarFooter>
     </Sidebar>
   )
 }

@@ -133,8 +133,8 @@ export function Phase3Page() {
     <div className="p-6 space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-lg font-semibold tracking-tight">Phase 3 — Hot / Cold gateway</div>
-          <p className="text-sm text-muted-foreground max-w-2xl">
+          <div className="text-2xl font-bold tracking-tight text-slate-900">Hot / Cold gateway</div>
+          <p className="text-sm text-slate-500 max-w-2xl mt-1">
             DuckDB hot tier + Parquet cold store. After Phase 2 commit, the webhook uses{" "}
             <code className="text-xs bg-muted px-1 rounded">Target_User: unknown</code> and{" "}
             <code className="text-xs bg-muted px-1 rounded">Lineage: &lt;staging_id&gt;</code>.
