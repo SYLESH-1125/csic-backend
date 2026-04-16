@@ -40,11 +40,28 @@ export type UploadProgressCallback = (progress: UploadProgress) => void
 export type UploadCompleteCallback = (result: ServerResponse) => void
 export type UploadErrorCallback = (error: Error) => void
 
+/** Must match backend `MAX_CHUNKS` in app/ingestion/ws_router.py */
+const BACKEND_MAX_CHUNKS = 10_000
+
+/** Binary chunk magic + header: WSC1 | u32 chunk | u8 flags | u32 len | 32-byte SHA256 | payload */
+const WS_CHUNK_MAGIC = new TextEncoder().encode('WSC1')
+const WS_CHUNK_HEADER_SIZE = 4 + 4 + 1 + 4 + 32
+
+function hexToBytes(hex: string): Uint8Array {
+  const out = new Uint8Array(hex.length / 2)
+  for (let i = 0; i < out.length; i++) {
+    out[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16)
+  }
+  return out
+}
+
 export class WebSocketUploadClient {
   private ws: WebSocket | null = null
   private sessionId: string
   private wsUrl: string
   private chunkSize: number = 64 * 1024
+  /** When true, send raw chunk frames (no base64/JSON) for lower CPU and wire size. */
+  private useBinaryChunks: boolean = true
   private onProgress: UploadProgressCallback | null = null
   private onComplete: UploadCompleteCallback | null = null
   private onError: UploadErrorCallback | null = null
@@ -53,6 +70,11 @@ export class WebSocketUploadClient {
     this.sessionId = sessionId
     const baseUrl = wsBaseUrl || WS_BASE_URL
     this.wsUrl = `${baseUrl}/ws/secure-stream/${sessionId}`
+  }
+
+  /** Disable binary frames (JSON+base64 only); for compatibility testing. */
+  setUseBinaryChunks(enabled: boolean) {
+    this.useBinaryChunks = enabled
   }
 
   setProgressCallback(callback: UploadProgressCallback) {
@@ -177,17 +199,28 @@ export class WebSocketUploadClient {
       const hashArray = Array.from(new Uint8Array(hashBuffer))
       const chunkHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 
-      const base64Data = this.uint8ToBase64(chunkData)
-
-      const message: ChunkMessage = {
-        chunk_number: chunkNumber,
-        chunk_hash: chunkHash,
-        data: base64Data,
-        is_final: chunkNumber === totalChunks - 1,
-      }
-
       if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify(message))
+        const isFinal = chunkNumber === totalChunks - 1
+        if (this.useBinaryChunks) {
+          const hashBytes = hexToBytes(chunkHash)
+          const frame = new Uint8Array(WS_CHUNK_HEADER_SIZE + chunkData.length)
+          frame.set(WS_CHUNK_MAGIC, 0)
+          const dv = new DataView(frame.buffer)
+          dv.setUint32(4, chunkNumber, false)
+          frame[8] = isFinal ? 1 : 0
+          dv.setUint32(9, chunkData.length, false)
+          frame.set(hashBytes, 13)
+          frame.set(chunkData, WS_CHUNK_HEADER_SIZE)
+          this.ws.send(frame.buffer)
+        } else {
+          const message: ChunkMessage = {
+            chunk_number: chunkNumber,
+            chunk_hash: chunkHash,
+            data: this.uint8ToBase64(chunkData),
+            is_final: isFinal,
+          }
+          this.ws.send(JSON.stringify(message))
+        }
         chunkNumber++
         offset += this.chunkSize
 
@@ -209,11 +242,17 @@ export class WebSocketUploadClient {
   private pickChunkSize(totalBytes: number): number {
     const MAX_CHUNK_BYTES = 5 * 1024 * 1024 // must match backend MAX_CHUNK_SIZE_BYTES
     const MIN_CHUNK_BYTES = 64 * 1024
-    // Target <= 9000 chunks to leave headroom for off-by-one / retries.
-    const targetChunks = 9000
-    const desired = Math.ceil(totalBytes / Math.max(targetChunks, 1))
+    const margin = 500 // stay under BACKEND_MAX_CHUNKS
+    const maxAllowed = Math.max(1, BACKEND_MAX_CHUNKS - margin)
+
+    // Prefer 5MB chunks whenever chunk count stays under the backend cap (large uploads).
+    const chunksIfMax = Math.ceil(totalBytes / MAX_CHUNK_BYTES)
+    if (chunksIfMax <= maxAllowed) {
+      return MAX_CHUNK_BYTES
+    }
+
+    const desired = Math.ceil(totalBytes / maxAllowed)
     const clamped = Math.min(MAX_CHUNK_BYTES, Math.max(MIN_CHUNK_BYTES, desired))
-    // Round up to 64KB boundary for nicer slicing.
     const boundary = 64 * 1024
     return Math.min(MAX_CHUNK_BYTES, Math.ceil(clamped / boundary) * boundary)
   }

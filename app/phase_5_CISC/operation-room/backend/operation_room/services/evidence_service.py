@@ -19,6 +19,151 @@ def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+MAGIC_QUERY_SOURCE = "MAGIC_QUERY"
+MAX_MAGIC_QUERY_ROWS = 5000
+
+
+def _parsed_logs_row_to_raw_event(row: dict, audit_id: str | None) -> dict:
+    """Map Phase 4 / Magic Query parsed_logs row to raw_events schema."""
+    ts = str(row.get("timestamp") or "")
+    et = str(row.get("event_template") or "")
+    action = (et[:200] if et else "log_event") or "log_event"
+    user = str(row.get("user") or "")
+    ip = str(row.get("ip_address") or "")
+    proc = str(row.get("process_name") or "")
+    fac = str(row.get("facility") or "")
+    raw = str(row.get("raw_log") or "")
+    sev = str(row.get("severity") or "")
+    rid = row.get("id")
+    detail = {
+        "magic_query": True,
+        "audit_id": audit_id,
+        "original_row_id": rid,
+        "event_template": et[:4096] if et else "",
+        "ip_address": ip,
+        "process_name": proc,
+        "severity": sev,
+        "facility": fac,
+        "raw_log": raw[:8192] if raw else "",
+    }
+    return {
+        "event_id": str(uuid.uuid4()),
+        "source_type": MAGIC_QUERY_SOURCE,
+        "timestamp": ts,
+        "source_system": proc or fac or "",
+        "actor": user,
+        "action": action,
+        "target": ip,
+        "detail": detail,
+    }
+
+
+async def import_magic_query_rows(
+    case_id: str,
+    rows: list[dict],
+    audit_id: str | None = None,
+    justification: str = "Magic Query result import",
+) -> dict:
+    """
+    Persist Magic Query / parsed_logs rows into raw_events with the same hash + CoC path as Phase 3 import.
+    """
+    if len(rows) > MAX_MAGIC_QUERY_ROWS:
+        raise ValueError(f"At most {MAX_MAGIC_QUERY_ROWS} rows per import")
+    if len(rows) < 1:
+        raise ValueError("At least one row is required")
+
+    batch_id = str(uuid.uuid4())
+    actor = "analyst"
+    now = _now_iso()
+
+    records = [_parsed_logs_row_to_raw_event(dict(r), audit_id) for r in rows]
+
+    payload_bytes = json.dumps(records, sort_keys=True, default=str).encode("utf-8")
+    hash_value = hash_records(records, settings.HASH_ALGORITHM)
+    byte_size = len(payload_bytes)
+
+    day = now[:10]
+    artefact_name = f"magic_query_{day}_{batch_id[:8]}"
+
+    conn = open_vault(case_id)
+    try:
+        with conn.transaction():
+            for rec in records:
+                conn.execute(
+                    """
+                    INSERT INTO raw_events
+                        (event_id, case_id, import_batch_id, source_type,
+                         timestamp, source_system, actor, action, target, detail, imported_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    [
+                        rec.get("event_id", str(uuid.uuid4())),
+                        case_id,
+                        batch_id,
+                        rec.get("source_type", MAGIC_QUERY_SOURCE),
+                        rec.get("timestamp"),
+                        rec.get("source_system"),
+                        rec.get("actor"),
+                        rec.get("action"),
+                        rec.get("target"),
+                        json.dumps(rec.get("detail", {})),
+                        now,
+                    ],
+                )
+
+            hash_id = str(uuid.uuid4())
+            conn.execute(
+                """
+                INSERT INTO evidence_hashes
+                    (hash_id, case_id, import_batch_id, artefact_name, artefact_type,
+                     hash_algorithm, hash_value, record_count, byte_size,
+                     created_at, created_by)
+                VALUES (?, ?, ?, ?, 'MAGIC_QUERY_RESULT', ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    hash_id,
+                    case_id,
+                    batch_id,
+                    artefact_name,
+                    settings.HASH_ALGORITHM.upper().replace("SHA", "SHA-"),
+                    hash_value,
+                    len(records),
+                    byte_size,
+                    now,
+                    actor,
+                ],
+            )
+    finally:
+        conn.close()
+
+    coc_id = record_coc_event(
+        case_id=case_id,
+        actor=actor,
+        action="IMPORT",
+        target_artefact=artefact_name,
+        justification=justification,
+        hash_after=hash_value,
+        details={
+            "batch_id": batch_id,
+            "source_type": MAGIC_QUERY_SOURCE,
+            "record_count": len(records),
+            "byte_size": byte_size,
+            "audit_id": audit_id,
+        },
+    )
+
+    return {
+        "import_batch_id": batch_id,
+        "artefact_name": artefact_name,
+        "record_count": len(records),
+        "byte_size": byte_size,
+        "hash_algorithm": settings.HASH_ALGORITHM.upper().replace("SHA", "SHA-"),
+        "hash_value": hash_value,
+        "coc_event_id": coc_id,
+        "message": f"Imported {len(records)} Magic Query rows into case vault.",
+    }
+
+
 async def import_evidence(case_id: str, data: dict) -> dict:
     """
     Full import pipeline:

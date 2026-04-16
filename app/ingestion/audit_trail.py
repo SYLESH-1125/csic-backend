@@ -228,36 +228,44 @@ class AuditTrail:
         extension_blacklisted: bool = False,
         yara_detected: bool = False,
         yara_pattern_name: Optional[str] = None,
+        triage_diagnostic_sample_bytes: int = 0,
+        triage_diagnostic_note: Optional[str] = None,
     ) -> None:
         """NODE 5 — Automated Sandbox Triage (always executed)."""
         self._sandbox_passed = (status == "clean")
+        checks: dict[str, Any] = {
+            "zip_bomb_detection": {
+                "ratio": round(zip_bomb_ratio, 2),
+                "threshold": 100,
+                "result": zip_bomb_result,
+            },
+            "magic_byte_check": {
+                "header_bytes": magic_header_hex,
+                "extension_match": magic_extension_match,
+            },
+            "entropy_scan": {
+                "entropy_score": round(entropy_score, 4),
+                "threshold": 7.2,
+                "result": entropy_result,
+            },
+            "extension_policy": {
+                "extension": extension,
+                "blacklisted": extension_blacklisted,
+            },
+            "yara_scan": {
+                "pattern_detected": yara_detected,
+                "pattern_name": yara_pattern_name,
+            },
+        }
+        if triage_diagnostic_sample_bytes > 0 or triage_diagnostic_note:
+            checks["diagnostic_scope"] = {
+                "entropy_yara_sample_bytes": triage_diagnostic_sample_bytes,
+                "note": triage_diagnostic_note,
+            }
         self._node5 = {
             "node_name": "Automated Sandbox Triage",
             "status": status,
-            "checks": {
-                "zip_bomb_detection": {
-                    "ratio": round(zip_bomb_ratio, 2),
-                    "threshold": 100,
-                    "result": zip_bomb_result,
-                },
-                "magic_byte_check": {
-                    "header_bytes": magic_header_hex,
-                    "extension_match": magic_extension_match,
-                },
-                "entropy_scan": {
-                    "entropy_score": round(entropy_score, 4),
-                    "threshold": 7.2,
-                    "result": entropy_result,
-                },
-                "extension_policy": {
-                    "extension": extension,
-                    "blacklisted": extension_blacklisted,
-                },
-                "yara_scan": {
-                    "pattern_detected": yara_detected,
-                    "pattern_name": yara_pattern_name,
-                },
-            },
+            "checks": checks,
         }
 
     def record_node6_ledger(
@@ -430,6 +438,8 @@ def build_trail_from_ws_session(
     extension_blacklisted: bool = False,
     yara_detected: bool = False,
     yara_pattern_name: Optional[str] = None,
+    triage_diagnostic_sample_bytes: int = 0,
+    triage_diagnostic_note: Optional[str] = None,
     # Node 6 (ledger)
     ledger_entry_id: str = "",
     previous_hash: Optional[str] = None,
@@ -483,6 +493,8 @@ def build_trail_from_ws_session(
         extension_blacklisted=extension_blacklisted,
         yara_detected=yara_detected,
         yara_pattern_name=yara_pattern_name,
+        triage_diagnostic_sample_bytes=triage_diagnostic_sample_bytes,
+        triage_diagnostic_note=triage_diagnostic_note,
     )
 
     trail.record_node6_ledger(

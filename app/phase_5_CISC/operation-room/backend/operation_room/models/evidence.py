@@ -1,6 +1,8 @@
 """Pydantic models for evidence / log import operations."""
 
-from pydantic import BaseModel, Field
+from typing import Any
+
+from pydantic import BaseModel, Field, field_validator
 
 
 class ImportRequest(BaseModel):
@@ -38,6 +40,23 @@ class ImportResult(BaseModel):
     hash_value: str
     coc_event_id: str
     message: str
+
+
+class MagicQueryImportRequest(BaseModel):
+    """Import rows produced by Magic Query (Phase 4 parsed_logs shape) into the case vault."""
+
+    rows: list[dict[str, Any]] = Field(..., description="Result rows from Magic Query / parsed_logs")
+    audit_id: str | None = Field(default=None, description="Active pipeline audit id when present")
+    justification: str = Field(default="Magic Query result import")
+
+    @field_validator("rows")
+    @classmethod
+    def limit_row_count(cls, v: list) -> list:
+        if len(v) > 5000:
+            raise ValueError("At most 5000 rows per import")
+        if len(v) < 1:
+            raise ValueError("At least one row is required")
+        return v
 
 
 class VerifyHashRequest(BaseModel):

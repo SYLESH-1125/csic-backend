@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getMonolithApiBaseForPhase4 } from "@/lib/public-env"
+import { getMonolithApiBaseForPhase4 } from "@operation-room/lib/public-env"
 
 interface ParsedLogRow {
   id: number
@@ -101,8 +101,9 @@ function applySqlFilters(sql: string, rows: ParsedLogRow[]): ParsedLogRow[] {
   const whereSeverity = sql.match(/severity\s*=\s*'([^']+)'/i)?.[1]
   if (whereSeverity) out = out.filter((r) => r.severity.toUpperCase() === whereSeverity.toUpperCase())
 
-  const likeTerms = [...sql.matchAll(/(?:event_template|raw_log)\s+LIKE\s+'%([^']+)%'/gi)].map((m) =>
-    m[1].toLowerCase(),
+  const likeTerms = Array.from(
+    sql.matchAll(/(?:event_template|raw_log)\s+LIKE\s+'%([^']+)%'/gi),
+    (m) => m[1].toLowerCase(),
   )
   if (likeTerms.length) {
     out = out.filter((r) =>

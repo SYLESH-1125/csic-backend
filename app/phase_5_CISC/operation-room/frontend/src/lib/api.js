@@ -35,6 +35,8 @@ export const api = {
   // ── Evidence ─────────────────────────────────────────────
   listEvidence: (caseId)      => request(`/cases/${caseId}/evidence`),
   importLogs:   (caseId, data)=> request(`/cases/${caseId}/evidence/import`, { method: 'POST', body: JSON.stringify(data) }),
+  importMagicQueryRows: (caseId, data) =>
+    request(`/cases/${caseId}/evidence/import-magic-query`, { method: 'POST', body: JSON.stringify(data) }),
   verifyHash:   (caseId, hashId) => request(`/cases/${caseId}/evidence/verify`, { method: 'POST', body: JSON.stringify({ hash_id: hashId }) }),
 
   // ── Evidence Vault ───────────────────────────────────────

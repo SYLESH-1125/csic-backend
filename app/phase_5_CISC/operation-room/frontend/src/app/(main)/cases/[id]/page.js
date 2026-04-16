@@ -7,6 +7,11 @@ import { Download, FolderPlus, Link2, Package, Search, PlayCircle, Loader2, Chec
 import { api } from '@operation-room/lib/api';
 import StatusBadge from '@operation-room/components/StatusBadge';
 
+const orHome =
+  typeof process !== 'undefined' && process.env.NEXT_PUBLIC_OR_OPERATION_HOME
+    ? process.env.NEXT_PUBLIC_OR_OPERATION_HOME
+    : '/';
+
 // Playbook Definitions
 const PLAYBOOKS = {
   FULL_AUDIT: {
@@ -38,6 +43,7 @@ export default function CaseDetailPage() {
   const [selectedExports, setSelectedExports] = useState([]);
   const [cocFeed, setCocFeed] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
 
   // Playbook execution state
   const [activePlaybook, setActivePlaybook] = useState(null);
@@ -108,18 +114,44 @@ export default function CaseDetailPage() {
   };
 
   useEffect(() => {
-      Promise.all([api.getCase(id), api.listEvidence(id), api.getEvidenceCards(id).catch(() => []), fetchCoc(), fetchExports()])
-        .then(([c, ev, cards]) => { setCaseData(c); setEvidence(ev); setEvidenceCards(cards); })
-      .catch(console.error)
-      .finally(() => setLoading(false));
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(null);
+    setCaseData(null);
 
-    // Poll CoC feed if a playbook is running
+    (async () => {
+      try {
+        const c = await api.getCase(id);
+        if (cancelled) return;
+        setCaseData(c);
+        const [ev, cards] = await Promise.all([
+          api.listEvidence(id),
+          api.getEvidenceCards(id).catch(() => []),
+        ]);
+        if (cancelled) return;
+        setEvidence(ev);
+        setEvidenceCards(cards);
+        fetchCoc();
+        fetchExports();
+      } catch (e) {
+        if (cancelled) return;
+        const msg = e instanceof Error ? e.message : String(e);
+        setLoadError(msg);
+        setCaseData(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
     const interval = setInterval(() => {
       if (isRunningRef.current) {
         fetchCoc();
       }
     }, 2000);
-    return () => clearInterval(interval);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [id]);
 
   const runPlaybook = async (playbookKey) => {
@@ -156,8 +188,32 @@ export default function CaseDetailPage() {
     return <div className="loading-overlay"><div className="spinner" /><span>Loading case…</span></div>;
   }
 
+  if (loadError) {
+    return (
+      <div className="glass-card-static animate-in" style={{ maxWidth: 520 }}>
+        <h2 style={{ fontSize: 18, marginBottom: 8 }}>Case unavailable</h2>
+        <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: 16 }}>
+          {loadError}
+        </p>
+        <p style={{ color: 'var(--text-muted)', fontSize: 14, marginBottom: 20 }}>
+          The case may have been removed, or this URL is outdated. Open the dashboard to see current cases.
+        </p>
+        <Link href={orHome} className="btn btn-primary">
+          Back to dashboard
+        </Link>
+      </div>
+    );
+  }
+
   if (!caseData) {
-    return <div className="glass-card-static"><p>Case not found.</p></div>;
+    return (
+      <div className="glass-card-static">
+        <p>Case not found.</p>
+        <Link href={orHome} className="btn btn-secondary" style={{ marginTop: 16 }}>
+          Back to dashboard
+        </Link>
+      </div>
+    );
   }
 
   return (
@@ -175,7 +231,7 @@ export default function CaseDetailPage() {
         </div>
         <div style={{ display: 'flex', gap: 10 }}>
           <Link href={`/cases/${id}/import`} className="btn btn-primary">
-            <Download size={15} /> Import Logs
+            <Download size={15} /> Magic Query
           </Link>
           <Link href={`/cases/${id}/timeline`} className="btn btn-secondary">
             <Search size={15} /> Timeline

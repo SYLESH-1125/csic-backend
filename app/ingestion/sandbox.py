@@ -43,6 +43,11 @@ from app.db.models import QuarantineLog
 ZIP_BOMB_RATIO_THRESHOLD: float = 100.0
 HIGH_ENTROPY_THRESHOLD: float = 7.2        # max theoretical = 8.0 (bits/byte)
 
+# Pre-commit audit-trail diagnostics only: avoid loading huge files into RAM.
+# Full-file entropy/YARA still run in async_malware_scan after WORM commit.
+TRIAGE_AUDIT_FULL_READ_BYTES = 32 * 1024 * 1024
+TRIAGE_AUDIT_SAMPLE_BYTES = 16 * 1024 * 1024
+
 QUARANTINE_DIR = Path("data/quarantine")
 
 # Extension → expected magic byte prefix (hex)
@@ -484,6 +489,8 @@ def collect_triage_info(file_path: Path) -> dict:
         "extension_blacklisted": ext in BLACKLISTED_EXTENSIONS,
         "yara_detected": False,
         "yara_pattern_name": None,
+        "triage_diagnostic_sample_bytes": 0,
+        "triage_diagnostic_note": None,
     }
 
     # ZIP bomb check
@@ -505,9 +512,21 @@ def collect_triage_info(file_path: Path) -> dict:
         except Exception:
             pass
 
-    # Entropy + YARA (read file bytes once)
+    # Entropy + YARA for audit trail (sample large files; async scan does full file)
     try:
-        data = file_path.read_bytes()
+        file_size = file_path.stat().st_size
+        if file_size > TRIAGE_AUDIT_FULL_READ_BYTES:
+            with open(file_path, "rb") as fh:
+                data = fh.read(TRIAGE_AUDIT_SAMPLE_BYTES)
+            info["triage_diagnostic_sample_bytes"] = len(data)
+            info["triage_diagnostic_note"] = (
+                f"audit-trail entropy/YARA used first {len(data)} of {file_size} bytes; "
+                "full-file scan runs after ingest"
+            )
+        else:
+            data = file_path.read_bytes()
+            info["triage_diagnostic_sample_bytes"] = len(data)
+
         entropy = _compute_byte_entropy(data)
         info["entropy_score"] = entropy
         if entropy > HIGH_ENTROPY_THRESHOLD:

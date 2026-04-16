@@ -38,6 +38,19 @@ export function getApiBaseUrl(): string {
   return publicEnv.apiUrl.replace("://0.0.0.0", "://127.0.0.1").replace(/\/+$/, "")
 }
 
+/**
+ * Phase 4 is mounted on the monolith root (`/api/phase4`), not under `/api/phase5`.
+ * Strip a trailing `/api/phase5` from `NEXT_PUBLIC_API_URL` when building Phase 4 URLs in server routes.
+ */
+export function getMonolithApiBaseForPhase4(): string {
+  let b = getApiBaseUrl().replace(/\/+$/, "")
+  const suffix = "/api/phase5"
+  if (b.toLowerCase().endsWith(suffix)) {
+    b = b.slice(0, -suffix.length)
+  }
+  return b.replace(/\/+$/, "") || "http://127.0.0.1:8000"
+}
+
 /** WebSocket origin (no trailing slash). */
 export function getWsBaseUrl(): string {
   const fromExplicit = publicEnv.wsUrl
