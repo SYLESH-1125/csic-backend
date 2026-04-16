@@ -10,7 +10,6 @@ export type Page =
   | "ingestion"
   | "parsing"
   | "phase3"
-  | "phase4"
   | "ledger"
   | "quarantine"
   | "audit"

@@ -14,7 +14,6 @@ import {
   ChevronRight,
   Workflow,
   Database,
-  ScanSearch,
   Settings,
 } from "lucide-react"
 import {
@@ -50,10 +49,6 @@ const phase3SubItems: { id: ShellPage; label: string; icon: typeof Upload }[] = 
   { id: "phase3", label: "Hot/Cold DB", icon: Database },
 ]
 
-const phase4SubItems: { id: ShellPage; label: string; icon: typeof Upload }[] = [
-  { id: "phase4", label: "Analytics & Detection", icon: ScanSearch },
-]
-
 function PhaseNumber({ n }: { n: number }) {
   return (
     <span className="flex size-[18px] shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary leading-none">
@@ -73,12 +68,10 @@ export function AppSidebar() {
   )
   const [parsingOpen, setParsingOpen] = useState(currentPage === "parsing")
   const [phase3Open, setPhase3Open] = useState(currentPage === "phase3")
-  const [phase4Open, setPhase4Open] = useState(currentPage === "phase4")
 
   const isIngestionSection = ingestionSubItems.some((item) => item.id === currentPage)
   const isParsingSection = currentPage === "parsing"
   const isPhase3Section = currentPage === "phase3"
-  const isPhase4Section = currentPage === "phase4"
 
   const activeStyle = "bg-primary/10 text-primary font-medium border-l-2 border-primary rounded-none"
   const defaultStyle = "text-foreground hover:bg-muted"
@@ -225,39 +218,7 @@ export function AppSidebar() {
                   </SidebarMenuItem>
                 ))}
 
-              {/* ── Phase 4: Querying ── */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => {
-                    setPhase4Open(!phase4Open)
-                    if (!isPhase4Section) go("phase4")
-                  }}
-                  tooltip="Phase 4 — Querying"
-                  className={isPhase4Section ? activeStyle : defaultStyle}
-                >
-                  <PhaseNumber n={4} />
-                  <span className="flex-1">Querying</span>
-                  {phase4Open
-                    ? <ChevronDown className="size-3.5 text-muted-foreground" />
-                    : <ChevronRight className="size-3.5 text-muted-foreground" />}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              {phase4Open &&
-                phase4SubItems.map((item) => (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      isActive={currentPage === item.id}
-                      onClick={() => go(item.id)}
-                      tooltip={item.label}
-                      className={`pl-9 ${currentPage === item.id ? subActiveStyle : subDefaultStyle}`}
-                    >
-                      <item.icon className="size-3.5" />
-                      <span className="text-[13px]">{item.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-
-              {/* ── Phase 5: Operation Room (full-page route) ── */}
+              {/* ── Phase 5: Operation Room (includes Magic Query at /cases/:id/import) ── */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => router.push("/operation-room")}

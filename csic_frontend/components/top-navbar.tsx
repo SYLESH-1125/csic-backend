@@ -14,7 +14,6 @@ const pageLabels: Record<string, string> = {
   health: "Phase 1 — Ingestion / System Health",
   parsing: "Phase 2 — Parsing & Normalization",
   phase3: "Phase 3 — Hot & Cold Storage",
-  phase4: "Phase 4 — Querying & Analytics",
   settings: "Settings",
 }
 

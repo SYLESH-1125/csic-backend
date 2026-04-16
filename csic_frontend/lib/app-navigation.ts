@@ -10,7 +10,6 @@ const SHELL: Set<string> = new Set([
   "ingestion",
   "parsing",
   "phase3",
-  "phase4",
   "ledger",
   "quarantine",
   "audit",

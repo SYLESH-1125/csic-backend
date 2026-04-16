@@ -15,7 +15,6 @@ import { HealthPage } from "@/components/health-page"
 import { SettingsPage } from "@/components/settings-page"
 import { ParsingPage } from "@/components/parsing-page"
 import { Phase3Page } from "@/components/phase3-page"
-import { Phase4Page } from "@/components/phase4-page"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { AppUrlBridge } from "@/components/app-url-bridge"
@@ -62,7 +61,6 @@ function AppContent() {
               {currentPage === "ingestion" && <IngestionPage />}
               {currentPage === "parsing" && <ParsingPage />}
               {currentPage === "phase3" && <Phase3Page />}
-              {currentPage === "phase4" && <Phase4Page />}
               {currentPage === "ledger" && <LedgerPage />}
               {currentPage === "quarantine" && <QuarantinePage />}
               {currentPage === "audit" && <AuditPage />}
