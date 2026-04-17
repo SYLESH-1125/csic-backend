@@ -42,18 +42,16 @@ export function LoginPage() {
       <div className="absolute inset-0 bg-[linear-gradient(rgba(11,94,215,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(11,94,215,0.03)_1px,transparent_1px)] bg-[size:32px_32px]" />
 
       <div className="relative z-10 flex w-full max-w-md flex-col items-center gap-6 px-4">
-        {/* Government Emblem */}
+        {/* Brand — transparent PNG (no circular white background) */}
         <div className="flex flex-col items-center gap-3">
-          <div className="flex size-16 items-center justify-center border-2 border-primary bg-primary/5">
-            <Shield className="size-8 text-primary" />
-          </div>
-          <div className="flex flex-col items-center gap-1 text-center">
-            <p className="text-xs font-medium tracking-widest text-muted-foreground uppercase">
-              Government of India
-            </p>
-            <p className="text-[10px] tracking-wider text-muted-foreground uppercase">
-              Ministry of Electricity & IT
-            </p>
+          <div className="flex h-[4.5rem] w-auto max-w-[min(100%,260px)] items-center justify-center">
+            <img
+              src="/sakshi-logo.png"
+              alt="SAKSHI LEDGER"
+              width={260}
+              height={142}
+              className="h-full w-auto max-w-full object-contain"
+            />
           </div>
         </div>
 
