@@ -12,6 +12,7 @@ Architecture note: Session persistence is abstracted behind SessionStore so
 that a Redis backend can be dropped in without changing call-sites.
 """
 
+import ipaddress
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -19,6 +20,8 @@ from typing import Optional
 from fastapi import Request, WebSocket, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.config import settings
+from app.db import duckdb_sessions
 from app.db.models import IngestionSession
 from app.core.logging import logger
 
@@ -27,7 +30,31 @@ from app.core.logging import logger
 # Constants
 # ---------------------------------------------------------------------------
 
-SESSION_TTL_MINUTES: int = 30
+# Single token for all loopback / local-dev aliases so ::1 matches 127.0.0.1, etc.
+_JIT_LOCAL_TOKEN = "__jit_local__"
+
+
+def canonical_ip_for_jit(ip: Optional[str]) -> str:
+    """
+    Normalize client IPs for JIT binding.
+
+    Browsers and stacks often report loopback as 127.0.0.1, ::1, or "localhost";
+    Starlette TestClient uses "testclient". Treat these as the same binding
+    surface so the WebSocket handshake sees the same logical client as HTTP.
+    """
+    if not ip:
+        return ""
+    s = ip.strip()
+    low = s.lower()
+    if low in ("localhost", "testclient"):
+        return _JIT_LOCAL_TOKEN
+    try:
+        addr = ipaddress.ip_address(s)
+        if addr.is_loopback:
+            return _JIT_LOCAL_TOKEN
+    except ValueError:
+        pass
+    return s
 
 
 # ---------------------------------------------------------------------------
@@ -46,17 +73,27 @@ class SessionStore:
 
     def create(self, bound_ip: str, mode: str) -> IngestionSession:
         """Persist a new ephemeral session and return it."""
+        ttl = max(1, int(settings.SESSION_TTL_MINUTES))
         session = IngestionSession(
             session_id=str(uuid.uuid4()),
             bound_ip=bound_ip,
             expires_at=datetime.now(timezone.utc).replace(tzinfo=None)
-            + timedelta(minutes=SESSION_TTL_MINUTES),
+            + timedelta(minutes=ttl),
             used=False,
             mode=mode,
         )
         self._db.add(session)
         self._db.commit()
         self._db.refresh(session)
+        duckdb_sessions.upsert_session_row(
+            session_id=session.session_id,
+            bound_ip=session.bound_ip,
+            expires_at=session.expires_at,
+            used=session.used,
+            mode=session.mode,
+            created_at=session.created_at,
+            audit_id=session.audit_id,
+        )
         logger.info(
             f"[AuthGateway] Session created: {session.session_id} "
             f"mode={mode} bound_ip={bound_ip} "
@@ -74,10 +111,12 @@ class SessionStore:
     def mark_used(self, session: IngestionSession) -> None:
         session.used = True
         self._db.commit()
+        duckdb_sessions.mark_used(session.session_id)
 
     def link_audit(self, session: IngestionSession, audit_id: str) -> None:
         session.audit_id = audit_id
         self._db.commit()
+        duckdb_sessions.link_audit(session.session_id, audit_id)
 
 
 # ---------------------------------------------------------------------------
@@ -177,10 +216,12 @@ def _enforce_rules(
     """
     prefix = f"[AuthGateway][{context}] session={session.session_id}"
 
-    # RULE 1 — IP Binding
-    if client_ip != session.bound_ip:
+    # RULE 1 — IP Binding (canonical: loopback / localhost / testclient equivalence)
+    if canonical_ip_for_jit(client_ip) != canonical_ip_for_jit(session.bound_ip):
         logger.warning(
-            f"{prefix} IP_MISMATCH: expected={session.bound_ip} got={client_ip}"
+            f"{prefix} IP_MISMATCH: expected={session.bound_ip} got={client_ip} "
+            f"(canonical expected={canonical_ip_for_jit(session.bound_ip)} "
+            f"got_canon={canonical_ip_for_jit(client_ip)})"
         )
         raise PermissionError(
             f"IP binding violation: expected {session.bound_ip}, got {client_ip}."
