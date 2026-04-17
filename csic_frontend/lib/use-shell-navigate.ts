@@ -7,7 +7,7 @@ import type { ShellPage } from "@/lib/app-navigation"
 import { APP_PAGE_QUERY } from "@/lib/app-navigation"
 
 /**
- * Keeps the address bar in sync with the NFLIP shell: `?page=…`.
+ * Keeps the address bar in sync with the Sakshi Ledger shell: `?page=…`.
  */
 export function useShellNavigate() {
   const router = useRouter()

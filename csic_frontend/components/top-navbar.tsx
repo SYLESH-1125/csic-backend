@@ -3,18 +3,19 @@
 import { useState } from "react"
 import { LogOut, Shield, User } from "lucide-react"
 import { useApp } from "@/lib/app-context"
+import { isShellGlassChrome } from "@/lib/shell-chrome"
 import { cn } from "@/lib/utils"
 
 const pageLabels: Record<string, string> = {
-  dashboard: "Main Dashboard",
-  ingestion: "Phase 1 — Ingestion / Injection Control",
-  ledger: "Phase 1 — Ingestion / Ledger View",
-  quarantine: "Phase 1 — Ingestion / Quarantine Center",
-  audit: "Phase 1 — Ingestion / Audit Trails",
-  health: "Phase 1 — Ingestion / System Health",
-  parsing: "Phase 2 — Parsing & Normalization",
-  phase3: "Phase 3 — Hot & Cold Storage",
-  settings: "Settings",
+  dashboard: "MAIN DASHBOARD",
+  ingestion: "INGESTION CONTROL",
+  ledger: "LEDGER VIEW",
+  quarantine: "QUARANTINE CENTER",
+  audit: "AUDIT TRAILS",
+  health: "SYSTEM HEALTH",
+  parsing: "PARSING & NORMALIZATION",
+  phase3: "HOT & COLD STORAGE",
+  settings: "SETTINGS",
 }
 
 export function TopNavbar({ className }: { className?: string }) {
@@ -23,17 +24,42 @@ export function TopNavbar({ className }: { className?: string }) {
 
   const new_ = "National Forensic Log Intelligence Platform"
 
+  const glassChrome = isShellGlassChrome(currentPage)
+
+  const headerSurface = glassChrome
+    ? {
+        height: "80px" as const,
+        minHeight: "80px" as const,
+        background:
+          "linear-gradient(135deg, rgba(255, 255, 255, 0.94) 0%, rgba(248, 250, 252, 0.88) 38%, rgba(239, 246, 255, 0.82) 72%, rgba(241, 245, 249, 0.9) 100%)",
+        borderBottom: "1px solid rgba(148, 163, 184, 0.38)",
+        backdropFilter: "blur(14px) saturate(1.15)",
+        WebkitBackdropFilter: "blur(14px) saturate(1.15)",
+        boxShadow:
+          "inset 0 1px 0 rgba(255, 255, 255, 0.75), 0 10px 40px -12px rgba(15, 23, 42, 0.14), 0 4px 20px -6px rgba(59, 130, 246, 0.12)",
+      }
+    : {
+        height: "80px" as const,
+        minHeight: "80px" as const,
+        backgroundColor: "#fafaf9",
+        borderBottom: "1px solid #e2e8f0",
+      }
+
   return (
     <header
-      style={{ height: "80px", minHeight: "80px", backgroundColor: "#fafaf9", borderBottom: "1px solid #e2e8f0" }}
-      className={cn("flex shrink-0 w-full items-center justify-between px-8 lg:px-12 m-0 z-30 transition-all", className)}
+      style={headerSurface}
+      className={cn(
+        "flex shrink-0 w-full items-center justify-between px-8 lg:px-12 m-0 transition-all",
+        glassChrome ? "relative z-30" : "z-30",
+        className
+      )}
     >
 
       <div className="flex items-center pl-2 lg:pl-4">
         <div className="hidden flex-col gap-1 sm:flex">
-          <h2 style={{ color: "#0f172a" }} className="text-2xl font-extrabold tracking-tight">
+          <h3 style={{ color: "#0f172a" }} className="text-2xl font-extrabold tracking-tight">
             {pageLabels[currentPage] || "Main Dashboard"}
-          </h2>
+          </h3>
           <p style={{ color: "#64748b" }} className="text-xs uppercase tracking-widest font-bold">
             {new_}
           </p>

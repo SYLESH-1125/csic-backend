@@ -8,7 +8,7 @@ import "@operation-room/app/globals.css"
 const inter = Inter({ subsets: ["latin"], variable: "--font-ui", display: "swap" })
 
 export const metadata: Metadata = {
-  title: "Operation Room | NFLIP",
+  title: "Operation Room | SAKSHI LEDGER",
   description: "Case workspace — embedded from app/phase_5_CISC/operation-room/frontend",
 }
 

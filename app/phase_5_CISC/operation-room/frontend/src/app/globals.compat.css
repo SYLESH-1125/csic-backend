@@ -114,6 +114,30 @@
   color: #fff;
 }
 
+/* Matches main shell dashboard (`csic_frontend` app-sidebar) branding */
+.sidebar-brand-logo {
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 9999px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-brand-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.25);
+}
+
 .sidebar-brand h1 {
   font-size: 15px;
   font-weight: 700;

@@ -28,7 +28,7 @@ function getPageInfo(pathname) {
   if (p.includes('/depth'))       return { title: 'Depth & Impact', subtitle: '4D Penetration Assessment · Business Impact' };
   if (p.includes('/studio-v4'))   return { title: 'Report Studio V4', subtitle: 'Canva-style Forensic Workspace · Evidence-Bound Editing' };
   if (p.includes('/cases/'))      return { title: 'Case Dashboard', subtitle: 'Evidence & Chain-of-Custody Management' };
-  return { title: 'NFLIP', subtitle: 'National Forensic Log Intelligence Platform' };
+  return { title: 'SAKSHI LEDGER', subtitle: 'National Forensic Log Intelligence Platform' };
 }
 
 export default function TopHeader() {

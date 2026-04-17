@@ -8,7 +8,7 @@ const _inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 const _jetbrainsMono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-jetbrains" })
 
 export const metadata: Metadata = {
-  title: 'NFLIP - National Forensic Log Intelligence Platform',
+  title: 'SAKSHI LEDGER - National Forensic Log Intelligence Platform',
   description: 'Government of India - Ministry of Electricity & IT - Secure Forensic Intelligence Portal',
   icons: {
     icon: [

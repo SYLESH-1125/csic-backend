@@ -5,7 +5,7 @@ import { Inter } from 'next/font/google';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-ui', display: 'swap' });
 
-export const metadata = { title: 'NFLIP — National Forensic Log Intelligence Platform', description: 'Government of India' };
+export const metadata = { title: 'SAKSHI LEDGER — National Forensic Log Intelligence Platform', description: 'Government of India' };
 export const viewport = { themeColor: '#ffffff' };
 
 export default function RootLayout({ children }) {

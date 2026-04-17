@@ -12,7 +12,6 @@ import {
   Home,
   Plus,
   ScanSearch,
-  ShieldCheck,
 } from 'lucide-react';
 
 const orHome =
@@ -113,11 +112,11 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">
-        <div className="sidebar-brand-icon">
-          <ShieldCheck size={18} strokeWidth={2.5} />
+        <div className="sidebar-brand-logo" aria-hidden>
+          <img src="/sakshi-logo.jpg" alt="SAKSHI LEDGER" />
         </div>
         <div>
-          <h1>NFLIP</h1>
+          <h1>SAKSHI LEDGER</h1>
           <span>Forensic Intelligence</span>
         </div>
       </div>

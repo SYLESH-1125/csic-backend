@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useApp } from "@/lib/app-context"
 import type { ShellPage } from "@/lib/app-navigation"
+import { isShellGlassChrome } from "@/lib/shell-chrome"
 import { useShellNavigate } from "@/lib/use-shell-navigate"
 
 const ingestionSubItems: { id: ShellPage; label: string; icon: typeof Upload }[] = [
@@ -113,8 +114,31 @@ export function AppSidebar({ className }: { className?: string }) {
     borderRadius: "0.5rem"
   }
 
+  const glassChrome = isShellGlassChrome(currentPage)
+
+  const sidebarSurface = glassChrome
+    ? {
+        background:
+          "linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(248, 250, 252, 0.9) 45%, rgba(241, 245, 249, 0.86) 100%)",
+        borderRight: "1px solid rgba(148, 163, 184, 0.38)",
+        backdropFilter: "blur(14px) saturate(1.1)",
+        WebkitBackdropFilter: "blur(14px) saturate(1.1)",
+        boxShadow:
+          "inset -1px 0 0 rgba(255, 255, 255, 0.65), 6px 0 32px -10px rgba(15, 23, 42, 0.12), 2px 0 16px -6px rgba(59, 130, 246, 0.1)",
+        width: "280px",
+        minWidth: "280px",
+        fontFamily: "'Inter', system-ui, sans-serif",
+      }
+    : {
+        backgroundColor: "#fafaf9",
+        borderRight: "1px solid #e2e8f0",
+        width: "280px",
+        minWidth: "280px",
+        fontFamily: "'Inter', system-ui, sans-serif",
+      }
+
   return (
-    <Sidebar variant="sidebar" collapsible="icon" style={{ backgroundColor: "#fafaf9", borderRight: "1px solid #e2e8f0", width: "280px", minWidth: "280px", fontFamily: "'Inter', system-ui, sans-serif" }} className="z-40 transition-all duration-300 m-0 p-0 rounded-none">
+    <Sidebar variant="sidebar" collapsible="icon" style={sidebarSurface} className="z-40 transition-all duration-300 m-0 p-0 rounded-none">
 
       <SidebarHeader className="px-5 py-6">
         <div className="flex items-center gap-3">
