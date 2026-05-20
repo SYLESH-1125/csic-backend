@@ -1,11 +1,13 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
-import { api } from '@operation-room/lib/api'
-import { cn } from '@operation-room/lib/utils'
-import { EvidenceContent } from '@operation-room/components/tiptap/EvidenceBlockNode'
-import { CanvasElement, PageMeta, calculateElementMinHeight, useStudioStore } from '@operation-room/components/studio-v4/store/useStudioStore'
-import { AssumptionFootnotes } from '@operation-room/components/studio-v4/AssumptionFootnotes'
+import { AssumptionFootnotes } from '@/components/studio-v4/AssumptionFootnotes'
+import { getComponentDataType, getComponentPayload } from '@/components/studio-v4/componentData'
+import { CanvasElement, PageMeta, calculateElementMinHeight, useStudioStore } from '@/components/studio-v4/store/useStudioStore'
+import { EvidenceContent } from '@/components/tiptap/EvidenceBlockNode'
+import { api } from '@/lib/api'
+import { cn } from '@/lib/utils'
+import NextImage from 'next/image'
+import { useEffect, useState } from 'react'
 
 // Define the precise A4 dimensions according to DocumentCanvas
 const A4_WIDTH = '210mm'
@@ -84,12 +86,12 @@ export default function PrintReportPage({
   // Phase 1 + 2: ClaimNode Admissibility & Collaboration Gate
   let unbackedClaimsCount = 0
   let unvettedClaimsCount = 0
-  
+
   const inspectClaims = (node: any) => {
     if (node?.type === 'claim') {
       const isUnbacked = !node.attrs?.evidenceCardIds || node.attrs.evidenceCardIds.length === 0
       const isUnvetted = node.attrs?.status !== 'approved'
-      
+
       if (isUnbacked) unbackedClaimsCount++
       if (isUnvetted) unvettedClaimsCount++
     }
@@ -113,20 +115,20 @@ export default function PrintReportPage({
           <h1 className="text-3xl font-bold text-red-500 mb-4 flex items-center gap-3">
             <span className="text-4xl animate-bounce">⚠️</span> Governance Gate (Export Blocked)
           </h1>
-          
+
           <p className="text-slate-300 text-lg leading-relaxed mb-6">
             The Report Studio export engine has isolated <strong className="text-red-400 font-mono text-xl">{unbackedClaimsCount} Unbacked Claim(s)</strong> and <strong className="text-orange-400 font-mono text-xl">{unvettedClaimsCount} Unvetted Claim(s)</strong> within the text editor nodes.
           </p>
-          
+
           <div className="bg-black/80 p-4 rounded text-sm text-red-300 font-mono mb-6 border border-red-900/50 shadow-inner">
             <span className="text-red-500 font-bold block mb-2">[CRITICAL GOVERNANCE FAILURE]</span>
             ERROR_CODE: {unvettedClaimsCount > 0 ? 'STATE_MACHINE_REJECTED_0xVETTING' : 'ADMISSIBILITY_FAIL_0xEVD_MISSING'}
-            <br/>
+            <br />
             REASON: {unvettedClaimsCount > 0 ? "One or more claims remain in Draft or Disputed status." : "Empty 'evidenceCardIds' array in TipTap JSON Contract."}
           </div>
-          
+
           <p className="text-amber-200 text-sm font-medium bg-amber-950/30 p-4 rounded border border-amber-900/50">
-             You cannot export this report to PDF until every visual claim pill is fully vetted, approved by a Lead Investigator, and backed by valid DuckDB Evidence UUIDs. Please return to Studio Mode to resolve these claims.
+            You cannot export this report to PDF until every visual claim pill is fully vetted, approved by a Lead Investigator, and backed by valid DuckDB Evidence UUIDs. Please return to Studio Mode to resolve these claims.
           </p>
         </div>
         <div id="render-complete" className="canvas-render-complete hidden" data-ready="true" />
@@ -152,25 +154,28 @@ export default function PrintReportPage({
             className="relative bg-white page-break-after overflow-hidden print-page shadow-none border-none"
             style={{ width: A4_WIDTH, height: A4_HEIGHT, pageBreakAfter: 'always' }}
           >
-              {decodeURIComponent(coverId).includes('/') ? (
-                  <img 
-                    src={decodeURIComponent(coverId)} 
-                    alt="Document Cover" 
-                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} 
-                  />
-              ) : (
-                  <div
-                    style={{
-                      position: 'absolute', inset: 0,
-                      background: coverId === 'template_2' || coverId === '2' ? 'linear-gradient(135deg, #0f172a 0%, #312e81 100%)' :
-                                  coverId === 'template_3' || coverId === '3' ? 'linear-gradient(135deg, #09090b 0%, #4c0519 100%)' :
-                                  'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-                      printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact'
-                    }}
-                  />
-              )}
-            </div>
-          )}
+            {decodeURIComponent(coverId).includes('/') ? (
+              <NextImage
+                src={decodeURIComponent(coverId)}
+                alt="Document Cover"
+                fill
+                unoptimized
+                sizes="100vw"
+                style={{ objectFit: 'cover' }}
+              />
+            ) : (
+              <div
+                style={{
+                  position: 'absolute', inset: 0,
+                  background: coverId === 'template_2' || coverId === '2' ? 'linear-gradient(135deg, #0f172a 0%, #312e81 100%)' :
+                    coverId === 'template_3' || coverId === '3' ? 'linear-gradient(135deg, #09090b 0%, #4c0519 100%)' :
+                      'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+                  printColorAdjust: 'exact', WebkitPrintColorAdjust: 'exact'
+                }}
+              />
+            )}
+          </div>
+        )}
 
         {/* Render core pages exactly as DocumentCanvas does */}
         {pages.map((page, i) => (
@@ -184,19 +189,20 @@ export default function PrintReportPage({
             }}
           >
             {page.elements.map(el => {
-                // BUGFIX: Force Evidence Blocks to exactly mirror the Studio Canvas effective height.
-                // If el.height is stale/default, we must expand it to autoMinHeight just like WidgetRenderer.
-                  const autoMinHeight = calculateElementMinHeight(el);
-                  const dynamicHeight = Math.max(el.height || 0, autoMinHeight);
-                let syncedData = el.data?.data;
-                if (requestedFocusMode === 'Story' && syncedData && typeof syncedData === 'object') {
-                  if (Array.isArray(syncedData.events)) {
-                    syncedData = {
-                      ...syncedData,
-                      events: syncedData.events.filter((e: any) => Boolean(e.critical_path) || e.severity === 'high' || e.action === 'ENCRYPT')
-                    }
+              // BUGFIX: Force Evidence Blocks to exactly mirror the Studio Canvas effective height.
+              // If el.height is stale/default, we must expand it to autoMinHeight just like WidgetRenderer.
+              const autoMinHeight = calculateElementMinHeight(el);
+              const dynamicHeight = Math.max(el.height || 0, autoMinHeight);
+              let syncedData = getComponentPayload(el.data);
+              const evidenceType = getComponentDataType(el.data);
+              if (requestedFocusMode === 'Story' && syncedData && typeof syncedData === 'object') {
+                if (Array.isArray(syncedData.events)) {
+                  syncedData = {
+                    ...syncedData,
+                    events: syncedData.events.filter((e: any) => Boolean(e.critical_path) || e.severity === 'high' || e.action === 'ENCRYPT')
                   }
                 }
+              }
 
               return (
                 <div
@@ -220,8 +226,8 @@ export default function PrintReportPage({
                       className={cn(
                         "w-full px-2 py-1 relative no-underline border-none",
                         el.data.style === 'heading'
-                           ? 'font-sans text-2xl font-black tracking-tighter text-slate-800 antialiased !decoration-transparent'
-                           : 'font-serif text-base leading-relaxed text-slate-700 antialiased prose prose-slate prose-p:my-1 prose-headings:my-1'
+                          ? 'font-sans text-2xl font-black tracking-tighter text-slate-800 antialiased !decoration-transparent'
+                          : 'font-serif text-base leading-relaxed text-slate-700 antialiased prose prose-slate prose-p:my-1 prose-headings:my-1'
                       )}
                       style={{
                         ...(el.data.fontSize ? { fontSize: el.data.fontSize } : {}),
@@ -231,14 +237,14 @@ export default function PrintReportPage({
                       <div className="ProseMirror outline-none min-h-full" dangerouslySetInnerHTML={{ __html: (el.data.content || '').replace(/<del>/g, '').replace(/<\/del>/g, '').replace(/<s>/g, '').replace(/<\/s>/g, '') }} />
                     </div>
                   ) : (
-                    <div className="flex flex-col w-full h-full">               
+                    <div className="flex flex-col w-full h-full">
                       <div className="h-6 shrink-0 bg-transparent" />
-                      <div className="flex-1 w-full h-[calc(100%-1.5rem)]">     
+                      <div className="flex-1 w-full h-[calc(100%-1.5rem)]">
                         <EvidenceContent
-                          type={el.data.type || 'chart'}
+                          type={evidenceType as any}
                           data={syncedData}
                           filters={{ logic: 'AND', conditions: [] }}
-                          dimensions={{ width: el.width, height: dynamicHeight - 24 }}   
+                          dimensions={{ width: el.width, height: dynamicHeight - 24 }}
                           displayMode="full"
                         />
                       </div>
@@ -318,12 +324,12 @@ export default function PrintReportPage({
                       while ((match = regex.exec(el.data.content)) !== null) {
                         items.push(
                           <tr key={`${match[1]}-${match[2]}`} className="border-b border-slate-200 bg-sky-50/20">
-                            <td className="px-4 py-3 font-mono text-[10px] text-slate-500">evd-{match[1].substring(0,8)}...</td>
+                            <td className="px-4 py-3 font-mono text-[10px] text-slate-500">evd-{match[1].substring(0, 8)}...</td>
                             <td className="px-4 py-3 text-sky-800 font-semibold">{match[2].replace('_', ' ').toUpperCase()}</td>
                             <td className="px-4 py-3 font-mono font-bold">{match[3]}</td>
                             <td className="px-4 py-3 font-mono text-[8px] text-slate-400">
                               {/* Pseudo-Hash representation matching backend resolution */}
-                              sha256:{Array.from(match[1]+match[2]+match[3]).reduce((a, b) => {a=((a<<5)-a)+b.charCodeAt(0);return a&a},0)}
+                              sha256:{Array.from(match[1] + match[2] + match[3]).reduce((a, b) => { a = ((a << 5) - a) + b.charCodeAt(0); return a & a }, 0)}
                             </td>
                           </tr>
                         )

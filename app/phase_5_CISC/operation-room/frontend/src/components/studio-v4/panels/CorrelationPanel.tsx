@@ -1,35 +1,37 @@
 'use client'
 
-import React, { useEffect, useState, useCallback } from 'react'
-import {
-  Link2,
-  GitMerge,
-  GitBranch,
-  Network,
-  Share2,
-  GitPullRequest,
-  Search,
-  Plus,
-  AlertCircle,
-  RefreshCw
-} from 'lucide-react'
-import { api } from '@operation-room/lib/api'
-import {
-  PanelHeader,
-  PanelContent,
-  PanelLoading,
-  PanelEmptyState,
-  ComponentCard,
-} from '../ExpandablePanel'
-import { useStudioStore } from '../store/useStudioStore'
-import { Button } from '@operation-room/components/ui/button'
-import { Badge } from '@operation-room/components/ui/badge'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import {
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@operation-room/components/ui/tabs'
+} from '@/components/ui/tabs'
+import { api } from '@/lib/api'
+import {
+  AlertCircle,
+  GitBranch,
+  GitMerge,
+  GitPullRequest,
+  Link2,
+  Network,
+  Plus,
+  RefreshCw,
+  Share2
+} from 'lucide-react'
+import NextImage from 'next/image'
+import React, { useCallback, useEffect, useState } from 'react'
+import {
+  ComponentCard,
+  PanelContent,
+  PanelEmptyState,
+  PanelHeader,
+  PanelLoading,
+} from '../ExpandablePanel'
+import { useStudioStore } from '../store/useStudioStore'
+import { emitEvidenceDrill } from './evidenceDrill'
+import { getQuestionSpec } from './investigatorQuestionTaxonomy'
 
 // Correlation Components Constants
 const CORRELATION_COMPONENTS = [
@@ -57,7 +59,28 @@ const CORRELATION_COMPONENTS = [
     type: 'event-chain' as const,
     preview: '/api/placeholder/correlation-chain.svg',
   },
+  {
+    id: 'actor-sequence-table',
+    name: 'Actor Sequence Table',
+    description: 'Ranked actor sequence table for behavior reconstruction',
+    icon: GitPullRequest,
+    type: 'actor-sequence' as const,
+    preview: (
+      <div className="w-full h-full p-2 bg-slate-900/5 flex flex-col gap-1 opacity-80 cursor-default">
+        {['alice', 'svc-admin', 'backup-job'].map((actor, idx) => (
+          <div key={actor} className="flex items-center gap-2 text-[9px]">
+            <span className="w-16 text-slate-500 truncate">{actor}</span>
+            <div className="h-1.5 flex-1 rounded bg-slate-200 overflow-hidden">
+              <div className={idx === 0 ? 'h-full w-4/5 bg-fuchsia-500' : idx === 1 ? 'h-full w-2/3 bg-violet-500' : 'h-full w-1/2 bg-indigo-500'} />
+            </div>
+          </div>
+        ))}
+      </div>
+    ),
+  },
 ]
+
+const CORRELATION_QUESTION_SPEC = getQuestionSpec('actor_behavior')
 
 interface CorrelatedEntity {
   correlation_id: string
@@ -85,12 +108,28 @@ export const CorrelationPanel = ({
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const handleDrillToEvidence = useCallback((entity: CorrelatedEntity) => {
+    emitEvidenceDrill({
+      sourcePanel: 'correlation',
+      module: 'correlation',
+      title: `${entity.primary_entity} → ${entity.related_entity}`,
+      summary: `Correlation type ${entity.relationship_type} at ${(entity.confidence_score * 100).toFixed(0)}% confidence.`,
+      questionType: CORRELATION_QUESTION_SPEC?.questionType,
+      visualPattern: CORRELATION_QUESTION_SPEC?.visualPattern,
+      drillPath: CORRELATION_QUESTION_SPEC?.drillPath,
+      findingRef: entity.correlation_id,
+      evidenceRef: entity.correlation_id,
+      anchorRef: `${entity.primary_entity}:${entity.related_entity}`,
+      confidence: entity.confidence_score,
+    })
+  }, [])
+
   const loadData = useCallback(async () => {
     if (!caseId) return
     try {
       setLoading(true)
       // Example endpoint: fetch cross-module correlations
-      const data = await api.get(`/cases/${caseId}/correlations`).catch(() => [])
+      const data = await api.get(`/cases/${caseId}/correlation/graph`).catch(() => [])
       if (Array.isArray(data)) {
         setCorrelations(data)
         setPanelBadge('correlation', data.length)
@@ -140,8 +179,16 @@ export const CorrelationPanel = ({
                   name={comp.name}
                   description={comp.description}
                   icon={<comp.icon strokeWidth={1.5} />}
-                  preview={<img src={comp.preview} alt={comp.name} className="w-full h-full object-cover opacity-50" />}
-                  onClick={() => onInsertComponent?.(comp.id)}
+                  preview={typeof comp.preview === 'string'
+                    ? <NextImage src={comp.preview} alt={comp.name} width={320} height={180} unoptimized className="w-full h-full object-cover opacity-50" />
+                    : comp.preview}
+                  onClick={() => onInsertComponent?.(comp.id, {
+                    module: 'correlation',
+                    dataEndpoint: `/api/cases/${caseId}/correlation/graph`,
+                    questionType: CORRELATION_QUESTION_SPEC?.questionType,
+                    visualPattern: CORRELATION_QUESTION_SPEC?.visualPattern,
+                    tracePath: CORRELATION_QUESTION_SPEC?.drillPath,
+                  })}
                   onDragStart={(e: React.DragEvent) => {
                     e.dataTransfer.setData('application/json', JSON.stringify({
                       type: 'component',
@@ -208,7 +255,7 @@ export const CorrelationPanel = ({
                             {corr.primary_entity}
                           </span>
                         </div>
-                        
+
                         {/* Link Icon */}
                         <div className="flex items-center pl-4 my-1 opacity-50">
                           <div className="w-1 h-3 border-l tracking-widest border-fuchsia-400" />
@@ -229,19 +276,40 @@ export const CorrelationPanel = ({
                         </div>
                       </div>
 
-                      <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 right-2">
-                        <Plus className="h-3 w-3 text-fuchsia-500" />
-                      </Button>
+                      <div className="absolute top-2 right-2 flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            onInsertEntity?.(corr)
+                          }}
+                        >
+                          <Plus className="h-3 w-3 text-fuchsia-500" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                          onClick={(event) => {
+                            event.stopPropagation()
+                            handleDrillToEvidence(corr)
+                          }}
+                        >
+                          <Link2 className="h-3 w-3 text-fuchsia-500" />
+                        </Button>
+                      </div>
                     </div>
-                    
+
                     <div className="flex items-center justify-between mt-1 pt-2 border-t border-fuchsia-100 dark:border-fuchsia-900/30">
                       <span className="font-geist-mono text-[10px] text-muted-foreground">
                         Confidence
                       </span>
                       <div className="flex items-center gap-1">
                         <div className="w-16 h-1.5 bg-muted rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-fuchsia-500" 
+                          <div
+                            className="h-full bg-fuchsia-500"
                             style={{ width: `${corr.confidence_score * 100}%` }}
                           />
                         </div>

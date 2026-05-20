@@ -1,14 +1,15 @@
 'use client'
 
-import React, { useRef } from 'react'
-import { cn } from '@operation-room/lib/utils'
-import { useStudioStore, CanvasElement } from '../store/useStudioStore'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import { Plus } from 'lucide-react'
-import { Button } from '@operation-room/components/ui/button'
-import { WidgetRenderer } from './WidgetRenderer'
-import { TextRenderer } from './TextRenderer'
+import NextImage from 'next/image'
+import React, { useRef } from 'react'
+import { CanvasElement, useStudioStore } from '../store/useStudioStore'
 import { AlignmentOverlay } from './AlignmentOverlay'
+import { TextRenderer } from './TextRenderer'
 import { useAlignment } from './useAlignment'
+import { WidgetRenderer } from './WidgetRenderer'
 
 interface DocumentCanvasProps {
   children?: React.ReactNode // Legacy prop; not used heavily in freeform mode unless for background layers
@@ -19,14 +20,14 @@ interface DocumentCanvasProps {
 
 export const DocumentCanvas = ({ children, zoom, className, onDropNewComponent }: DocumentCanvasProps) => {
   const containerRef = useRef<HTMLDivElement>(null)
-  
+
   // Destructure zustand store
   const {
-    pages, 
-    currentPage, 
-    addPage, 
-    setCurrentPage, 
-    setSelectedElements 
+    pages,
+    currentPage,
+    addPage,
+    setCurrentPage,
+    setSelectedElements
   } = useStudioStore()
 
   const {
@@ -45,7 +46,7 @@ export const DocumentCanvas = ({ children, zoom, className, onDropNewComponent }
     canvasHeight: 1123,
     enabled: true,
   })
-  
+
   const scale = zoom / 100
 
   const handleElementDragMove = (
@@ -114,10 +115,10 @@ export const DocumentCanvas = ({ children, zoom, className, onDropNewComponent }
           <div key={page.id} className="relative mb-6 group">
             {/* Outline Page Active Ring */}
             <div className={cn(
-               "absolute -inset-2 rounded-xl transition-all duration-300 pointer-events-none",
-               currentPage === pageIndex ? "ring-2 ring-sky-500/20" : ""
+              "absolute -inset-2 rounded-xl transition-all duration-300 pointer-events-none",
+              currentPage === pageIndex ? "ring-2 ring-sky-500/20" : ""
             )} />
-            
+
             {/* Page sheet boundary */}
             <div
               id={`page-${page.id}`}
@@ -137,7 +138,7 @@ export const DocumentCanvas = ({ children, zoom, className, onDropNewComponent }
                 try {
                   const data = e.dataTransfer.getData('application/json')
                   if (!data) return
-                  
+
                   const payload = JSON.parse(data)
                   if (payload && onDropNewComponent) {
 
@@ -155,51 +156,79 @@ export const DocumentCanvas = ({ children, zoom, className, onDropNewComponent }
                 }
               }}
             >
-              <div 
+              <div
                 className="absolute inset-x-[16mm] inset-y-[20mm] pointer-events-none border border-transparent group-hover:border-sky-500/10 border-dashed transition-colors"
                 style={{ zIndex: 0 }}
               />
 
               {/* Auto-Paginated Bounded Flow Flexbox layer */}
-              <div 
-                className="absolute inset-[16mm] flex flex-col gap-4 overflow-visible" 
+              <div
+                className="absolute inset-[16mm] flex flex-col gap-4 overflow-visible"
                 data-canvas-bg="true"
                 style={{ breakInside: 'auto' }}
               >
-                 {page.elements?.map(el => (
-                   <React.Fragment key={el.id}>
-                      {el.type === 'component' && (
-                        <div style={{ breakInside: 'avoid', breakAfter: 'auto' }} className="w-full relative shrink-0">
-                          <WidgetRenderer
-                            element={el}
-                            pageIndex={pageIndex}
-                            onDragStart={startDrag}
-                            onDragMove={handleElementDragMove}
-                            onDragEnd={endDrag}
-                          />
+                {page.elements?.map(el => (
+                  <React.Fragment key={el.id}>
+                    {(el.type === 'component' || el.type === 'evidence') && (
+                      <div style={{ breakInside: 'avoid', breakAfter: 'auto' }} className="w-full relative shrink-0">
+                        <WidgetRenderer
+                          element={el}
+                          pageIndex={pageIndex}
+                          onDragStart={startDrag}
+                          onDragMove={handleElementDragMove}
+                          onDragEnd={endDrag}
+                        />
+                      </div>
+                    )}
+                    {el.type === 'text' && (
+                      <div style={{ breakInside: 'auto', breakAfter: 'auto' }} className="w-full relative shrink-0">
+                        <TextRenderer
+                          element={el}
+                          pageIndex={pageIndex}
+                          onDragStart={startDrag}
+                          onDragMove={handleElementDragMove}
+                          onDragEnd={endDrag}
+                        />
+                      </div>
+                    )}
+                    {el.type === 'image' && (
+                      <div style={{ breakInside: 'avoid', breakAfter: 'auto' }} className="w-full relative shrink-0">
+                        <div className="group rounded-lg border border-slate-200/60 dark:border-slate-800 overflow-hidden bg-card shadow-sm">
+                          <div className="h-6 bg-slate-100/80 dark:bg-slate-900/80 border-b flex items-center px-2">
+                            <span className="text-[10px] font-ui font-semibold uppercase text-muted-foreground tracking-wider truncate">{el.data.name || 'Image'}</span>
+                          </div>
+                          {el.data.url ? (
+                            <NextImage
+                              src={el.data.url}
+                              alt={el.data.name || 'Uploaded image'}
+                              width={1200}
+                              height={800}
+                              unoptimized
+                              className="w-full h-auto object-contain max-h-[400px]"
+                            />
+                          ) : (
+                            <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">No image source</div>
+                          )}
                         </div>
-                      )}
-                      {el.type === 'text' && (
-                        <div style={{ breakInside: 'auto', breakAfter: 'auto' }} className="w-full relative shrink-0">
-                          <TextRenderer
-                            element={el}
-                            pageIndex={pageIndex}
-                            onDragStart={startDrag}
-                            onDragMove={handleElementDragMove}
-                            onDragEnd={endDrag}
-                          />
+                      </div>
+                    )}
+                    {el.type === 'shape' && (
+                      <div style={{ breakInside: 'avoid', breakAfter: 'auto' }} className="w-full relative shrink-0">
+                        <div className="rounded-lg border-2 border-dashed border-slate-300 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-center" style={{ minHeight: el.height || 100 }}>
+                          <span className="text-xs text-muted-foreground font-ui">{el.data.name || 'Shape'}</span>
                         </div>
-                      )}
-                    </React.Fragment>
-                  ))}
+                      </div>
+                    )}
+                  </React.Fragment>
+                ))}
 
-                  <AlignmentOverlay
-                    guides={activeGuides}
-                    distances={distances}
-                    canvasWidth={794}
-                    canvasHeight={1123}
-                    visible={isDragging && currentPage === pageIndex}
-                  />
+                <AlignmentOverlay
+                  guides={activeGuides}
+                  distances={distances}
+                  canvasWidth={794}
+                  canvasHeight={1123}
+                  visible={isDragging && currentPage === pageIndex}
+                />
               </div>
 
               {/* Page number watermark */}

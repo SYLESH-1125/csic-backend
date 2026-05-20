@@ -17,6 +17,7 @@ import {
   Eye,
   AlertTriangle,
 } from 'lucide-react'
+import NextImage from 'next/image'
 import { api } from '@operation-room/lib/api'
 import {
   PanelHeader,
@@ -220,7 +221,7 @@ export const VaultPanel = ({
                   name={comp.name}
                   description={comp.description}
                   icon={<comp.icon strokeWidth={1.5} />}
-                  preview={<img src={comp.preview} alt={comp.name} className="w-full h-full object-cover opacity-50" />}
+                  preview={<NextImage src={comp.preview} alt={comp.name} width={320} height={180} unoptimized className="w-full h-full object-cover opacity-50" />}
                   onClick={() => onInsertComponent?.(comp.id)}
                   onDragStart={(e: React.DragEvent) => {
                     e.dataTransfer.setData('application/json', JSON.stringify({

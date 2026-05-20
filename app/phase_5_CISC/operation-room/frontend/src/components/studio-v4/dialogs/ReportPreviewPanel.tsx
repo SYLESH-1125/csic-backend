@@ -11,31 +11,28 @@
  * - Export confirmation
  */
 
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@operation-room/components/ui/dialog';
-import { Button } from '@operation-room/components/ui/button';
-import { Slider } from '@operation-room/components/ui/slider';
-import { Badge } from '@operation-room/components/ui/badge';
-import { ScrollArea } from '@operation-room/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 import {
-  Eye,
-  EyeOff,
-  ZoomIn,
-  ZoomOut,
+  AlertTriangle,
+  Check,
   ChevronLeft,
   ChevronRight,
   Edit,
+  Eye,
   FileDown,
-  Printer,
-  X,
-  Check,
-  AlertTriangle,
   FileText,
   Maximize2,
   Minimize2,
+  X,
+  ZoomIn,
+  ZoomOut
 } from 'lucide-react';
-import { useStudioStore, PageMeta, CanvasElement } from '../store/useStudioStore';
-import { cn } from '@operation-room/lib/utils';
+import NextImage from 'next/image';
+import { useCallback, useEffect, useState } from 'react';
+import { CanvasElement, PageMeta, useStudioStore } from '../store/useStudioStore';
 
 // Page dimensions (A4 at 96 DPI)
 const PAGE_WIDTH = 794; // 210mm
@@ -51,7 +48,7 @@ interface PreviewPanelProps {
 // Simplified element renderer for preview
 const PreviewElement = ({ element }: { element: CanvasElement }) => {
   const scale = 0.5; // Preview scale
-  
+
   if (element.type === 'text') {
     return (
       <div
@@ -104,9 +101,12 @@ const PreviewElement = ({ element }: { element: CanvasElement }) => {
         }}
       >
         {element.data.url ? (
-          <img 
-            src={element.data.url} 
-            alt={element.data.name || 'Image'} 
+          <NextImage
+            src={element.data.url}
+            alt={element.data.name || 'Image'}
+            width={Math.max(1, Math.round(element.width * scale))}
+            height={Math.max(1, Math.round(element.height * scale))}
+            unoptimized
             className="w-full h-full object-cover"
           />
         ) : (
@@ -133,19 +133,19 @@ const PreviewElement = ({ element }: { element: CanvasElement }) => {
 };
 
 // Single page preview
-const PagePreview = ({ 
-  page, 
-  pageNumber, 
+const PagePreview = ({
+  page,
+  pageNumber,
   isActive,
-  onClick 
-}: { 
-  page: PageMeta; 
+  onClick
+}: {
+  page: PageMeta;
   pageNumber: number;
   isActive: boolean;
   onClick: () => void;
 }) => {
   const scale = 0.5;
-  
+
   return (
     <div
       className={cn(
@@ -166,7 +166,7 @@ const PagePreview = ({
           <PreviewElement key={element.id} element={element} />
         ))}
       </div>
-      
+
       {/* Page number badge */}
       <div className="absolute bottom-2 right-2 px-2 py-0.5 bg-gray-800/80 text-white text-xs rounded">
         {pageNumber}
@@ -184,25 +184,25 @@ export function ReportPreviewPanel({
   const pages = useStudioStore((state) => state.pages);
   const focusMode = useStudioStore((state) => state.focusMode);
   const documentTitle = useStudioStore((state) => state.documentTitle);
-  
+
   const [currentPage, setCurrentPage] = useState(0);
   const [zoom, setZoom] = useState(100);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [validationIssues, setValidationIssues] = useState<string[]>([]);
-  
+
   // Validation check
   useEffect(() => {
     if (!open) return;
-    
+
     const issues: string[] = [];
-    
+
     // Check for empty pages
     pages.forEach((page, idx) => {
       if (page.elements.length === 0) {
         issues.push(`Page ${idx + 1} is empty`);
       }
     });
-    
+
     // Check for unverified elements
     let unverifiedCount = 0;
     pages.forEach(page => {
@@ -215,33 +215,33 @@ export function ReportPreviewPanel({
     if (unverifiedCount > 0) {
       issues.push(`${unverifiedCount} element(s) have modified content (Chain of Custody broken)`);
     }
-    
+
     setValidationIssues(issues);
   }, [open, pages]);
-  
+
   // Navigate pages
   const prevPage = useCallback(() => {
     setCurrentPage(p => Math.max(0, p - 1));
   }, []);
-  
+
   const nextPage = useCallback(() => {
     setCurrentPage(p => Math.min(pages.length - 1, p + 1));
   }, [pages.length]);
-  
+
   // Keyboard navigation
   useEffect(() => {
     if (!open) return;
-    
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'ArrowLeft') prevPage();
       if (e.key === 'ArrowRight') nextPage();
       if (e.key === 'Escape') onOpenChange(false);
     };
-    
+
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, prevPage, nextPage, onOpenChange]);
-  
+
   const handleExportPDF = useCallback(() => {
     onExport('pdf');
     onOpenChange(false);
@@ -251,7 +251,7 @@ export function ReportPreviewPanel({
     onExport('docx');
     onOpenChange(false);
   }, [onExport, onOpenChange]);
-  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className={cn(
@@ -269,7 +269,7 @@ export function ReportPreviewPanel({
               </p>
             </div>
           </div>
-          
+
           {/* Zoom controls */}
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => setZoom(z => Math.max(50, z - 10))}>
@@ -280,8 +280,8 @@ export function ReportPreviewPanel({
               <ZoomIn className="w-4 h-4" />
             </Button>
             <div className="w-px h-6 bg-slate-200 mx-2" />
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               size="icon"
               onClick={() => setIsFullscreen(!isFullscreen)}
             >
@@ -289,7 +289,7 @@ export function ReportPreviewPanel({
             </Button>
           </div>
         </div>
-        
+
         {/* Main content */}
         <div className="flex-1 flex overflow-hidden">
           {/* Page thumbnails sidebar */}
@@ -322,7 +322,7 @@ export function ReportPreviewPanel({
               </div>
             ))}
           </div>
-          
+
           {/* Main preview area */}
           <div className="flex-1 bg-slate-200 overflow-auto flex items-center justify-center p-8">
             <div
@@ -364,7 +364,7 @@ export function ReportPreviewPanel({
               )}
             </div>
           </div>
-          
+
           {/* Validation sidebar */}
           <div className="w-64 border-l bg-white overflow-y-auto">
             <div className="p-4 space-y-4">
@@ -395,7 +395,7 @@ export function ReportPreviewPanel({
                   </div>
                 </div>
               </div>
-              
+
               {validationIssues.length > 0 && (
                 <div>
                   <h3 className="font-medium text-amber-700 mb-2 flex items-center gap-2">
@@ -411,7 +411,7 @@ export function ReportPreviewPanel({
                   </div>
                 </div>
               )}
-              
+
               <div className="pt-4 border-t">
                 <h3 className="font-medium text-slate-900 mb-2">Export Options</h3>
                 <div className="space-y-2">
@@ -426,7 +426,7 @@ export function ReportPreviewPanel({
             </div>
           </div>
         </div>
-        
+
         {/* Footer */}
         <div className="flex items-center justify-between px-4 py-3 border-t bg-slate-50">
           {/* Page navigation */}
@@ -441,7 +441,7 @@ export function ReportPreviewPanel({
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
-          
+
           {/* Actions */}
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>

@@ -5,6 +5,7 @@ import { Dialog, DialogContent } from '@operation-room/components/ui/dialog';
 import { useStudioStore } from '../store/useStudioStore';
 import { api } from '@operation-room/lib/api';
 import { Shield } from 'lucide-react';
+import NextImage from 'next/image';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, CartesianGrid, Sector, Legend } from 'recharts';
 
 interface GhostWriterWizardProps {
@@ -328,7 +329,7 @@ export function GhostWriterWizard({ open, onOpenChange, caseId, docId, apiBaseUr
                       onClick={() => { setNewSelectedTemplate(new_t.id); setNewSelectedCover(''); setNewError(''); }}
                       style={{ cursor: 'pointer', border: new_selected_template === new_t.id ? '2px solid #0284C7' : '1px solid #CBD5E1', borderRadius: '8px', padding: '20px', background: '#FFFFFF', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)', transition: 'all 0.2s', transform: new_selected_template === new_t.id ? 'translateY(-2px)' : 'none' }}
                     >
-                      <img src={new_t.thumbnail} alt={new_t.name} style={{ width: "100%", height: "140px", objectFit: "contain", marginBottom: "15px", borderRadius: "4px", backgroundColor: "#F8FAFC", padding: "10px" }} />
+                      <NextImage src={new_t.thumbnail} alt={new_t.name} width={560} height={140} unoptimized style={{ width: "100%", height: "140px", objectFit: "contain", marginBottom: "15px", borderRadius: "4px", backgroundColor: "#F8FAFC", padding: "10px" }} />
                       <div style={{ fontWeight: 'bold', marginBottom: '6px', color: '#0F172A', fontSize: "16px" }}>{new_t.name}</div>
                       <div style={{ color: '#64748B', fontSize: '13px', fontWeight: "bold" }}>Standard Architecture</div>
                     </div>
@@ -345,7 +346,7 @@ export function GhostWriterWizard({ open, onOpenChange, caseId, docId, apiBaseUr
                           onClick={() => setNewSelectedCover(new_c.id)}
                           style={{ cursor: 'pointer', border: new_selected_cover === new_c.id ? '2px solid #0284C7' : '1px solid #CBD5E1', borderRadius: '8px', padding: '15px', background: '#FFFFFF', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.05)', textAlign: 'center', transition: "all 0.2s" }}
                         >
-                          <img src={new_c.image} alt={new_c.name} style={{ width: '100%', height: '260px', objectFit: 'contain', borderRadius: '4px', marginBottom: '15px', background: '#F8FAFC', padding: "5px", border: "1px solid #E2E8F0" }} />
+                          <NextImage src={new_c.image} alt={new_c.name} width={400} height={260} unoptimized style={{ width: '100%', height: '260px', objectFit: 'contain', borderRadius: '4px', marginBottom: '15px', background: '#F8FAFC', padding: "5px", border: "1px solid #E2E8F0" }} />
                           <div style={{ fontWeight: 'bold', color: '#0F172A' }}>{new_c.name}</div>
                         </div>
                       ))}
