@@ -104,3 +104,6 @@ def startup_integrity_check():
         logger.warning(f"Integrity check skipped: {new_e}")
     finally:
         new_db.close()
+
+# Vercel FastAPI detection expects a top-level `app` (uvicorn still uses app.main:new_app).
+app = new_app
