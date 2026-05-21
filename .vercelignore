@@ -1,17 +1,23 @@
 # Deploy Next.js UI from csic_frontend (not the Python API at repo root).
-# IMPORTANT: use /app/ (root-only) — plain "app/" also ignores csic_frontend/app/
+# IMPORTANT: use /app/ patterns (root-only) — plain "app/" also ignores csic_frontend/app/
 
 # Python / FastAPI — use Render for backend, not this Vercel project
 pyproject.toml
 uv.lock
 requirements.txt
 .python-version
-/app/
 .venv/
 venv/
 /data/
 
-# Operation Room frontend sources (outside csic_frontend root; included via externalDir)
+# Ignore repo-root Python tree, but keep Operation Room frontend sources for @operation-room imports
+/app/*
+!/app/phase_5_CISC/
+/app/phase_5_CISC/*
+!/app/phase_5_CISC/operation-room/
+/app/phase_5_CISC/operation-room/*
+!/app/phase_5_CISC/operation-room/frontend/
+/app/phase_5_CISC/operation-room/frontend/*
 !/app/phase_5_CISC/operation-room/frontend/src/
 
 # Caches / local

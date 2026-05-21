@@ -25,6 +25,8 @@ const backendOrigin = (
   `${monolithOrigin}/api/phase5`
 ).replace(/\/+$/, '')
 
+const repoRoot = path.join(__dirname, '..')
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
@@ -33,6 +35,8 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  /** Monorepo: trace files outside csic_frontend (Operation Room under app/phase_5_CISC). */
+  outputFileTracingRoot: repoRoot,
   async rewrites() {
     return [
       {
@@ -48,8 +52,6 @@ const nextConfig = {
   experimental: {
     externalDir: true,
     proxyTimeout: 300000,
-    /** Monorepo: trace files outside csic_frontend (Operation Room under app/phase_5_CISC). */
-    outputFileTracingRoot: path.join(__dirname, '..'),
   },
   webpack(config) {
     const nm = path.join(__dirname, 'node_modules')
@@ -72,8 +74,7 @@ const nextConfig = {
     return config
   },
   turbopack: {
-    /** Keep root here so `node_modules` resolves from this app; Operation Room is wired via `--webpack` + aliases. */
-    root: __dirname,
+    root: repoRoot,
     resolveAlias: {
       canvas: path.join(__dirname, 'lib/empty-module.js'),
     },
