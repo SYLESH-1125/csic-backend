@@ -1,34 +1,17 @@
 # Deploy Next.js UI from csic_frontend (not the Python API at repo root).
 
-# Python / FastAPI — use a separate deployment or local uvicorn
+# Python / FastAPI — use Render for backend, not this Vercel project
 pyproject.toml
 uv.lock
 requirements.txt
 .python-version
-app/main.py
-app/auth/
-app/core/
-app/db/
-app/detection/
-app/dashboard/
-app/features/
-app/ingestion/
-app/ledger/
-app/parsing/
-app/phase2/
-app/phase3/
-app/phase4/
-app/reporting/
+app/
 .venv/
 venv/
 data/
 
-# Operation Room: keep frontend src only (needed for @operation-room imports)
-app/phase_5_CISC/operation-room/backend/
-app/phase_5_CISC/docs/
-app/phase_5_CISC/archive_scripts/
-app/phase_5_CISC/.copilot-tracking/
-app/phase_5_CISC/.github/
+# Operation Room frontend sources (included via externalDir / outside root directory)
+!app/phase_5_CISC/operation-room/frontend/src/
 
 # Caches / local
 node_modules/
