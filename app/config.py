@@ -1,7 +1,11 @@
+import os
 from pathlib import Path
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_IS_VERCEL = bool(os.environ.get("VERCEL"))
+_VERCEL_DATA_ROOT = Path("/tmp/csic-data")
 
 
 class Settings(BaseSettings):
@@ -26,7 +30,7 @@ class Settings(BaseSettings):
 
     # JIT session TTL (minutes)
     SESSION_TTL_MINUTES: int = 30
-    
+
     # Authentication
     SECRET_KEY: str = "change-this-secret-key-in-production-use-openssl-rand-hex-32"
 
@@ -44,15 +48,36 @@ class Settings(BaseSettings):
             return v.lower() not in {"false", "0", "no", "off", "release", "production", "prod"}
         return bool(v)
 
+    @model_validator(mode="after")
+    def apply_vercel_paths(self) -> "Settings":
+        """Vercel Lambda has a read-only project dir; use /tmp for ephemeral storage."""
+        if not _IS_VERCEL:
+            return self
+
+        root = _VERCEL_DATA_ROOT
+        self.SQLITE_DB_PATH = str(root / "ledger.db")
+        self.DATABASE_URL = f"sqlite:///{self.SQLITE_DB_PATH}"
+        self.RAW_STORAGE_PATH = str(root / "raw")
+        self.PARQUET_STORAGE_PATH = str(root / "parquet")
+        self.WORM_STORAGE_PATH = str(root / "worm")
+        self.QUARANTINE_PATH = str(root / "quarantine")
+        self.TEMP_CHUNKS_PATH = str(root / "temp")
+        return self
+
 
 settings = Settings()
 
-# Ensure all required directories exist at startup
+# Ensure required directories exist at startup (writable on Vercel only under /tmp).
 for _path in (
     settings.RAW_STORAGE_PATH,
     settings.PARQUET_STORAGE_PATH,
     settings.WORM_STORAGE_PATH,
     settings.QUARANTINE_PATH,
     settings.TEMP_CHUNKS_PATH,
+    Path(settings.SQLITE_DB_PATH).parent,
 ):
-    Path(_path).mkdir(parents=True, exist_ok=True)
+    try:
+        Path(_path).mkdir(parents=True, exist_ok=True)
+    except OSError:
+        # Never crash import on read-only filesystems; local dev may still warn elsewhere.
+        pass

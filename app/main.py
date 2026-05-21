@@ -22,8 +22,8 @@ new_app.add_middleware(
     allow_headers=["*"],
 )
 
-if not _IS_VERCEL:
-    Base.metadata.create_all(bind=engine)
+# Create tables (on Vercel uses ephemeral SQLite under /tmp — see app.config).
+Base.metadata.create_all(bind=engine)
 
 # ── Core routers (always available) ─────────────────────────────────────────
 from app.auth.router import router as auth_router
