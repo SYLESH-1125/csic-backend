@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "npm run build --prefix csic_frontend",
+    "dev": "npm run dev --prefix csic_frontend",
+    "vercel-build": "npm run build --prefix csic_frontend"
+  }
+}

@@ -1,32 +1,42 @@
-# Use pyproject.toml for Vercel dependency resolution (avoid dual-file ambiguity)
+# Deploy Next.js UI from csic_frontend (not the Python API at repo root).
+
+# Python / FastAPI — use a separate deployment or local uvicorn
+pyproject.toml
+uv.lock
 requirements.txt
-
-# Frontend app (deploy backend only from repo root)
-csic_frontend/
-
-# Local data and caches
+.python-version
+app/main.py
+app/auth/
+app/core/
+app/db/
+app/detection/
+app/dashboard/
+app/features/
+app/ingestion/
+app/ledger/
+app/parsing/
+app/phase2/
+app/phase3/
+app/phase4/
+app/reporting/
+.venv/
+venv/
 data/
+
+# Operation Room: keep frontend src only (needed for @operation-room imports)
+app/phase_5_CISC/operation-room/backend/
+app/phase_5_CISC/docs/
+app/phase_5_CISC/archive_scripts/
+app/phase_5_CISC/.copilot-tracking/
+app/phase_5_CISC/.github/
+
+# Caches / local
 node_modules/
 __pycache__/
 *.pyc
 .env
 .env.*
 
-# Heavy phases / modules not loaded on Vercel (see app/main.py _IS_VERCEL)
-app/phase_5_CISC/
-app/phase3/
-app/reporting/
-app/features/
-app/detection/
-app/dashboard/
-app/parsing/
-
-# Tests, docs, and archives not needed at runtime
+# Docs / tests
 **/tests/
 **/*.md
-app/phase_5_CISC/docs/
-app/phase_5_CISC/archive_scripts/
-app/phase_5_CISC/operation-room/backend/archive/
-app/phase_5_CISC/operation-room/docs/
-app/phase_5_CISC/.copilot-tracking/
-app/phase_5_CISC/.github/
