@@ -1,7 +1,6 @@
 # Use pyproject.toml for Vercel dependency resolution (avoid dual-file ambiguity)
 requirements.txt
 
-
 # Frontend app (deploy backend only from repo root)
 csic_frontend/
 
@@ -13,6 +12,15 @@ __pycache__/
 .env
 .env.*
 
+# Heavy phases / modules not loaded on Vercel (see app/main.py _IS_VERCEL)
+app/phase_5_CISC/
+app/phase3/
+app/reporting/
+app/features/
+app/detection/
+app/dashboard/
+app/parsing/
+
 # Tests, docs, and archives not needed at runtime
 **/tests/
 **/*.md
@@ -20,3 +28,5 @@ app/phase_5_CISC/docs/
 app/phase_5_CISC/archive_scripts/
 app/phase_5_CISC/operation-room/backend/archive/
 app/phase_5_CISC/operation-room/docs/
+app/phase_5_CISC/.copilot-tracking/
+app/phase_5_CISC/.github/
