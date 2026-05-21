@@ -1,8 +1,12 @@
 {
+  "name": "csic-backend",
   "private": true,
+  "workspaces": [
+    "csic_frontend"
+  ],
   "scripts": {
-    "build": "npm run build --prefix csic_frontend",
-    "dev": "npm run dev --prefix csic_frontend",
-    "vercel-build": "npm run build --prefix csic_frontend"
+    "build": "npm run build --workspace=csic_frontend",
+    "dev": "npm run dev --workspace=csic_frontend",
+    "vercel-build": "npm run build --workspace=csic_frontend"
   }
 }

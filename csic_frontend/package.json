@@ -6,7 +6,8 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "vercel-build": "next build --webpack"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
