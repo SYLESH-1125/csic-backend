@@ -48,6 +48,8 @@ const nextConfig = {
   experimental: {
     externalDir: true,
     proxyTimeout: 300000,
+    /** Monorepo: trace files outside csic_frontend (Operation Room under app/phase_5_CISC). */
+    outputFileTracingRoot: path.join(__dirname, '..'),
   },
   webpack(config) {
     const nm = path.join(__dirname, 'node_modules')
