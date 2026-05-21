@@ -6,15 +6,8 @@ const tailwind3 = require('tailwindcss-v3')
 const autoprefixer = require('autoprefixer')
 const tailwind4 = require('@tailwindcss/postcss')
 
-const orTailwindConfig = path.join(
-  __dirname,
-  '..',
-  'app',
-  'phase_5_CISC',
-  'operation-room',
-  'frontend',
-  'tailwind.config.js',
-)
+// Bundled with csic_frontend so Vercel always has it (repo tailwind.config.js may be .vercelignore'd).
+const orTailwindConfig = path.join(__dirname, 'operation-room.tailwind.config.cjs')
 
 const operationRoomPlugins = [
   tailwind3({ config: orTailwindConfig }),
@@ -61,7 +54,12 @@ module.exports = {
       const fromOpt =
         from ||
         path.join(
-          path.dirname(orTailwindConfig),
+          __dirname,
+          '..',
+          'app',
+          'phase_5_CISC',
+          'operation-room',
+          'frontend',
           'src',
           'app',
           'globals.css',

@@ -19,6 +19,7 @@ venv/
 !/app/phase_5_CISC/operation-room/frontend/
 /app/phase_5_CISC/operation-room/frontend/*
 !/app/phase_5_CISC/operation-room/frontend/src/
+!/app/phase_5_CISC/operation-room/frontend/tailwind.config.js
 
 # Caches / local
 node_modules/
