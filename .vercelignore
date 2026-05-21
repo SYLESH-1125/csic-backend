@@ -1,6 +1,6 @@
-# Local Python virtualenv (must not ship to Vercel — breaks uv lock)
-.venv/
-venv/
+# Use pyproject.toml for Vercel dependency resolution (avoid dual-file ambiguity)
+requirements.txt
+
 
 # Frontend app (deploy backend only from repo root)
 csic_frontend/
@@ -13,5 +13,10 @@ __pycache__/
 .env
 .env.*
 
-# Phase 5 archives / docs not needed at runtime
+# Tests, docs, and archives not needed at runtime
+**/tests/
+**/*.md
+app/phase_5_CISC/docs/
+app/phase_5_CISC/archive_scripts/
 app/phase_5_CISC/operation-room/backend/archive/
+app/phase_5_CISC/operation-room/docs/

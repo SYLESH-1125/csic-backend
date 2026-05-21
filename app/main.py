@@ -1,3 +1,4 @@
+import os
 import sys
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -30,8 +31,9 @@ new_app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create all tables (includes new IngestionSession + QuarantineLog tables)
-Base.metadata.create_all(bind=engine)
+# Create tables locally; skip on Vercel (read-only/ephemeral filesystem).
+if not os.environ.get("VERCEL"):
+    Base.metadata.create_all(bind=engine)
 
 # ── REST routers (prefixed under /api) ─────────────────────────────────────
 new_app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])

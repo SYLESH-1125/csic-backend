@@ -1,8 +1,0 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "functions": {
-    "app/**/*.py": {
-      "excludeFiles": "{.venv/**,venv/**,csic_frontend/**,node_modules/**,data/**,**/__pycache__/**,**/*.pyc,app/phase_5_CISC/operation-room/backend/archive/**}"
-    }
-  }
-}
