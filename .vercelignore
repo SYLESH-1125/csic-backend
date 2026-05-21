@@ -1,0 +1,17 @@
+# Local Python virtualenv (must not ship to Vercel — breaks uv lock)
+.venv/
+venv/
+
+# Frontend app (deploy backend only from repo root)
+csic_frontend/
+
+# Local data and caches
+data/
+node_modules/
+__pycache__/
+*.pyc
+.env
+.env.*
+
+# Phase 5 archives / docs not needed at runtime
+app/phase_5_CISC/operation-room/backend/archive/
